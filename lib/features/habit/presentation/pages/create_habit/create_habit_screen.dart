@@ -299,6 +299,8 @@ class _CreateScreenState extends State<CreateScreen> {
       note: noteController.text.trim(),
       repeatDays: habit.repeatDays,
       isCompleteToday: habit.isCompleteToday,
+      goalValue: habit.goalValue ?? 'Once',
+      goalCount: habit.goalCount ?? '',
     );
     if (isUpdate) {
       context.read<HabitsBloc>().add(UpdateHabitEvent(newHabit));

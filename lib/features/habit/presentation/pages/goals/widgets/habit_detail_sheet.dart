@@ -130,6 +130,24 @@ Future<dynamic> habitDetailSheet({
                               habit.habitTime ?? 'Anytime',
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
+                            Text(
+                              "●",
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+
+                            Text(
+                              habit.goalCount ?? 'null',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            Text(
+                              "●",
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+
+                            Text(
+                              habit.goalValue ?? 'null',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
                           ],
                         ),
                       ],
