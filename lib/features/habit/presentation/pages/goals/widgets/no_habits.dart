@@ -165,7 +165,7 @@ class _HabitLibraryState extends State<HabitLibrary> {
                           onTap: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (context) => CreateScreen(
+                                builder: (context) => CreateHabitScreen(
                                   habit: null,
                                   category: habit['categoryId'],
                                   name: habit['name'],

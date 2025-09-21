@@ -17,6 +17,7 @@ class CreateInitial extends CreateState {
   List<Object?> get props => [habit];
 }
 
+
 class CreateLoading extends CreateState {}
 
 class CreateSuccess extends CreateState {

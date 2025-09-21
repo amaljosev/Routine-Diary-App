@@ -18,7 +18,7 @@ class HabitStartAtWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return HabitCreationTile(
       icon: Icons.calendar_month,
-      title: 'Start at',
+      title: 'Start Date',
       trailing: habitStartAt != null
           ? '${habitStartAt?.day}-${habitStartAt?.month}-${habitStartAt?.year}'
           : 'Today',

@@ -1,5 +1,5 @@
 class Habit {
-  final String id;
+  final String? id;
   final String? habitName;
   final String? note;
   final String? habitIconId;
@@ -12,12 +12,11 @@ class Habit {
   final String? habitRemindTime;
   final String? habitColorId;
   final String? isCompleteToday;
-
-  
-
+  final String? goalValue;
+  final String? goalCount;
 
   Habit({
-    required this.id,
+    this.id,
     this.habitName,
     this.note,
     this.category,
@@ -29,7 +28,9 @@ class Habit {
     this.repeatDays,
     this.habitRemindTime,
     this.habitColorId,
-    this.isCompleteToday
+    this.isCompleteToday,
+    this.goalValue,
+    this.goalCount,
   });
 
   Habit copyWith({
@@ -45,13 +46,15 @@ class Habit {
     String? habitRemindTime,
     String? habitColorId,
     String? repeatDays,
-    String? isCompleteToday
+    String? isCompleteToday,
+    String? goalValue,
+    String? goalCount,
   }) {
     return Habit(
       id: id ?? this.id,
       habitName: habitName ?? this.habitName,
       note: note ?? this.note,
-      category: category?? this.category,
+      category: category ?? this.category,
       habitIconId: habitIconId ?? this.habitIconId,
       habitStartAt: habitStartAt ?? this.habitStartAt,
       habitTime: habitTime ?? this.habitTime,
@@ -60,8 +63,9 @@ class Habit {
       habitColorId: habitColorId ?? this.habitColorId,
       habitRepeatValue: habitRepeatValue ?? this.habitRepeatValue,
       repeatDays: repeatDays ?? this.repeatDays,
-      isCompleteToday: isCompleteToday??this.isCompleteToday
-  
+      isCompleteToday: isCompleteToday ?? this.isCompleteToday,
+      goalValue: goalValue ?? this.goalValue,
+      goalCount: goalCount ?? this.goalCount,
     );
   }
 
@@ -71,7 +75,7 @@ class Habit {
       'id': id,
       'habitName': habitName,
       'note': note,
-      'category':category,
+      'category': category,
       'habitIconId': habitIconId,
       'habitStartAt': habitStartAt,
       'habitTime': habitTime,
@@ -80,7 +84,9 @@ class Habit {
       'repeatDays': repeatDays,
       'habitRemindTime': habitRemindTime,
       'habitColorId': habitColorId,
-      'isCompleteToday':isCompleteToday,
+      'isCompleteToday': isCompleteToday,
+      'goalValue': goalValue,
+      'goalCount': goalCount,
     };
   }
 
@@ -99,7 +105,9 @@ class Habit {
       repeatDays: map['repeatDays'],
       habitRemindTime: map['habitRemindTime'],
       habitColorId: map['habitColorId'],
-      isCompleteToday: map['isCompleteToday']
+      isCompleteToday: map['isCompleteToday'],
+      goalValue: map['goalValue'],
+      goalCount: map['goalCount'],
     );
   }
 }

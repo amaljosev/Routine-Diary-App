@@ -48,7 +48,7 @@ Future<dynamic> habitDetailSheet({
 
                         if (confirm != null && confirm && context.mounted) {
                           context.read<HabitsBloc>().add(
-                            DeleteHabitEvent(habit.id),
+                            DeleteHabitEvent(habit.id!),
                           );
                           Navigator.pop(context);
                         }
@@ -59,7 +59,7 @@ Future<dynamic> habitDetailSheet({
                       onPressed: () => Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (context) =>
-                              HabitAnalyticsScreen(habitId: habit.id),
+                              HabitAnalyticsScreen(habitId: habit.id!),
                         ),
                       ),
 
@@ -68,7 +68,7 @@ Future<dynamic> habitDetailSheet({
                     IconButton(
                       onPressed: () => Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (context) => CreateScreen(
+                          builder: (context) => CreateHabitScreen(
                             habit: habit,
                             category: habit.category!,
                           ),
@@ -166,7 +166,7 @@ Future<dynamic> habitDetailSheet({
                       ? () {}
                       : () {
                           context.read<HabitsBloc>().add(
-                            MarkHabitCompleteEvent(habitId: habit.id),
+                            MarkHabitCompleteEvent(habitId: habit.id!),
                           );
                           Navigator.pop(context);
                         },

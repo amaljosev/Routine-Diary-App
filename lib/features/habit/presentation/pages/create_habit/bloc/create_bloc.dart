@@ -16,10 +16,11 @@ class CreateBloc extends Bloc<CreateEvent, CreateState> {
     on<UpdateHabitNameEvent>(_onUpdateHabitName);
     on<UpdateHabitNoteEvent>(_onUpdateHabitNote);
     on<UpdateHabitIconEvent>(_onUpdateHabitIconId);
-    // on<UpdateHabitTypeEvent>(_onUpdateHabitType);
     on<UpdateHabitColorEvent>(_onUpdateHabitColorId);
     on<UpdateHabitStartAtEvent>(_onUpdateHabitStartAt);
     on<UpdateHabitTimeEvent>(_onUpdateHabitTime);
+    on<UpdateHabitGoalValueEvent>(_onUpdateHabitGoalValue);
+    on<UpdateHabitGoalCountEvent>(_onUpdateHabitGoalCount);
     on<UpdateHabitCategoryEvent>(_onUpdateHabitCategory);
     on<UpdateHabitEndAtEvent>(_onUpdateHabitEndAt);
     on<UpdateHabitRepeatValueEvent>(_onUpdateHabitRepeatValue);
@@ -31,7 +32,7 @@ class CreateBloc extends Bloc<CreateEvent, CreateState> {
 
   static Habit _createInitialHabit() {
     return Habit(
-      id: DateTime.now().toString(),
+      id: null,
       habitName: null,
       note: null,
       habitIconId: CommonFunctions.getRandomNumber(
@@ -44,6 +45,8 @@ class CreateBloc extends Bloc<CreateEvent, CreateState> {
       habitRepeatValue: null,
       repeatDays: null,
       habitRemindTime: null,
+      goalValue: null,
+      goalCount: null,
       habitColorId: CommonFunctions.getRandomNumber(
         0,
         AppColors.myColors.length - 1,
@@ -63,11 +66,14 @@ class CreateBloc extends Bloc<CreateEvent, CreateState> {
         emit(
           CreateInitial(
             habit: currentState.habit.copyWith(
+            
               category: event.category,
-              habitIconId:event.iconId?? CommonFunctions.getRandomNumber(
-                0,
-                HabitsItems.habitList.length - 1,
-              ).toString(),
+              habitIconId:
+                  event.iconId ??
+                  CommonFunctions.getRandomNumber(
+                    0,
+                    HabitsItems.habitList.length - 1,
+                  ).toString(),
               habitColorId: CommonFunctions.getRandomNumber(
                 0,
                 AppColors.myColors.length - 1,
@@ -250,8 +256,6 @@ class CreateBloc extends Bloc<CreateEvent, CreateState> {
         return;
       }
 
-   
-
       emit(CreateLoading());
 
       try {
@@ -287,6 +291,34 @@ class CreateBloc extends Bloc<CreateEvent, CreateState> {
       emit(
         CreateInitial(
           habit: currentState.habit.copyWith(category: event.category),
+        ),
+      );
+    }
+  }
+
+  FutureOr<void> _onUpdateHabitGoalValue(
+    event,
+    Emitter<CreateState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is CreateInitial) {
+      emit(
+        CreateInitial(
+          habit: currentState.habit.copyWith(goalValue: event.goalValue),
+        ),
+      );
+    }
+  }
+
+  FutureOr<void> _onUpdateHabitGoalCount(
+    UpdateHabitGoalCountEvent event,
+    Emitter<CreateState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is CreateInitial) {
+      emit(
+        CreateInitial(
+          habit: currentState.habit.copyWith(goalCount: event.goalCount),
         ),
       );
     }

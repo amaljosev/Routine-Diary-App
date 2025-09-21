@@ -13,10 +13,14 @@ class InitializeCreateEvent extends CreateEvent {
   final Habit? habit;
   final String? iconId;
 
-  const InitializeCreateEvent(this.category, this.habit,this.iconId);
+  const InitializeCreateEvent({
+    required this.category,
+    this.habit,
+    this.iconId,
+  });
 
   @override
-  List<Object?> get props => [category];
+  List<Object?> get props => [category,];
 }
 
 class UpdateHabitNameEvent extends CreateEvent {
@@ -107,6 +111,24 @@ class UpdateHabitRepeatValueEvent extends CreateEvent {
 
   @override
   List<Object?> get props => [repeatValue];
+}
+
+class UpdateHabitGoalValueEvent extends CreateEvent {
+  final String goalValue;
+
+  const UpdateHabitGoalValueEvent(this.goalValue);
+
+  @override
+  List<Object?> get props => [goalValue];
+}
+
+class UpdateHabitGoalCountEvent extends CreateEvent {
+  final String goalCount;
+
+  const UpdateHabitGoalCountEvent(this.goalCount);
+
+  @override
+  List<Object?> get props => [goalCount];
 }
 
 class UpdateRepeatDaysEvent extends CreateEvent {

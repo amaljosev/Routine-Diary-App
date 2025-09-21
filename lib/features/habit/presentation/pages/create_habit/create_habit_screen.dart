@@ -7,6 +7,7 @@ import 'package:consist/features/habit/presentation/blocs/habits_bloc/habits_blo
 import 'package:consist/features/habit/presentation/pages/create_habit/bloc/create_bloc.dart';
 import 'package:consist/features/habit/presentation/pages/create_habit/widgets/add_note_widget.dart';
 import 'package:consist/features/habit/presentation/pages/create_habit/widgets/bg_color_picker.dart';
+import 'package:consist/features/habit/presentation/pages/create_habit/widgets/counter_options.dart';
 import 'package:consist/features/habit/presentation/pages/create_habit/widgets/duration_widget.dart';
 import 'package:consist/features/habit/presentation/pages/create_habit/widgets/habit_category_widget.dart';
 import 'package:consist/features/habit/presentation/pages/create_habit/widgets/habit_icon.dart';
@@ -17,6 +18,33 @@ import 'package:consist/features/habit/presentation/pages/create_habit/widgets/h
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
+class CreateHabitScreen extends StatelessWidget {
+  const CreateHabitScreen({
+    super.key,
+    required this.category,
+    this.name,
+    this.habit,
+    this.icon,
+  });
+  final String category;
+  final String? name;
+  final Habit? habit;
+  final String? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => CreateBloc(),
+      child: CreateScreen(
+        category: category,
+        name: name,
+        habit: habit,
+        icon: icon,
+      ),
+    );
+  }
+}
 
 class CreateScreen extends StatefulWidget {
   const CreateScreen({
@@ -42,7 +70,11 @@ class _CreateScreenState extends State<CreateScreen> {
   @override
   void initState() {
     context.read<CreateBloc>().add(
-      InitializeCreateEvent(widget.category, widget.habit, widget.icon),
+      InitializeCreateEvent(
+        category: widget.category,
+        habit: widget.habit,
+        iconId: widget.icon,
+      ),
     );
     if (widget.name != null) {
       nameController.text = widget.name ?? '';
@@ -86,7 +118,6 @@ class _CreateScreenState extends State<CreateScreen> {
       builder: (context, state) {
         if (state is CreateInitial) {
           final habit = state.habit;
-
           return Scaffold(
             backgroundColor: CommonFunctions.getColorById(habit.habitColorId!),
             appBar: AppBar(
@@ -173,27 +204,24 @@ class _CreateScreenState extends State<CreateScreen> {
                                   HabitCategoryWidget(
                                     habitCategory: habit.category,
                                     isDark: isDark,
-                                    isUpdate: widget.habit!=null,
+                                    isUpdate: widget.habit != null,
                                   ),
                                   Divider(
                                     height: 0,
                                     color: isDark ? null : Colors.black12,
                                   ),
-
+                                  GoalValue(
+                                    isDark: isDark,
+                                    goalValue: habit.goalValue,
+                                    habitId: widget.icon,
+                                    goalCount: habit.goalCount,
+                                  ),
+                                  Divider(
+                                    height: 0,
+                                    color: isDark ? null : Colors.black12,
+                                  ),
                                   if (widget.habit == null)
-                                    HabitStartAtWidget(
-                                      habitStartAt:
-                                          AppConverters.stringToDateTime(
-                                            habit.habitStartAt,
-                                          ),
-                                      isDark: isDark,
-                                    ),
-                                  Divider(
-                                    height: 0,
-                                    color: isDark ? null : Colors.black12,
-                                  ),
-
-                                  HabitTimeWidget(habitTime: habit.habitTime),
+                                    HabitTimeWidget(habitTime: habit.habitTime),
                                   Divider(
                                     height: 0,
                                     color: isDark ? null : Colors.black12,
@@ -207,6 +235,17 @@ class _CreateScreenState extends State<CreateScreen> {
                                         habit.habitColorId,
                                       ),
                                     ),
+                                  Divider(
+                                    height: 0,
+                                    color: isDark ? null : Colors.black12,
+                                  ),
+                                  HabitStartAtWidget(
+                                    habitStartAt:
+                                        AppConverters.stringToDateTime(
+                                          habit.habitStartAt,
+                                        ),
+                                    isDark: isDark,
+                                  ),
                                   Divider(
                                     height: 0,
                                     color: isDark ? null : Colors.black12,

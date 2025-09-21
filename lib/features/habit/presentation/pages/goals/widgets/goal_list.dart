@@ -75,7 +75,7 @@ class GoalsList extends StatelessWidget {
       onTap: !isComplete
           ? () {}
           : () => context.read<HabitsBloc>().add(
-              MarkHabitCompleteEvent(habitId: habit.id),
+              MarkHabitCompleteEvent(habitId: habit.id!),
             ),
       child: CircleAvatar(
         radius: 16,

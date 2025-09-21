@@ -31,7 +31,8 @@ class HabitDatabase {
         CREATE TABLE habits (
           id TEXT PRIMARY KEY,
           habitName TEXT,
-          note TEXT,
+          goalValue TEXT,
+          goalCount TEXT,
           habitIconId TEXT,
           category TEXT,
           habitType TEXT,
@@ -42,8 +43,8 @@ class HabitDatabase {
           repeatDays TEXT,
           habitRemindTime TEXT,
           habitColorId TEXT,
-          isCompleteToday TEXT
-
+          isCompleteToday TEXT,
+          note TEXT
         )
       ''');
 
@@ -98,6 +99,8 @@ class HabitDatabase {
             'habitRemindTime': habit.habitRemindTime,
             'habitColorId': habit.habitColorId,
             'isCompleteToday': habit.isCompleteToday,
+            'goalValue': habit.goalValue,
+            'goalCount': habit.goalCount,
           })
           .then(
             (value) async => await db.insert('habit_analytics', {
@@ -144,6 +147,8 @@ class HabitDatabase {
               habitRemindTime: map['habitRemindTime'] as String?,
               habitColorId: map['habitColorId'] as String?,
               isCompleteToday: map['isCompleteToday'] as String?,
+              goalValue: map['goalValue'] as String?,
+              goalCount: map['goalCount'] as String?,
             ),
           )
           .toList();
@@ -174,6 +179,8 @@ class HabitDatabase {
           habitRemindTime: map['habitRemindTime'] as String?,
           habitColorId: map['habitColorId'] as String?,
           isCompleteToday: map['isCompleteToday'] as String?,
+          goalValue: map['goalValue'] as String?,
+          goalCount: map['goalCount'] as String?,
         );
       }
       return null;
@@ -202,6 +209,8 @@ class HabitDatabase {
           'habitRemindTime': habit.habitRemindTime,
           'habitColorId': habit.habitColorId,
           'isCompleteToday': habit.isCompleteToday,
+          'goalValue': habit.goalValue,
+          'goalCount': habit.goalCount,
         },
         where: 'id = ?',
         whereArgs: [habit.id],
@@ -281,6 +290,7 @@ class HabitDatabase {
           'lastDay': analytics.lastDay,
           'achievements': jsonEncode(analytics.achievements),
           'streakStartedAt': analytics.streakStartedAt,
+
         },
         where: 'habitId = ?',
         whereArgs: [habitId],
@@ -381,6 +391,8 @@ Future<double> calculateYearlyCompletionRate(String habitId) async {
           habitRemindTime: map['habitRemindTime'] as String?,
           habitColorId: map['habitColorId'] as String?,
           isCompleteToday: map['isCompleteToday'] as String?,
+          goalValue: map['goalValue'] as String?,
+          goalCount: map['goalCount'] as String?,
         );
       }).toList();
     } catch (e, st) {

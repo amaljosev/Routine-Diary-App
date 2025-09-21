@@ -44,7 +44,7 @@ class NewGoalDetailWidget extends StatelessWidget {
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) =>
-                        CreateScreen(habit: null, category: '1'),
+                        CreateHabitScreen(habit: null, category: '1'),
                   ),
                 ),
                 title: 'Habits to Develop',
@@ -59,7 +59,7 @@ class NewGoalDetailWidget extends StatelessWidget {
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) =>
-                        CreateScreen(habit: null, category: '2'),
+                        CreateHabitScreen(habit: null, category: '2'),
                   ),
                 ),
                 title: 'Habits to Quit',
@@ -75,7 +75,7 @@ class NewGoalDetailWidget extends StatelessWidget {
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) =>
-                        CreateScreen(habit: null, category: '3'),
+                        CreateHabitScreen(habit: null, category: '3'),
                   ),
                 ),
                 title: 'Task',

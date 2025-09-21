@@ -9,7 +9,6 @@ import 'package:consist/features/habit/data/datasources/habit_local_datasource.d
 import 'package:consist/features/habit/data/repositories/habit_repository_impl.dart';
 import 'package:consist/features/habit/domain/create_habit/repositories/habit_repository.dart';
 import 'package:consist/features/habit/presentation/blocs/habits_bloc/habits_bloc.dart';
-import 'package:consist/features/habit/presentation/pages/create_habit/bloc/create_bloc.dart';
 import 'package:consist/features/onboarding/data/datasources/user_datasource.dart';
 import 'package:consist/features/onboarding/data/repositories/user_repo_impl.dart';
 import 'package:consist/features/onboarding/domain/repository/user_repo.dart';
@@ -66,7 +65,6 @@ class MyApp extends StatelessWidget {
       providers: [
         BlocProvider(create: (_) => UserBloc(userRepository: userRepo)),
         BlocProvider(create: (_) => HabitsBloc(habitRepository: habitRepo)),
-        BlocProvider(create: (_) => CreateBloc()),
         BlocProvider(
           create: (_) =>
               DiaryBloc(repository: diaryRepo)..add(LoadDiaryEntries()),
