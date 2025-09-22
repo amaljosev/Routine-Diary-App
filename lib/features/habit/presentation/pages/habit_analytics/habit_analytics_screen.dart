@@ -1,6 +1,7 @@
 import 'package:consist/core/utils/converters.dart';
 import 'package:consist/core/widgets/error_widget.dart';
 import 'package:consist/core/widgets/loading_widget.dart';
+import 'package:consist/features/habit/domain/create_habit/entities/analytics_models.dart';
 import 'package:consist/features/habit/presentation/blocs/habits_bloc/habits_bloc.dart';
 import 'package:consist/features/habit/presentation/widgets/calender_widget.dart';
 import 'package:flutter/material.dart';
@@ -59,7 +60,7 @@ class _HabitAnalyticsScreenState extends State<HabitAnalyticsScreen> {
           } else if (state is HabitAnalyticsError) {
             return ErrorScreenWidget();
           } else if (state is HabitAnalyticsLoaded) {
-            final analytics = state.analytics;
+            final HabitAnalytics?  analytics = state.analytics;
 
             if (analytics == null) {
               return const Center(

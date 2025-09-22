@@ -63,7 +63,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (_) => UserBloc(userRepository: userRepo)),
+        BlocProvider(
+          create: (_) =>
+              UserBloc(userRepository: userRepo, habitRepository: habitRepo),
+        ),
         BlocProvider(create: (_) => HabitsBloc(habitRepository: habitRepo)),
         BlocProvider(
           create: (_) =>

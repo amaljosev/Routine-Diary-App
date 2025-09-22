@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'package:consist/features/habit/domain/create_habit/repositories/habit_repository.dart';
 import 'package:consist/features/onboarding/domain/entities/user_analytics_model.dart';
 import 'package:consist/features/onboarding/domain/repository/user_repo.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -9,7 +10,9 @@ part 'user_state.dart';
 
 class UserBloc extends Bloc<UserEvent, UserState> {
   final UserRepository userRepository;
-  UserBloc({required this.userRepository}) : super(UserInitial()) {
+  final HabitRepository habitRepository;
+  UserBloc({required this.userRepository, required this.habitRepository})
+    : super(UserInitial()) {
     on<PageChangeEvent>(
       (event, emit) => emit(PageChangeState(pageIndex: event.pageIndex)),
     );
@@ -46,26 +49,30 @@ class UserBloc extends Bloc<UserEvent, UserState> {
       try {
         final prefs = await SharedPreferences.getInstance();
         final isLogged = prefs.getBool('isLogged') ?? false;
-        await Future.delayed(Duration(seconds: 2));
+
         if (isLogged) {
           final result = await userRepository.checkAndUpdateDailyStats();
+           await habitRepository
+              .resetHabitsIfNewDay();
           if (result) {
+            await Future.delayed(Duration(seconds: 2));
             emit(UserLoggedState());
           } else {
-            emit(CheckUserLoginStatusErrorState(
-                msg: 'Please try again'));
+            emit(CheckUserLoginStatusErrorState(msg: 'Please try again'));
           }
         } else {
           final userId = prefs.getString('userId');
           if (userId != null && userId.isNotEmpty) {
+            await Future.delayed(Duration(seconds: 2));
             emit(UserProfileCreatedState());
           } else {
+            await Future.delayed(Duration(seconds: 2));
             emit(NewUserState());
           }
         }
       } catch (e) {
         log(e.toString());
-        emit(CheckUserLoginStatusErrorState(msg: 'Please try again'));  
+        emit(CheckUserLoginStatusErrorState(msg: 'Please try again'));
       }
     });
     on<FetchUserProfileEvent>((event, emit) async {

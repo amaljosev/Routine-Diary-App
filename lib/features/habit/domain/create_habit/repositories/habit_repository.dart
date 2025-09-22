@@ -17,5 +17,6 @@ abstract class HabitRepository {
   Future<HabitAnalytics?> getHabitAnalytics(String id);
   Future<HabitAnalytics?> updateHabitAnalytics(String id);
   Future<HabitAnalytics?> checkStreakAndFetchAnalytics(String id);
+  Future<int> resetHabitsIfNewDay();
 }
 

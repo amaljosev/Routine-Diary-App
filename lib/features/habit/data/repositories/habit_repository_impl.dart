@@ -67,4 +67,10 @@ class HabitRepositoryImpl implements HabitRepository {
   Future<HabitAnalytics?> checkStreakAndFetchAnalytics(String id) async{
     return await db.checkStreakAndFetchAnalytics(id);
   }
+  
+
+  @override
+  Future<int> resetHabitsIfNewDay() async {
+    return await db.resetHabitsIfNewDay();
+  }
 }

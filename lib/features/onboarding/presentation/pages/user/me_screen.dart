@@ -1,3 +1,4 @@
+import 'package:consist/core/components/neumorphic_card.dart';
 import 'package:consist/features/onboarding/domain/entities/user_analytics_model.dart';
 import 'package:consist/features/onboarding/presentation/blocs/user_bloc/user_bloc.dart';
 import 'package:flutter/material.dart';
@@ -127,7 +128,7 @@ class _MeScreenState extends State<MeScreen> {
               width: 150,
               height: 150,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
+                color: Colors.white.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
             ),
@@ -139,7 +140,7 @@ class _MeScreenState extends State<MeScreen> {
               width: 100,
               height: 100,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
+                color: Colors.white.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
             ),
@@ -188,7 +189,7 @@ class _MeScreenState extends State<MeScreen> {
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 8,
                   offset: const Offset(2, 2),
                 ),
@@ -250,7 +251,7 @@ class _MeScreenState extends State<MeScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.2),
+        color: Colors.black.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -278,7 +279,7 @@ class _MeScreenState extends State<MeScreen> {
     return Row(
       children: [
         Expanded(
-          child: _NeumorphicCard(
+          child: NeumorphicCard(
             child: Column(
               children: [
                 const Text('🔥', style: TextStyle(fontSize: 24)),
@@ -306,7 +307,7 @@ class _MeScreenState extends State<MeScreen> {
         ),
         const SizedBox(width: 16),
         Expanded(
-          child: _NeumorphicCard(
+          child: NeumorphicCard(
             child: Column(
               children: [
                 const Text('👑', style: TextStyle(fontSize: 24)),
@@ -334,7 +335,7 @@ class _MeScreenState extends State<MeScreen> {
         ),
         const SizedBox(width: 16),
         Expanded(
-          child: _NeumorphicCard(
+          child: NeumorphicCard(
             child: Column(
               children: [
                 const Text('📊', style: TextStyle(fontSize: 24)),
@@ -368,7 +369,7 @@ class _MeScreenState extends State<MeScreen> {
   //   BuildContext context,
   //   UserAnalytics userData,
   // ) {
-  //   return _NeumorphicCard(
+  //   return NeumorphicCard(
   //     padding: const EdgeInsets.all(16),
   //     child: Column(
   //       crossAxisAlignment: CrossAxisAlignment.start,
@@ -537,7 +538,7 @@ class _MeScreenState extends State<MeScreen> {
   //         },
   //         child: SizedBox(
   //           height: 100,
-  //           child: _NeumorphicCard(
+  //           child: NeumorphicCard(
   //             child: Column(
   //               mainAxisAlignment: MainAxisAlignment.center,
   //               children: [
@@ -567,7 +568,7 @@ class _MeScreenState extends State<MeScreen> {
   //   BuildContext context,
   //   UserAnalytics userData,
   // ) {
-  //   return _NeumorphicCard(
+  //   return NeumorphicCard(
   //     padding: const EdgeInsets.all(16),
   //     child: Column(
   //       crossAxisAlignment: CrossAxisAlignment.start,
@@ -626,7 +627,7 @@ class _MeScreenState extends State<MeScreen> {
   //       width: 40,
   //       height: 40,
   //       decoration: BoxDecoration(
-  //         color: const Color(0xFF7C3AED).withOpacity(0.1),
+  //         color: const Color(0xFF7C3AED).withValues(alpha:  0.1),
   //         shape: BoxShape.circle,
   //       ),
   //       child: Icon(icon, color: const Color(0xFF7C3AED), size: 20),
@@ -647,8 +648,8 @@ class _MeScreenState extends State<MeScreen> {
   //       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
   //       decoration: BoxDecoration(
   //         color: status == 'Completed'
-  //             ? const Color(0xFF10B981).withOpacity(0.2)
-  //             : Colors.grey.withOpacity(0.2),
+  //             ? const Color(0xFF10B981).withValues(alpha:  0.2)
+  //             : Colors.grey.withValues(alpha:  0.2),
   //         borderRadius: BorderRadius.circular(12),
   //       ),
   //       child: Text(
@@ -665,35 +666,7 @@ class _MeScreenState extends State<MeScreen> {
   // }
 }
 
-class _NeumorphicCard extends StatelessWidget {
-  final Widget child;
 
-  const _NeumorphicCard({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(4, 4),
-          ),
-          BoxShadow(
-            color: Colors.white.withOpacity(0.9),
-            blurRadius: 10,
-            offset: const Offset(-4, -4),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(16),
-      child: child,
-    );
-  }
-}
 
 // class MeScreen extends StatelessWidget {
 //   const MeScreen({super.key});

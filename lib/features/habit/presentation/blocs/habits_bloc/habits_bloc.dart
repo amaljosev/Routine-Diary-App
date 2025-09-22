@@ -70,7 +70,6 @@ class HabitsBloc extends Bloc<HabitsEvent, HabitsState> {
         final analytics = await habitRepository.updateHabitAnalytics(
           event.habitId,
         );
-
         await habitRepository.markHabitComplete(
           habitId: event.habitId,
           completionDate: todayStr,

@@ -33,6 +33,7 @@ class HabitDatabase {
           habitName TEXT,
           goalValue TEXT,
           goalCount TEXT,
+          goalCompletedCount TEXT,
           habitIconId TEXT,
           category TEXT,
           habitType TEXT,
@@ -101,6 +102,7 @@ class HabitDatabase {
             'isCompleteToday': habit.isCompleteToday,
             'goalValue': habit.goalValue,
             'goalCount': habit.goalCount,
+            'goalCompletedCount': habit.goalCompletedCount,
           })
           .then(
             (value) async => await db.insert('habit_analytics', {
@@ -149,6 +151,7 @@ class HabitDatabase {
               isCompleteToday: map['isCompleteToday'] as String?,
               goalValue: map['goalValue'] as String?,
               goalCount: map['goalCount'] as String?,
+              goalCompletedCount: map['goalCompletedCount'] as String?,
             ),
           )
           .toList();
@@ -181,12 +184,104 @@ class HabitDatabase {
           isCompleteToday: map['isCompleteToday'] as String?,
           goalValue: map['goalValue'] as String?,
           goalCount: map['goalCount'] as String?,
+          goalCompletedCount: map['goalCompletedCount'] as String?,
         );
       }
       return null;
     } catch (e) {
       log("Error getting habit by ID: $e");
       return null;
+    }
+  }
+
+  Future<int> resetHabitsIfNewDay() async {
+    try {
+      final db = await instance.database;
+
+      // Get today's date in DD:MM:YYYY format
+      final today = DateTime.now();
+      final todayStr = "${today.day}:${today.month}:${today.year}";
+
+      // Query all habits
+      final habits = await db.query('habits');
+
+      for (var habit in habits) {
+        final lastCompleteDate = habit['isCompleteToday'] as String?;
+
+        // If lastCompleteDate != today, reset
+        if (lastCompleteDate != todayStr) {
+          await db.update(
+            'habits',
+            {
+              'isCompleteToday': null, 
+              'goalCompletedCount': '0', 
+            },
+            where: 'id = ?',
+            whereArgs: [habit['id']],
+          );
+        }
+      }
+
+      log("Habits reset check done for $todayStr ✅");
+      return 1;
+    } catch (e) {
+      log("Error resetting habits: $e");
+      return -1;
+    }
+  }
+
+  // ✅ Reset goal completed count
+
+  Future<int> resetGoalCompletedCount(String habitId) async {
+    try {
+      final db = await instance.database;
+      return await db.update(
+        'habits',
+        {'goalCompletedCount': '0'},
+        where: 'id = ?',
+        whereArgs: [habitId],
+      );
+    } catch (e) {
+      log("Error resetting goal completed count: $e");
+      return -1;
+    }
+  }
+
+  Future<int> getHabitCompletionCount(String habitId) async {
+    try {
+      final db = await instance.database;
+      final result = await db.query(
+        'habits',
+        columns: ['goalCompletedCount'],
+        where: 'id = ?',
+        whereArgs: [habitId],
+      );
+      if (result.isNotEmpty) {
+        final countStr = result.first['goalCompletedCount'] as String?;
+        return int.tryParse(countStr ?? '0') ?? 0;
+      }
+      return 0;
+    } catch (e) {
+      log("Error getting habit completion count: $e");
+      return 0;
+    }
+  }
+
+  // ✅ Update habit completion count
+  Future<int> updateHabitCompletionCount(String habitId) async {
+    try {
+      final db = await instance.database;
+      int currentCount = await getHabitCompletionCount(habitId);
+      currentCount += 1;
+      return await db.update(
+        'habits',
+        {'goalCompletedCount': currentCount.toString()},
+        where: 'id = ?',
+        whereArgs: [habitId],
+      );
+    } catch (e) {
+      log("Error updating habit completion count: $e");
+      return -1;
     }
   }
 
@@ -211,6 +306,7 @@ class HabitDatabase {
           'isCompleteToday': habit.isCompleteToday,
           'goalValue': habit.goalValue,
           'goalCount': habit.goalCount,
+          'goalCompletedCount': habit.goalCompletedCount,
         },
         where: 'id = ?',
         whereArgs: [habit.id],
@@ -242,6 +338,26 @@ class HabitDatabase {
     }
   }
 
+  Future<int> getTargetCompletionCount(String habitId) async {
+    try {
+      final db = await instance.database;
+      final result = await db.query(
+        'habits',
+        columns: ['goalCount'],
+        where: 'id = ?',
+        whereArgs: [habitId],
+      );
+      if (result.isNotEmpty) {
+        final countStr = result.first['goalCount'] as String?;
+        return int.tryParse(countStr ?? '0') ?? 0;
+      }
+      return 0;
+    } catch (e) {
+      log("Error getting target completion count: $e");
+      return 0;
+    }
+  }
+
   Future<void> markHabitComplete({
     required String habitId,
     required String completionDate, // Format: 'YYYY-MM-DD'
@@ -250,9 +366,13 @@ class HabitDatabase {
   }) async {
     try {
       final db = await instance.database;
+      final targetCount = await getTargetCompletionCount(habitId);
       await db.update(
         'habits',
-        {'isCompleteToday': completionDate},
+        {
+          'isCompleteToday': completionDate,
+          'goalCompletedCount': targetCount.toString(),
+        },
         where: 'id = ?',
         whereArgs: [habitId],
       );
@@ -290,7 +410,6 @@ class HabitDatabase {
           'lastDay': analytics.lastDay,
           'achievements': jsonEncode(analytics.achievements),
           'streakStartedAt': analytics.streakStartedAt,
-
         },
         where: 'habitId = ?',
         whereArgs: [habitId],
@@ -320,48 +439,50 @@ class HabitDatabase {
   }
 
   Future<double> calculateMonthlyCompletionRate(String habitId) async {
-  final db = await instance.database;
-  final today = DateTime.now();
-  final beginningOfMonth = DateTime(today.year, today.month, 1);
-  final endOfMonth =
-      DateTime(today.year, today.month + 1, 0); // Last day of current month
+    final db = await instance.database;
+    final today = DateTime.now();
+    final beginningOfMonth = DateTime(today.year, today.month, 1);
+    final endOfMonth = DateTime(
+      today.year,
+      today.month + 1,
+      0,
+    ); // Last day of current month
 
-  final maps = await db.query(
-    'habit_completions',
-    where: 'habitId = ? AND completionDate BETWEEN ? AND ?',
-    whereArgs: [
-      habitId,
-      beginningOfMonth.toIso8601String().substring(0, 10),
-      endOfMonth.toIso8601String().substring(0, 10),
-    ],
-  );
-  if (maps.isEmpty) return 0.0;
-  int completed = maps.where((m) => m['isCompleted'] == 1).length;
-  int totalDays = endOfMonth.day; // Number of days in the month
-  return (completed / totalDays) * 100.0;
-}
+    final maps = await db.query(
+      'habit_completions',
+      where: 'habitId = ? AND completionDate BETWEEN ? AND ?',
+      whereArgs: [
+        habitId,
+        beginningOfMonth.toIso8601String().substring(0, 10),
+        endOfMonth.toIso8601String().substring(0, 10),
+      ],
+    );
+    if (maps.isEmpty) return 0.0;
+    int completed = maps.where((m) => m['isCompleted'] == 1).length;
+    int totalDays = endOfMonth.day; // Number of days in the month
+    return (completed / totalDays) * 100.0;
+  }
 
-Future<double> calculateYearlyCompletionRate(String habitId) async {
-  final db = await instance.database;
-  final today = DateTime.now();
-  final beginningOfYear = DateTime(today.year, 1, 1);
-  final endOfYear = DateTime(today.year, 12, 31);
+  Future<double> calculateYearlyCompletionRate(String habitId) async {
+    final db = await instance.database;
+    final today = DateTime.now();
+    final beginningOfYear = DateTime(today.year, 1, 1);
+    final endOfYear = DateTime(today.year, 12, 31);
 
-  final maps = await db.query(
-    'habit_completions',
-    where: 'habitId = ? AND completionDate BETWEEN ? AND ?',
-    whereArgs: [
-      habitId,
-      beginningOfYear.toIso8601String().substring(0, 10),
-      endOfYear.toIso8601String().substring(0, 10),
-    ],
-  );
-  if (maps.isEmpty) return 0.0;
-  int completed = maps.where((m) => m['isCompleted'] == 1).length;
-  int totalDays = 365; // Not accounting for leap years for simplicity
-  return (completed / totalDays) * 100.0;
-}
-
+    final maps = await db.query(
+      'habit_completions',
+      where: 'habitId = ? AND completionDate BETWEEN ? AND ?',
+      whereArgs: [
+        habitId,
+        beginningOfYear.toIso8601String().substring(0, 10),
+        endOfYear.toIso8601String().substring(0, 10),
+      ],
+    );
+    if (maps.isEmpty) return 0.0;
+    int completed = maps.where((m) => m['isCompleted'] == 1).length;
+    int totalDays = 365; // Not accounting for leap years for simplicity
+    return (completed / totalDays) * 100.0;
+  }
 
   // ✅ Get habits by category
   Future<List<Habit>> getHabitsByCategory(String category) async {
@@ -393,6 +514,7 @@ Future<double> calculateYearlyCompletionRate(String habitId) async {
           isCompleteToday: map['isCompleteToday'] as String?,
           goalValue: map['goalValue'] as String?,
           goalCount: map['goalCount'] as String?,
+          goalCompletedCount: map['goalCompletedCount'] as String?,
         );
       }).toList();
     } catch (e, st) {
@@ -542,7 +664,7 @@ Future<double> calculateYearlyCompletionRate(String habitId) async {
 
       if (lastDay == null) {
         // No last day recorded → no streak yet
-       
+
         return analytics;
       }
 

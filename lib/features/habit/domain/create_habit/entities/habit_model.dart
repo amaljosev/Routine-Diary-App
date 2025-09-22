@@ -14,6 +14,7 @@ class Habit {
   final String? isCompleteToday;
   final String? goalValue;
   final String? goalCount;
+  final String? goalCompletedCount;
 
   Habit({
     this.id,
@@ -31,6 +32,7 @@ class Habit {
     this.isCompleteToday,
     this.goalValue,
     this.goalCount,
+    this.goalCompletedCount,
   });
 
   Habit copyWith({
@@ -49,6 +51,7 @@ class Habit {
     String? isCompleteToday,
     String? goalValue,
     String? goalCount,
+    String? goalCompletedCount,
   }) {
     return Habit(
       id: id ?? this.id,
@@ -66,6 +69,7 @@ class Habit {
       isCompleteToday: isCompleteToday ?? this.isCompleteToday,
       goalValue: goalValue ?? this.goalValue,
       goalCount: goalCount ?? this.goalCount,
+      goalCompletedCount: goalCompletedCount ?? this.goalCompletedCount,
     );
   }
 
@@ -87,6 +91,7 @@ class Habit {
       'isCompleteToday': isCompleteToday,
       'goalValue': goalValue,
       'goalCount': goalCount,
+      'goalCompletedCount': goalCompletedCount,
     };
   }
 
@@ -108,6 +113,7 @@ class Habit {
       isCompleteToday: map['isCompleteToday'],
       goalValue: map['goalValue'],
       goalCount: map['goalCount'],
+      goalCompletedCount: map['goalCompletedCount'],
     );
   }
 }

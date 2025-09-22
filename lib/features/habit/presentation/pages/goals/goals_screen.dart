@@ -38,6 +38,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
           if (state is HabitsLoading) {
             return AppLoading();
           } else if (state is HabitsLoaded) {
+            
             final habits = state.filtered;
             final allHabits = state.habits;
             final selectedCategoryId = state.cat;
