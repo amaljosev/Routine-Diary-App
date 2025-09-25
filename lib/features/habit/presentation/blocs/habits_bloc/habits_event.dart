@@ -66,3 +66,32 @@ class FetchHabitAnalyticsEvent extends HabitsEvent {
   @override
   List<Object?> get props => [habitId];
 }
+class UpdateHabitGoalCountEvent extends HabitsEvent {
+  final String habitId;
+  final int count;
+  const UpdateHabitGoalCountEvent({required this.habitId, this.count = 1});
+
+  @override
+  List<Object?> get props => [habitId, count];
+}
+class IncrementHabitGoalCountEvent extends HabitsEvent {
+  final String habitId;
+  const IncrementHabitGoalCountEvent({required this.habitId});
+
+  @override
+  List<Object?> get props => [habitId];
+}
+class DecrementHabitGoalCountEvent extends HabitsEvent {
+  final String habitId;
+  const DecrementHabitGoalCountEvent({required this.habitId});
+
+  @override
+  List<Object?> get props => [habitId];
+}
+class ResetHabitGoalCountEvent extends HabitsEvent {
+  final String habitId;
+  const ResetHabitGoalCountEvent({required this.habitId});
+
+  @override
+  List<Object?> get props => [habitId];
+}

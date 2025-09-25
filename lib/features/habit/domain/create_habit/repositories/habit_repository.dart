@@ -18,5 +18,9 @@ abstract class HabitRepository {
   Future<HabitAnalytics?> updateHabitAnalytics(String id);
   Future<HabitAnalytics?> checkStreakAndFetchAnalytics(String id);
   Future<int> resetHabitsIfNewDay();
+  Future<int> incrementHabitGoalCount(String habitId);
+  Future<int> decrementHabitGoalCount(String habitId);
+  Future<int> resetHabitGoalCount(String habitId);
+  Future<int> updateHabitGoalCount(String habitId, int count);
 }
 

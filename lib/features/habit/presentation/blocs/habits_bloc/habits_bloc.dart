@@ -117,5 +117,65 @@ class HabitsBloc extends Bloc<HabitsEvent, HabitsState> {
         emit(HabitAnalyticsError(e.toString()));
       }
     });
+
+    on<ResetHabitGoalCountEvent>((event, emit) async {
+      try {
+        final result = await habitRepository.resetHabitGoalCount(event.habitId);
+        if (result != -1) {
+          emit(ResetHabitGoalCountSuccess());
+        } else {
+          emit(ResetHabitGoalCountError('Failed to reset goal count'));
+        }
+      } catch (e) {
+        emit(
+          ResetHabitGoalCountError(
+            'Failed to reset goal count: ${e.toString()}',
+          ),
+        );
+      }
+    });
+    on<UpdateHabitGoalCountEvent>((event, emit) async {
+      try {
+        final result = await habitRepository.updateHabitGoalCount(
+          event.habitId,
+          event.count,
+        );
+        if (result != -1) {
+          emit(UpdateHabitGoalCountSuccess());
+        } else {
+          emit(HabitsError(message: 'Failed to update goal count'));
+        }
+      } catch (e) {
+        emit(
+          HabitsError(message: 'Failed to update goal count: ${e.toString()}'),
+        );
+      }
+    });
+    on<IncrementHabitGoalCountEvent>((event, emit) async {
+  try {
+    final result = await habitRepository.incrementHabitGoalCount(event.habitId);
+    if (result != -1) {
+      emit(IncrementHabitGoalCountSuccess()); 
+    } else {
+      emit(IncrementHabitGoalCountError('Failed to increment goal count'));
+    }
+  } catch (e) {
+    emit(IncrementHabitGoalCountError('Failed to increment goal count: $e'));
+  }
+});
+
+on<DecrementHabitGoalCountEvent>((event, emit) async {
+  try {
+    final result = await habitRepository.decrementHabitGoalCount(event.habitId);
+    if (result != -1) {
+      emit(DecrementHabitGoalCountSuccess()); 
+    } else {
+      emit(DecrementHabitGoalCountError('Failed to decrement goal count'));
+    }
+  } catch (e) {
+    emit(DecrementHabitGoalCountError('Failed to decrement goal count: $e'));
+  }
+});
+
   }
 }

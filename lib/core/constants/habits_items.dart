@@ -30,7 +30,7 @@ class HabitsItems {
       "name": "Workout",
       "icon": Icons.fitness_center_outlined,
       "categoryId": "1",
-      "countOptions": ["once", "minute", "hour", "session"],
+      "countOptions": ["minute", "hour", "session"],
     },
     {
       "id": "2",
@@ -174,70 +174,70 @@ class HabitsItems {
       "name": "Declutter Workspace",
       "icon": Icons.cleaning_services_outlined,
       "categoryId": "3",
-      "countOptions": ["once", "minute", "hour", "session"],
+      "countOptions": ["minute", "hour", "session"],
     },
     {
       "id": "22",
       "name": "Schedule Medical Checkup",
       "icon": Icons.medical_services_outlined,
       "categoryId": "3",
-      "countOptions": ["once", "book", "appointment"],
+      "countOptions": ["book", "appointment"],
     },
     {
       "id": "23",
       "name": "Plan Monthly Budget",
       "icon": Icons.account_balance_wallet_outlined,
       "categoryId": "3",
-      "countOptions": ["once", "minute", "hour", "session"],
+      "countOptions": ["minute", "hour", "session"],
     },
     {
       "id": "24",
       "name": "Organize Bookshelf",
       "icon": Icons.shelves,
       "categoryId": "3",
-      "countOptions": ["once", "minute", "hour"],
+      "countOptions": ["minute", "hour"],
     },
     {
       "id": "25",
       "name": "Batch Cook Meals",
       "icon": Icons.kitchen,
       "categoryId": "3",
-      "countOptions": ["once", "hour", "session"],
+      "countOptions": ["hour", "session"],
     },
     {
       "id": "26",
       "name": "Sort Mail",
       "icon": Icons.mail_outline,
       "categoryId": "3",
-      "countOptions": ["once", "minute", "session"],
+      "countOptions": ["minute", "session"],
     },
     {
       "id": "27",
       "name": "Prep Next-Day Clothes",
       "icon": Icons.checkroom,
       "categoryId": "3",
-      "countOptions": ["once", "outfit", "daily"],
+      "countOptions": ["outfit", "daily"],
     },
     {
       "id": "28",
       "name": "Clean Drop Zone",
       "icon": Icons.home_outlined,
       "categoryId": "3",
-      "countOptions": ["once", "minute", "session"],
+      "countOptions": ["minute", "session"],
     },
     {
       "id": "29",
       "name": "Backup Digital Files",
       "icon": Icons.backup,
       "categoryId": "3",
-      "countOptions": ["once", "weekly", "monthly"],
+      "countOptions": ["weekly", "monthly"],
     },
     {
       "id": "31",
       "name": "Update Personal Records",
       "icon": Icons.folder_open,
       "categoryId": "3",
-      "countOptions": ["once", "minute", "session"],
+      "countOptions": ["minute", "session"],
     },
 
     // Extended Habits from iconList with category mapping
@@ -473,7 +473,7 @@ class HabitsItems {
       "name": "Tracking",
       "icon": Icons.list_alt_outlined,
       "categoryId": "5",
-      "countOptions": ["once", "daily", "weekly", "minute"],
+      "countOptions": ["daily", "weekly", "minute"],
     },
 
     // Mindfulness & Self Growth (categoryId: "6")
@@ -794,7 +794,6 @@ class HabitsItems {
   ];
   static const List<String> goalUnits = [
     // General Count
-
     "count",
     "task",
     "session",

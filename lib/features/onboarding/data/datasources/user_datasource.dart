@@ -1,5 +1,6 @@
 import 'dart:developer';
 import 'package:consist/core/database/user_db.dart';
+import 'package:consist/features/habit/data/datasources/habit_local_datasource.dart';
 import 'package:consist/features/onboarding/domain/entities/user_analytics_model.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -29,7 +30,6 @@ class UserLocalDataSource {
         installedDate: DateTime.now().toIso8601String(),
         lastLogin: DateTime.now().toIso8601String(),
         lastCompleted: DateTime.now().toIso8601String(),
-
       );
 
       await db.insert(
@@ -60,7 +60,7 @@ class UserLocalDataSource {
   Future<UserAnalytics?> getCurrentUser() async {
     try {
       final db = await _dbProvider.database;
-      final maps = await db.query(table, limit: 1); 
+      final maps = await db.query(table, limit: 1);
 
       if (maps.isNotEmpty) {
         return UserAnalytics.fromMap(maps.first);
@@ -189,31 +189,32 @@ class UserLocalDataSource {
   }
 
   Future<bool> checkAndUpdateDailyStats() async {
-  try {
-    final user = await getCurrentUser();
-    if (user == null) return false;
+    try {
+      final user = await getCurrentUser();
+      if (user == null) return false;
 
-    final now = DateTime.now();
-    final lastLogin = DateTime.parse(user.lastLogin);
+      final now = DateTime.now();
+      final lastLogin = DateTime.parse(user.lastLogin);
 
-    // Check if we already processed today's update
-    if (_isSameDay(lastLogin, now)) {
-      return true; // Already updated today, nothing else to do
+      // Check if we already processed today's update
+      if (_isSameDay(lastLogin, now)) {
+        return true; // Already updated today, nothing else to do
+      }
+
+      // Always update last login timestamp
+      await updateLastLogin();
+      // ✅ Reset all habits if new day
+      await HabitDatabase.instance.resetHabitsForNewDay();
+
+      // Handle streak and activity logic
+      await _handleStreakAndActivity(user, now);
+
+      return true; // ✅ Success
+    } catch (e, st) {
+      log('checkAndUpdateDailyStats error: $e', stackTrace: st);
+      return false; // ❌ Failed
     }
-
-    // Always update last login timestamp
-    await updateLastLogin();
-
-    // Handle streak and activity logic
-    await _handleStreakAndActivity(user, now);
-
-    return true; // ✅ Success
-  } catch (e, st) {
-    log('checkAndUpdateDailyStats error: $e', stackTrace: st);
-    return false; // ❌ Failed
   }
-}
-
 
   Future<void> _handleStreakAndActivity(
     UserAnalytics user,
@@ -263,7 +264,7 @@ class UserLocalDataSource {
 
       final db = await _dbProvider.database;
       final updatedAchievements = [...user.achievements, achievementId];
-      
+
       return await db.update(
         table,
         {'achievements': UserAnalytics.encodeAchievements(updatedAchievements)},
@@ -283,8 +284,10 @@ class UserLocalDataSource {
       if (user == null) return 0;
 
       final db = await _dbProvider.database;
-      final updatedAchievements = user.achievements.where((id) => id != achievementId).toList();
-      
+      final updatedAchievements = user.achievements
+          .where((id) => id != achievementId)
+          .toList();
+
       return await db.update(
         table,
         {'achievements': UserAnalytics.encodeAchievements(updatedAchievements)},

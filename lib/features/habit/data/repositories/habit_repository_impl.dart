@@ -38,13 +38,13 @@ class HabitRepositoryImpl implements HabitRepository {
     required String habitId,
     required String completionDate,
     required HabitAnalytics analytics,
-    required bool isComplete
+    required bool isComplete,
   }) async {
     await db.markHabitComplete(
       habitId: habitId,
       completionDate: completionDate,
       analytics: analytics,
-      isCompleted: isComplete
+      isCompleted: isComplete,
     );
   }
 
@@ -52,25 +52,43 @@ class HabitRepositoryImpl implements HabitRepository {
   Future<List<Habit>> getHabitsByCategory(String category) async {
     return await db.getHabitsByCategory(category);
   }
-  
+
   @override
- Future<HabitAnalytics?> getHabitAnalytics(String id) async{
+  Future<HabitAnalytics?> getHabitAnalytics(String id) async {
     return await db.getHabitAnalytics(id);
   }
-  
+
   @override
-  Future<HabitAnalytics?> updateHabitAnalytics(String id) async{
+  Future<HabitAnalytics?> updateHabitAnalytics(String id) async {
     return await db.calculateUpdatedAnalytics(id);
   }
-  
+
   @override
-  Future<HabitAnalytics?> checkStreakAndFetchAnalytics(String id) async{
+  Future<HabitAnalytics?> checkStreakAndFetchAnalytics(String id) async {
     return await db.checkStreakAndFetchAnalytics(id);
   }
-  
 
   @override
   Future<int> resetHabitsIfNewDay() async {
     return await db.resetHabitsIfNewDay();
+  }
+
+  @override
+  Future<int> decrementHabitGoalCount(String habitId) async {
+    return await db.decrementHabitGoalCount(habitId);
+  }
+
+  @override
+  Future<int> incrementHabitGoalCount(String habitId) async {
+    return await db.incrementHabitGoalCount(habitId);
+  }
+
+  @override
+  Future<int> resetHabitGoalCount(String habitId) async {
+    return await db.resetHabitGoalCount(habitId);
+  }
+  @override
+  Future<int> updateHabitGoalCount(String habitId, int count) async {
+    return await db.updateHabitGoalCount(habitId, count); 
   }
 }

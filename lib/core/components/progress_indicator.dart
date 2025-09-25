@@ -8,12 +8,13 @@ class AnimatedProgressIndicator extends StatefulWidget {
     required this.endColor,
   });
 
-  @override
-  AnimatedProgressIndicatorState createState() =>
-      AnimatedProgressIndicatorState();
   final double progressValue;
   final Color beginColor;
   final Color endColor;
+
+  @override
+  AnimatedProgressIndicatorState createState() =>
+      AnimatedProgressIndicatorState();
 }
 
 class AnimatedProgressIndicatorState extends State<AnimatedProgressIndicator>
@@ -25,24 +26,36 @@ class AnimatedProgressIndicatorState extends State<AnimatedProgressIndicator>
   @override
   void initState() {
     super.initState();
-
     _controller = AnimationController(
-      duration: const Duration(seconds: 2),
+      duration: const Duration(milliseconds: 800),
       vsync: this,
     );
+
+    _setupAnimations();
+    _controller.forward();
+  }
+
+  void _setupAnimations() {
     _valueAnimation = Tween<double>(
       begin: 0.0,
       end: widget.progressValue,
-    ).animate(_controller);
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
-    // Animate the color between two colors
     _colorAnimation = ColorTween(
       begin: widget.beginColor,
       end: widget.endColor,
     ).animate(_controller);
+  }
 
-    // Start the animation once
-    _controller.forward();
+  @override
+  void didUpdateWidget(covariant AnimatedProgressIndicator oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.progressValue != widget.progressValue) {
+      _controller.reset();
+      _setupAnimations();
+      _controller.forward();
+    }
   }
 
   @override
@@ -56,12 +69,11 @@ class AnimatedProgressIndicatorState extends State<AnimatedProgressIndicator>
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) => CircularProgressIndicator(
+        year2023: false,
         strokeWidth: 15,
         backgroundColor: widget.beginColor.withValues(alpha: 0.1),
         value: _valueAnimation.value,
         valueColor: _colorAnimation,
-        // ignore: deprecated_member_use
-        year2023: false,
       ),
     );
   }

@@ -52,8 +52,6 @@ class UserBloc extends Bloc<UserEvent, UserState> {
 
         if (isLogged) {
           final result = await userRepository.checkAndUpdateDailyStats();
-           await habitRepository
-              .resetHabitsIfNewDay();
           if (result) {
             await Future.delayed(Duration(seconds: 2));
             emit(UserLoggedState());

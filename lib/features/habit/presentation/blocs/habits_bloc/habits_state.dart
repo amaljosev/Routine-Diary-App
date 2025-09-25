@@ -72,3 +72,36 @@ class HabitAnalyticsError extends HabitsState {
   @override
   List<Object?> get props => [message];
 }
+class UpdateHabitGoalCountSuccess extends HabitsState {}
+class UpdateHabitGoalCountError extends HabitsState {
+  final String message;
+  const UpdateHabitGoalCountError(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+class IncrementHabitGoalCountSuccess extends HabitsState {}
+
+class IncrementHabitGoalCountError extends HabitsState {
+  final String message;
+  const IncrementHabitGoalCountError(this.message);
+  @override
+  List<Object?> get props => [message];
+}
+
+class DecrementHabitGoalCountSuccess extends HabitsState {}
+
+class DecrementHabitGoalCountError extends HabitsState {
+  final String message;
+  const DecrementHabitGoalCountError(this.message);
+  @override
+  List<Object?> get props => [message];
+}
+class ResetHabitGoalCountSuccess extends HabitsState {}
+class ResetHabitGoalCountError extends HabitsState {
+  final String message;
+  const ResetHabitGoalCountError(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}

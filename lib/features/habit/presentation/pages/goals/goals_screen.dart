@@ -1,4 +1,5 @@
 import 'package:consist/core/widgets/loading_widget.dart';
+import 'package:consist/features/habit/domain/create_habit/entities/habit_model.dart';
 import 'package:consist/features/habit/presentation/blocs/habits_bloc/habits_bloc.dart';
 import 'package:consist/features/habit/presentation/pages/goals/widgets/categories_slider.dart';
 import 'package:consist/features/habit/presentation/pages/goals/widgets/goal_list.dart';
@@ -18,64 +19,125 @@ class _GoalsScreenState extends State<GoalsScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<HabitsBloc>().add(LoadHabitsEvent());
+    _loadHabits();
+  }
+
+  void _loadHabits() {
+    context.read<HabitsBloc>().add( LoadHabitsEvent());
   }
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final ThemeData theme = Theme.of(context);
+    final bool isDark = theme.brightness == Brightness.dark;
+    final Size size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: BlocConsumer<HabitsBloc, HabitsState>(
-        listener: (context, state) {
-          if (state is HabitCompleteSuccess) {
-            context.read<HabitsBloc>().add(LoadHabitsEvent());
-          }
+        listener: (BuildContext context, HabitsState state) {
+          // Handle state changes if needed
         },
-        builder: (context, state) {
-          if (state is HabitsLoading) {
-            return AppLoading();
-          } else if (state is HabitsLoaded) {
-            
-            final habits = state.filtered;
-            final allHabits = state.habits;
-            final selectedCategoryId = state.cat;
-
-            return allHabits.isEmpty
-                ? const HabitLibrary(fromHome: false)
-                : NestedScrollView(
-                    headerSliverBuilder: (context, innerBoxIsScrolled) => [
-                      header(size, context),
-                      // Add the categories as a pinned sliver
-                      SliverPersistentHeader(
-                        pinned: true,
-                        delegate: _CategoriesSliverDelegate(
-                          child: HabitCategoriesSlider(
-                            selectedCategoryId: selectedCategoryId,
-                          ),
-                        ),
-                      ),
-                    ],
-                    body: GoalsList(habits: habits, isDark: isDark, size: size),
-                  );
-          } else if (state is HabitsError) {
-            return Center(child: Text("Error: ${state.message}"));
-          }
-          return const Center(
-            child: Text("Welcome! Add a habit to get started."),
-          );
+        builder: (BuildContext context, HabitsState state) {
+          return _buildBody(state, theme, isDark, size);
         },
       ),
       floatingActionButton: NewRoutine(isDark: isDark),
+    );
+  }
+
+  Widget _buildBody(
+    HabitsState state,
+    ThemeData theme,
+    bool isDark,
+    Size size,
+  ) {
+    if (state is HabitsLoading) {
+      return const AppLoading();
+    }
+
+    if (state is HabitsLoaded) {
+      final List<Habit> habits = state.filtered;
+      final List<Habit> allHabits = state.habits;
+      final String selectedCategoryId = state.cat;
+
+      if (allHabits.isEmpty) {
+        return const HabitLibrary(fromHome: false);
+      }
+
+      return NestedScrollView(
+        headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) => [
+          _buildHeader(size, theme),
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _CategoriesSliverDelegate(
+              child: HabitCategoriesSlider(
+                selectedCategoryId: selectedCategoryId,
+              ),
+            ),
+          ),
+        ],
+        body: GoalsList(habits: habits, isDark: isDark, size: size),
+      );
+    }
+
+    if (state is HabitsError) {
+      return Center(child: Text('Error: ${state.message}'));
+    }
+
+    return const Center(
+      child: Text('Welcome! Add a habit to get started.'),
+    );
+  }
+
+  SliverAppBar _buildHeader(Size size, ThemeData theme) {
+    return SliverAppBar.large(
+      expandedHeight: size.height * 0.15,
+      backgroundColor: theme.colorScheme.surface,
+      flexibleSpace: FlexibleSpaceBar(
+        background: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(15),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Your Goals',
+                  style: theme.textTheme.headlineLarge?.copyWith(
+                    fontSize: 40,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                Text(
+                  'for today',
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        expandedTitleScale: 1.0,
+        stretchModes: const [StretchMode.zoomBackground],
+      ),
+      title: Text(
+        'Small steps, big results. Keep going!',
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: theme.colorScheme.onSurface,
+        ),
+      ),
+      centerTitle: true,
+      automaticallyImplyLeading: false,
+      elevation: 0,
+      pinned: true,
     );
   }
 }
 
 class _CategoriesSliverDelegate extends SliverPersistentHeaderDelegate {
   _CategoriesSliverDelegate({required this.child});
-
   final Widget child;
 
   @override
@@ -92,6 +154,7 @@ class _CategoriesSliverDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   double get maxExtent => 70.0;
+
   @override
   double get minExtent => 70.0;
 
@@ -99,49 +162,4 @@ class _CategoriesSliverDelegate extends SliverPersistentHeaderDelegate {
   bool shouldRebuild(_CategoriesSliverDelegate oldDelegate) {
     return child != oldDelegate.child;
   }
-}
-
-SliverAppBar header(Size size, BuildContext context) {
-  return SliverAppBar.large(
-    expandedHeight: size.height * 0.15,
-    backgroundColor: Theme.of(context).colorScheme.surface,
-    flexibleSpace: FlexibleSpaceBar(
-      background: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(15),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Your Goals',
-                style: Theme.of(context).textTheme.headlineLarge!.copyWith(
-                  fontSize: 40,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              Text(
-                'for today',
-                style: Theme.of(
-                  context,
-                ).textTheme.headlineMedium!.copyWith(color: Colors.grey),
-              ),
-            ],
-          ),
-        ),
-      ),
-      expandedTitleScale: 1.0,
-      stretchModes: [StretchMode.zoomBackground],
-    ),
-    title: Text(
-      'Small steps, big results. Keep going!',
-      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-        color: Theme.of(context).colorScheme.onSurface,
-      ),
-    ),
-    centerTitle: true,
-    automaticallyImplyLeading: false,
-    elevation: 0,
-    pinned: true,
-  );
 }

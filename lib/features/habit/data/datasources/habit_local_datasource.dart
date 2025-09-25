@@ -212,10 +212,7 @@ class HabitDatabase {
         if (lastCompleteDate != todayStr) {
           await db.update(
             'habits',
-            {
-              'isCompleteToday': null, 
-              'goalCompletedCount': '0', 
-            },
+            {'isCompleteToday': null, 'goalCompletedCount': '0'},
             where: 'id = ?',
             whereArgs: [habit['id']],
           );
@@ -230,21 +227,12 @@ class HabitDatabase {
     }
   }
 
-  // ✅ Reset goal completed count
-
-  Future<int> resetGoalCompletedCount(String habitId) async {
-    try {
-      final db = await instance.database;
-      return await db.update(
-        'habits',
-        {'goalCompletedCount': '0'},
-        where: 'id = ?',
-        whereArgs: [habitId],
-      );
-    } catch (e) {
-      log("Error resetting goal completed count: $e");
-      return -1;
-    }
+  Future<int> resetHabitsForNewDay() async {
+    final db = await database;
+    return await db.update('habits', {
+      'isCompleteToday': null,
+      'goalCompletedCount': '0',
+    });
   }
 
   Future<int> getHabitCompletionCount(String habitId) async {
@@ -268,7 +256,7 @@ class HabitDatabase {
   }
 
   // ✅ Update habit completion count
-  Future<int> updateHabitCompletionCount(String habitId) async {
+  Future<int> incrementHabitGoalCount(String habitId) async {
     try {
       final db = await instance.database;
       int currentCount = await getHabitCompletionCount(habitId);
@@ -276,6 +264,54 @@ class HabitDatabase {
       return await db.update(
         'habits',
         {'goalCompletedCount': currentCount.toString()},
+        where: 'id = ?',
+        whereArgs: [habitId],
+      );
+    } catch (e) {
+      log("Error updating habit completion count: $e");
+      return -1;
+    }
+  }
+
+  Future<int> decrementHabitGoalCount(String habitId) async {
+    try {
+      final db = await instance.database;
+      int currentCount = await getHabitCompletionCount(habitId);
+      currentCount -= 1;
+      return await db.update(
+        'habits',
+        {'goalCompletedCount': currentCount.toString()},
+        where: 'id = ?',
+        whereArgs: [habitId],
+      );
+    } catch (e) {
+      log("Error updating habit completion count: $e");
+      return -1;
+    }
+  }
+
+  Future<int> resetHabitGoalCount(String habitId) async {
+    try {
+      final db = await instance.database;
+
+      return await db.update(
+        'habits',
+        {'isCompleteToday': null, 'goalCompletedCount': '0'},
+        where: 'id = ?',
+        whereArgs: [habitId],
+      );
+    } catch (e) {
+      log("Error updating habit completion count: $e");
+      return -1;
+    }
+  }
+
+  Future<int> updateHabitGoalCount(String habitId, int count) async {
+    try {
+      final db = await instance.database;
+      return await db.update(
+        'habits',
+        {'goalCompletedCount': count.toString()},
         where: 'id = ?',
         whereArgs: [habitId],
       );
@@ -419,69 +455,178 @@ class HabitDatabase {
     }
   }
 
-  Future<double> calculateWeeklyCompletionRate(String habitId) async {
+  Future<double> calculateWeeklyCompletionRate(
+    String habitId, {
+    bool weekdaysOnly = false,
+  }) async {
     final db = await instance.database;
     final today = DateTime.now();
-    final weekAgo = today.subtract(Duration(days: 6));
-    final maps = await db.query(
-      'habit_completions',
-      where: 'habitId = ? AND completionDate BETWEEN ? AND ?',
-      whereArgs: [
-        habitId,
-        weekAgo.toIso8601String().substring(0, 10),
-        today.toIso8601String().substring(0, 10),
-      ],
+    final start = today.subtract(Duration(days: 6)); // last 7 days, inclusive
+
+    final startStr = start.toIso8601String().substring(0, 10); // 'YYYY-MM-DD'
+    final endStr = today.toIso8601String().substring(0, 10);
+
+    // Get distinct completion dates where isCompleted = 1
+    final rows = await db.rawQuery(
+      'SELECT DISTINCT completionDate FROM habit_completions WHERE habitId = ? AND isCompleted = 1 AND completionDate BETWEEN ? AND ?',
+      [habitId, startStr, endStr],
     );
-    if (maps.isEmpty) return 0.0;
-    int completed = maps.where((m) => m['isCompleted'] == 1).length;
-    int totalDays = 7; // Or count days with expected completions
-    return (completed / totalDays) * 100.0;
+
+    // Build a set of distinct completed dates (optionally excluding weekends)
+    final completedDates = <String>{};
+    for (final row in rows) {
+      final raw = row['completionDate'] as String;
+      final dateStr = raw.length >= 10 ? raw.substring(0, 10) : raw;
+      final dt = DateTime.parse(dateStr);
+      if (weekdaysOnly) {
+        if (dt.weekday == DateTime.saturday || dt.weekday == DateTime.sunday) {
+          continue;
+        }
+      }
+      completedDates.add(dateStr);
+    }
+
+    final int completed = completedDates.length;
+
+    // Count total days in window (either all days or weekdays only)
+    int totalDays = 0;
+    if (weekdaysOnly) {
+      for (
+        DateTime d = start;
+        !d.isAfter(today);
+        d = d.add(Duration(days: 1))
+      ) {
+        if (d.weekday >= DateTime.monday && d.weekday <= DateTime.friday) {
+          totalDays++;
+        }
+      }
+    } else {
+      totalDays = today.difference(start).inDays + 1; // inclusive
+    }
+
+    if (totalDays <= 0) return 0.0;
+
+    double rate = (completed / totalDays) * 100.0;
+
+    // Safety clamp to 0..100
+    if (rate.isNaN) return 0.0;
+    if (rate < 0.0) rate = 0.0;
+    if (rate > 100.0) rate = 100.0;
+
+    return rate;
   }
 
-  Future<double> calculateMonthlyCompletionRate(String habitId) async {
+  Future<double> calculateMonthlyCompletionRate(
+    String habitId, {
+    bool weekdaysOnly = false,
+  }) async {
     final db = await instance.database;
     final today = DateTime.now();
-    final beginningOfMonth = DateTime(today.year, today.month, 1);
+    final startOfMonth = DateTime(today.year, today.month, 1);
     final endOfMonth = DateTime(
       today.year,
       today.month + 1,
       0,
-    ); // Last day of current month
+    ); // last day of month
 
-    final maps = await db.query(
-      'habit_completions',
-      where: 'habitId = ? AND completionDate BETWEEN ? AND ?',
-      whereArgs: [
-        habitId,
-        beginningOfMonth.toIso8601String().substring(0, 10),
-        endOfMonth.toIso8601String().substring(0, 10),
-      ],
+    final startStr = startOfMonth.toIso8601String().substring(0, 10);
+    final endStr = endOfMonth.toIso8601String().substring(0, 10);
+
+    // Distinct completion dates
+    final rows = await db.rawQuery(
+      'SELECT DISTINCT completionDate FROM habit_completions '
+      'WHERE habitId = ? AND isCompleted = 1 AND completionDate BETWEEN ? AND ?',
+      [habitId, startStr, endStr],
     );
-    if (maps.isEmpty) return 0.0;
-    int completed = maps.where((m) => m['isCompleted'] == 1).length;
-    int totalDays = endOfMonth.day; // Number of days in the month
-    return (completed / totalDays) * 100.0;
+
+    final completedDates = <String>{};
+    for (final row in rows) {
+      final raw = row['completionDate'] as String;
+      final dateStr = raw.length >= 10 ? raw.substring(0, 10) : raw;
+      final dt = DateTime.parse(dateStr);
+      if (weekdaysOnly) {
+        if (dt.weekday == DateTime.saturday || dt.weekday == DateTime.sunday) {
+          continue;
+        }
+      }
+      completedDates.add(dateStr);
+    }
+
+    int completed = completedDates.length;
+
+    // Total days in the month (respecting weekdays if needed)
+    int totalDays = 0;
+    for (
+      DateTime d = startOfMonth;
+      !d.isAfter(endOfMonth);
+      d = d.add(const Duration(days: 1))
+    ) {
+      if (weekdaysOnly) {
+        if (d.weekday >= DateTime.monday && d.weekday <= DateTime.friday) {
+          totalDays++;
+        }
+      } else {
+        totalDays++;
+      }
+    }
+
+    if (totalDays == 0) return 0.0;
+    double rate = (completed / totalDays) * 100.0;
+    return rate.clamp(0.0, 100.0);
   }
 
-  Future<double> calculateYearlyCompletionRate(String habitId) async {
+  Future<double> calculateYearlyCompletionRate(
+    String habitId, {
+    bool weekdaysOnly = false,
+  }) async {
     final db = await instance.database;
     final today = DateTime.now();
-    final beginningOfYear = DateTime(today.year, 1, 1);
+    final startOfYear = DateTime(today.year, 1, 1);
     final endOfYear = DateTime(today.year, 12, 31);
 
-    final maps = await db.query(
-      'habit_completions',
-      where: 'habitId = ? AND completionDate BETWEEN ? AND ?',
-      whereArgs: [
-        habitId,
-        beginningOfYear.toIso8601String().substring(0, 10),
-        endOfYear.toIso8601String().substring(0, 10),
-      ],
+    final startStr = startOfYear.toIso8601String().substring(0, 10);
+    final endStr = endOfYear.toIso8601String().substring(0, 10);
+
+    final rows = await db.rawQuery(
+      'SELECT DISTINCT completionDate FROM habit_completions '
+      'WHERE habitId = ? AND isCompleted = 1 AND completionDate BETWEEN ? AND ?',
+      [habitId, startStr, endStr],
     );
-    if (maps.isEmpty) return 0.0;
-    int completed = maps.where((m) => m['isCompleted'] == 1).length;
-    int totalDays = 365; // Not accounting for leap years for simplicity
-    return (completed / totalDays) * 100.0;
+
+    final completedDates = <String>{};
+    for (final row in rows) {
+      final raw = row['completionDate'] as String;
+      final dateStr = raw.length >= 10 ? raw.substring(0, 10) : raw;
+      final dt = DateTime.parse(dateStr);
+      if (weekdaysOnly) {
+        if (dt.weekday == DateTime.saturday || dt.weekday == DateTime.sunday) {
+          continue;
+        }
+      }
+      completedDates.add(dateStr);
+    }
+
+    int completed = completedDates.length;
+
+    // Total days in year (365/366), respecting weekdays if needed
+    int totalDays = 0;
+    for (
+      DateTime d = startOfYear;
+      !d.isAfter(endOfYear);
+      d = d.add(const Duration(days: 1))
+    ) {
+      if (weekdaysOnly) {
+        if (d.weekday >= DateTime.monday && d.weekday <= DateTime.friday) {
+          totalDays++;
+        }
+      } else {
+        totalDays++;
+      }
+    }
+
+    if (totalDays == 0) return 0.0;
+    double rate = (completed / totalDays) * 100.0;
+    return rate.clamp(0.0, 100.0);
   }
 
   // ✅ Get habits by category
