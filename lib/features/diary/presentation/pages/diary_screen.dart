@@ -1,7 +1,10 @@
+import 'dart:io';
+import 'package:consist/core/theme/app_colors.dart';
 import 'package:consist/features/diary/data/models/diary_entry_model.dart';
 import 'package:consist/features/diary/presentation/blocs/diary/diary_bloc.dart';
 import 'package:consist/features/diary/presentation/pages/entry/diary_entry.dart';
 import 'package:consist/features/diary/presentation/widgets/entry_card_widget.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -10,6 +13,9 @@ class DiaryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
       body: BlocBuilder<DiaryBloc, DiaryState>(
         builder: (context, state) {
@@ -19,29 +25,48 @@ class DiaryScreen extends StatelessWidget {
               SliverAppBar(
                 expandedHeight: 200.0,
                 stretch: true,
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.black87,
+                backgroundColor: isDark ? AppColors.darkPrimary : AppColors.lightPrimary,
+                foregroundColor: Colors.white,
                 flexibleSpace: FlexibleSpaceBar(
                   stretchModes: const [StretchMode.blurBackground],
-                  background: Image.asset(
-                    'assets/img/diary.png',
-                    fit: BoxFit.cover,
+                  background: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.asset(
+                        'assets/img/diary.png',
+                        fit: BoxFit.cover,
+                      ),
+                      // Add overlay for better text contrast
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.transparent,
+                              isDark 
+                                  ? Colors.black.withValues(alpha: 0.5)
+                                  : Colors.black.withValues(alpha: 0.3),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   centerTitle: true,
-                  titlePadding: const EdgeInsets.only(
-                    bottom: 16,
-                  ), // move closer to bottom
-                  title: const Text(
+                  titlePadding: const EdgeInsets.only(bottom: 16),
+                  title: Text(
                     "My Diary",
-                    style: TextStyle(
+                    style: theme.textTheme.headlineSmall?.copyWith(
                       color: Colors.white,
-                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                       shadows: [
                         Shadow(
                           blurRadius: 6,
-                          color: Colors.black45,
-                          offset: Offset(1, 1),
+                          color: isDark 
+                              ? Colors.black.withValues(alpha: 0.7)
+                              : Colors.black.withValues(alpha: 0.5),
+                          offset: const Offset(1, 1),
                         ),
                       ],
                     ),
@@ -50,6 +75,19 @@ class DiaryScreen extends StatelessWidget {
                 floating: false,
                 pinned: false,
                 snap: false,
+                actions: [
+                  IconButton(
+                    onPressed: () {
+                      // TODO: Implement settings
+                    },
+                    icon: Icon(
+                      Platform.isAndroid 
+                          ? Icons.settings 
+                          : CupertinoIcons.settings,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
               ),
 
               // Header with month/year
@@ -60,15 +98,33 @@ class DiaryScreen extends StatelessWidget {
                     children: [
                       Text(
                         "Recent Entries",
-                        style: Theme.of(context).textTheme.headlineSmall,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.onSurface,
+                        ),
                       ),
                       const Spacer(),
-                      Text(
-                        "${DateTime.now().month}/${DateTime.now().year}",
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                          fontWeight: FontWeight.w500,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isDark 
+                              ? AppColors.darkSurface
+                              : AppColors.lightSurface,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          "${DateTime.now().month}/${DateTime.now().year}",
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ],
@@ -80,9 +136,7 @@ class DiaryScreen extends StatelessWidget {
               if (state.isLoading)
                 const SliverFillRemaining(
                   child: Center(
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-                    ),
+                    child: CircularProgressIndicator(),
                   ),
                 )
               else if (state.errorMessage != null)
@@ -93,17 +147,16 @@ class DiaryScreen extends StatelessWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.error_outline,
                             size: 48,
-                            color: Colors.red,
+                            color: theme.colorScheme.error,
                           ),
                           const SizedBox(height: 16),
                           Text(
                             "Error: ${state.errorMessage}",
-                            style: const TextStyle(
-                              color: Colors.red,
-                              fontSize: 16,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.error,
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -111,6 +164,17 @@ class DiaryScreen extends StatelessWidget {
                             onPressed: () {
                               context.read<DiaryBloc>().add(LoadDiaryEntries());
                             },
+                            style: ElevatedButton.styleFrom(
+                              foregroundColor: theme.colorScheme.onPrimary,
+                              backgroundColor: theme.colorScheme.primary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                            ),
                             child: const Text("Try Again"),
                           ),
                         ],
@@ -126,21 +190,39 @@ class DiaryScreen extends StatelessWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 40.0,
+                          Container(
+                            width: 120,
+                            height: 120,
+                            decoration: BoxDecoration(
+                              color: isDark 
+                                  ? AppColors.darkSurface
+                                  : AppColors.lightSurface,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                                width: 2,
+                              ),
                             ),
-                            child: Image.asset('assets/img/no_entries.png'),
+                            child: Icon(
+                              Icons.edit_note,
+                              size: 60,
+                              color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                            ),
                           ),
                           const SizedBox(height: 24),
-                          const Text(
+                          Text(
                             "No entries yet",
-                            style: TextStyle(fontSize: 18, color: Colors.grey),
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.onSurface,
+                            ),
                           ),
                           const SizedBox(height: 8),
-                          const Text(
+                          Text(
                             "Start writing your thoughts...",
-                            style: TextStyle(fontSize: 14, color: Colors.grey),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                            ),
                           ),
                         ],
                       ),
@@ -150,10 +232,13 @@ class DiaryScreen extends StatelessWidget {
               else
                 // Entries list
                 SliverList(
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    final DiaryEntryModel entry = state.entries[index];
-                    return DiaryEntryCard(entry: entry);
-                  }, childCount: state.entries.length),
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final DiaryEntryModel entry = state.entries[index];
+                      return DiaryEntryCard(entry: entry);
+                    },
+                    childCount: state.entries.length,
+                  ),
                 ),
             ],
           );
@@ -170,10 +255,12 @@ class DiaryScreen extends StatelessWidget {
             context.read<DiaryBloc>().add(LoadDiaryEntries());
           }
         },
-
-        foregroundColor: Colors.white,
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
         elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
         child: const Icon(Icons.add, size: 28),
       ),
     );

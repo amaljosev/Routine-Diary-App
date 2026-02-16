@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
+import 'package:consist/core/theme/app_colors.dart';
 import 'package:consist/features/diary/data/models/diary_entry_model.dart';
 import 'package:consist/features/diary/domain/entities/sticker_model.dart';
 import 'package:consist/features/diary/presentation/blocs/diary/diary_bloc.dart';
 import 'package:consist/features/diary/presentation/blocs/diary_entry/diary_entry_bloc.dart';
 import 'package:consist/features/diary/presentation/widgets/diary_ui_helpers.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
@@ -42,10 +44,16 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   void initState() {
     super.initState();
     _bloc = context.read<DiaryEntryBloc>();
+    
+    // Initialize with entry data if available
     if (widget.entry != null) {
-      _bloc.add(InitializeDiaryEntry(widget.entry));
-      _titleController.text = widget.entry?.title ?? "";
-      _descriptionController.text = widget.entry?.content ?? "";
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _bloc.add(InitializeDiaryEntry(widget.entry));
+          _titleController.text = widget.entry?.title ?? "";
+          _descriptionController.text = widget.entry?.content ?? "";
+        }
+      });
     }
   }
 
@@ -61,15 +69,24 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   Widget build(BuildContext context) {
     return BlocBuilder<DiaryEntryBloc, DiaryEntryState>(
       builder: (context, state) {
+        // Update title controller if state changes
+        if (widget.entry != null && mounted) {
+          if (_titleController.text != state.title) {
+            _titleController.text = state.title;
+          }
+        }
+        
         return Scaffold(body: _buildBackground(state, context));
       },
     );
   }
 
   Widget _buildBackground(DiaryEntryState state, BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       decoration: BoxDecoration(
-        color: state.bgColor ?? Theme.of(context).colorScheme.surface,
+        color: state.bgColor ?? theme.colorScheme.surface,
         image: state.bgImage.isNotEmpty
             ? DecorationImage(
                 image: AssetImage(state.bgImage),
@@ -80,7 +97,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       child: SafeArea(
         child: Stack(
           children: [
-            Container(color: Colors.white54),
+            Container(color: theme.colorScheme.surface.withValues(alpha: 0.4)),
             _buildContent(state, context),
           ],
         ),
@@ -95,7 +112,18 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
           backgroundColor: Colors.transparent,
           foregroundColor: Theme.of(context).colorScheme.onSurface,
           forceMaterialTransparency: true,
+          leading: IconButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            icon: Icon(CupertinoIcons.back),
+          ),
+          actions: [
+            // Save button in AppBar
+            _buildAppBarSaveButton(context, state),
+          ],
         ),
+        
         Expanded(
           child: GestureDetector(
             child: Padding(
@@ -109,12 +137,87 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     );
   }
 
+  // AppBar Save Button
+  Widget _buildAppBarSaveButton(BuildContext context, DiaryEntryState state) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final isValid = _titleController.text.trim().isNotEmpty ||
+                    _descriptionController.text.trim().isNotEmpty;
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 8.0),
+      child: ElevatedButton(
+        onPressed: isValid ? () => _saveEntry(context, state) : null,
+        style: ElevatedButton.styleFrom(
+          foregroundColor: theme.colorScheme.onPrimary,
+          backgroundColor: theme.colorScheme.primary,
+          disabledForegroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+          disabledBackgroundColor: isDark 
+              ? AppColors.darkSurface.withValues(alpha: 0.5)
+              : Colors.grey.withValues(alpha: 0.2),
+          elevation: isValid ? 2 : 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          minimumSize: const Size(70, 36),
+        ),
+        child: Text(
+          widget.entry != null ? 'UPDATE' : 'SAVE',
+          style: theme.textTheme.labelMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            fontSize: 12,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Save entry method
+  void _saveEntry(BuildContext context, DiaryEntryState state) {
+    final entry = DiaryEntryModel(
+      id: widget.entry == null
+          ? DateTime.now().toIso8601String()
+          : widget.entry!.id,
+      title: _titleController.text.trim(),
+      date: state.date.toIso8601String(),
+      preview: _descriptionController.text.trim(),
+      mood: state.mood,
+      content: _descriptionController.text,
+      createdAt: widget.entry == null
+          ? DateTime.now().toIso8601String()
+          : widget.entry!.createdAt,
+      updatedAt: DateTime.now().toIso8601String(),
+      bgColor: state.bgColor?.toString() ?? Colors.white.toString(),
+      stickersJson: jsonEncode(
+        state.stickers.map((s) => s.toJson()).toList(),
+      ),
+      imagesJson: jsonEncode(
+        state.images.map((i) => i.toJson()).toList(),
+      ),
+      bgImagePath: state.bgImage,
+    );
+
+    if (widget.entry != null) {
+      context.read<DiaryBloc>().add(UpdateDiaryEntry(entry));
+    } else {
+      context.read<DiaryBloc>().add(AddDiaryEntry(entry));
+    }
+    
+    Navigator.pop(
+      context,
+      widget.entry != null ? widget.entry!.id : true,
+    );
+  }
+
   Widget _buildCustomScrollView(DiaryEntryState state, BuildContext context) {
     return CustomScrollView(
       controller: _scrollController,
       slivers: [
         // Header section with date and mood
         SliverToBoxAdapter(child: _buildHeaderSection(state, context)),
+        const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
         // Title field
         SliverToBoxAdapter(child: _buildTitleField(context)),
@@ -168,7 +271,6 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
         Text(
           intl.DateFormat('dd').format(state.date),
           style: Theme.of(context).textTheme.headlineLarge!.copyWith(
-            fontSize: 34,
             fontWeight: FontWeight.w900,
             color: Theme.of(context).colorScheme.onSurface,
           ),
@@ -176,17 +278,15 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
         Text(
           intl.DateFormat('EEEE').format(state.date),
           style: Theme.of(context).textTheme.headlineLarge!.copyWith(
-            fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: Theme.of(context).colorScheme.primaryContainer,
+            color: Theme.of(context).colorScheme.primary,
           ),
         ),
         Text(
           intl.DateFormat('MMMM yyyy').format(state.date),
-          style: Theme.of(context).textTheme.headlineLarge!.copyWith(
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-            color: Theme.of(context).colorScheme.outline,
+          style: Theme.of(context).textTheme.titleMedium!.copyWith(
+            fontWeight: FontWeight.w900,
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
           ),
         ),
       ],
@@ -205,26 +305,27 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   }
 
   Widget _buildTitleField(BuildContext context) {
+    final theme = Theme.of(context);
+
     return TextFormField(
+      controller: _titleController,
       onChanged: (value) => _bloc.add(TitleChanged(value)),
-      decoration: InputDecoration(
-        border: InputBorder.none,
-        hintText: 'Title',
-        hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
-          fontWeight: FontWeight.w900,
-          fontSize: 24,
-          color: Theme.of(context).colorScheme.onSurface,
-        ),
-      ),
-      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-        fontWeight: FontWeight.w900,
-        fontSize: 24,
-        color: Theme.of(context).colorScheme.onSurface,
-      ),
       maxLines: null,
       maxLength: 50,
-      controller: _titleController,
-      textDirection: TextDirection.ltr,
+      decoration: InputDecoration(
+        hintText: 'Title',
+        hintStyle: theme.textTheme.bodyLarge?.copyWith(
+          fontWeight: FontWeight.w900,
+          fontSize: 24,
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+        ),
+        border: InputBorder.none,
+      ),
+      style: theme.textTheme.bodyLarge?.copyWith(
+        fontWeight: FontWeight.w900,
+        fontSize: 24,
+        color: theme.colorScheme.onSurface,
+      ),
     );
   }
 
@@ -236,18 +337,19 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
         children: [
           // Text field
           TextFormField(
+            controller: _descriptionController,
             onChanged: (value) => _bloc.add(DescriptionChanged(value)),
-            decoration: const InputDecoration(
+            maxLines: null,
+            decoration: InputDecoration(
+              hintText: "What's on your mind?",
+              hintStyle: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+              ),
               border: InputBorder.none,
-              hintText: 'What\'s on your mind?',
             ),
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               color: Theme.of(context).colorScheme.onSurface,
             ),
-            controller: _descriptionController,
-            keyboardType: TextInputType.multiline,
-            maxLines: null,
-            onTap: () => _bloc.add(DeselectAll()),
           ),
 
           // Stickers and images overlay
@@ -259,16 +361,24 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   }
 
   Widget _buildBottomSection(BuildContext context, DiaryEntryState state) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(20),
-
-      child: Column(
-        children: [
-          _buildActionButtons(context),
-          const SizedBox(height: 16),
-          _buildSaveButton(context, state),
-        ],
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.transparent,
+            isDark 
+                ? AppColors.darkSurface.withValues(alpha: 0.9)
+                : Colors.white.withValues(alpha: 0.9),
+          ],
+        ),
       ),
+      child: _buildActionButtons(context),
     );
   }
 
@@ -280,6 +390,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
 
   Widget _buildSticker(StickerModel sticker, DiaryEntryState state) {
     final isSelected = state.selectedStickerId == sticker.id;
+    final theme = Theme.of(context);
 
     return Positioned(
       left: sticker.x,
@@ -292,15 +403,10 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
         onLongPress: () => _showStickerMenu(sticker),
         onScaleUpdate: isSelected
             ? (details) {
-                final newX = (sticker.x + details.focalPointDelta.dx)
-                    .toDouble();
-                final newY = (sticker.y + details.focalPointDelta.dy)
-                    .toDouble();
+                final newX = (sticker.x + details.focalPointDelta.dx).toDouble();
+                final newY = (sticker.y + details.focalPointDelta.dy).toDouble();
                 _bloc.add(UpdateStickerPosition(sticker.id, newX, newY));
-                final scaledSize = (sticker.size * details.scale).clamp(
-                  12.0,
-                  200.0,
-                );
+                final scaledSize = (sticker.size * details.scale).clamp(12.0, 200.0);
                 _bloc.add(UpdateStickerSize(sticker.id, scaledSize.toDouble()));
               }
             : null,
@@ -310,14 +416,14 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
           decoration: isSelected
               ? BoxDecoration(
                   border: Border.all(
-                    color: Colors.blue,
+                    color: theme.colorScheme.primary,
                     width: 2,
                     style: BorderStyle.solid,
                   ),
                   borderRadius: BorderRadius.circular(4),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.blue.withValues(alpha: 0.3),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.3),
                       blurRadius: 8,
                       spreadRadius: 2,
                     ),
@@ -340,6 +446,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
 
   Widget _buildImage(DiaryImage image, DiaryEntryState state) {
     final isSelected = state.selectedImageId == image.id;
+    final theme = Theme.of(context);
 
     return Positioned(
       left: image.x,
@@ -365,14 +472,14 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
           decoration: isSelected
               ? BoxDecoration(
                   border: Border.all(
-                    color: Colors.blue,
+                    color: theme.colorScheme.primary,
                     width: 2,
                     style: BorderStyle.solid,
                   ),
                   borderRadius: BorderRadius.circular(4),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.blue.withValues(alpha: 0.3),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.3),
                       blurRadius: 8,
                       spreadRadius: 2,
                     ),
@@ -395,8 +502,29 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   }
 
   Widget _buildActionButtons(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
-      decoration: _buildActionButtonsDecoration(context),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: isDark
+            ? AppColors.darkSurface
+            : AppColors.lightSurface.withValues(alpha: 0.9),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.2),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.5)
+                : theme.colorScheme.primary.withValues(alpha: 0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       padding: const EdgeInsets.all(8),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -438,71 +566,38 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     );
   }
 
-  Widget _buildSaveButton(BuildContext context, DiaryEntryState state) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: () {
-          final entry = DiaryEntryModel(
-            id: widget.entry == null
-                ? DateTime.now().toIso8601String()
-                : widget.entry!.id,
-            title: _titleController.text.trim(),
-            date: state.date.toIso8601String(),
-            preview: _descriptionController.text.trim(),
-            mood: state.mood,
-            content: _descriptionController.text,
-            createdAt: widget.entry == null
-                ? DateTime.now().toIso8601String()
-                : widget.entry!.createdAt,
-            updatedAt: DateTime.now().toIso8601String(),
-            bgColor: "${state.bgColor ?? Colors.white.toString()}",
-            stickersJson: jsonEncode(
-              state.stickers.map((s) => s.toJson()).toList(),
-            ),
-            imagesJson: jsonEncode(
-              state.images.map((i) => i.toJson()).toList(),
-            ),
-            bgImagePath: state.bgImage,
-          );
-
-          if (widget.entry != null) {
-            context.read<DiaryBloc>().add(UpdateDiaryEntry(entry));
-          } else {
-            context.read<DiaryBloc>().add(AddDiaryEntry(entry));
-          }
-          Navigator.pop(
-            context,
-            widget.entry != null ? widget.entry!.id : true,
-          );
-        },
-        child: Text(widget.entry != null ? 'Update diary' : 'Save'),
-      ),
-    );
-  }
-
   BoxDecoration _buildSoftDecoration(BuildContext context, double radius) {
-    return BoxDecoration(
-      gradient: LinearGradient(
-        colors: [
-          Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-          Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    if (isDark) {
+      return BoxDecoration(
+        color: AppColors.darkSurface,
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(color: theme.colorScheme.outline, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.6),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
         ],
-      ),
+      );
+    }
+
+    return BoxDecoration(
+      color: AppColors.lightSurface,
       borderRadius: BorderRadius.circular(radius),
       border: Border.all(
-        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-        width: 1.5,
+        color: theme.colorScheme.primary.withValues(alpha: 0.2),
+        width: 1,
       ),
-    );
-  }
-
-  BoxDecoration _buildActionButtonsDecoration(BuildContext context) {
-    return BoxDecoration(
-      borderRadius: BorderRadius.circular(20),
-      color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.7),
-      boxShadow: const [
-        BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2)),
+      boxShadow: [
+        BoxShadow(
+          color: theme.colorScheme.primary.withValues(alpha: 0.08),
+          blurRadius: 8,
+          offset: const Offset(0, 2),
+        ),
       ],
     );
   }
@@ -513,16 +608,17 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     required VoidCallback onPressed,
     required BuildContext context,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6),
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          foregroundColor: Theme.of(context).colorScheme.primary,
-          backgroundColor: Theme.of(
-            context,
-          ).colorScheme.surface.withValues(alpha: 0.9),
-          elevation: 2,
+          foregroundColor: theme.colorScheme.onPrimary,
+          backgroundColor: theme.colorScheme.primary,
+          elevation: isDark ? 4 : 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -535,9 +631,10 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
             const SizedBox(width: 6),
             Text(
               label,
-              style: Theme.of(
-                context,
-              ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600),
+              style: theme.textTheme.labelMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onPrimary,
+              ),
             ),
           ],
         ),
@@ -564,6 +661,12 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   Future<void> _showStickerMenu(StickerModel sticker) async {
     final action = await showModalBottomSheet<String>(
       context: context,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? AppColors.darkSurface
+          : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (ctx) => _buildStickerMenu(ctx),
     );
 
@@ -581,6 +684,12 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   Future<void> _showImageMenu(DiaryImage image) async {
     final action = await showModalBottomSheet<String>(
       context: context,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? AppColors.darkSurface
+          : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (ctx) => _buildImageMenu(ctx),
     );
 
@@ -594,23 +703,26 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   }
 
   Widget _buildStickerMenu(BuildContext ctx) {
+    final theme = Theme.of(ctx);
+    final isDark = theme.brightness == Brightness.dark;
+
     return SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           ListTile(
-            leading: const Icon(Icons.delete),
-            title: const Text('Remove Sticker'),
+            leading: Icon(Icons.delete, color: isDark ? Colors.white : null),
+            title: Text('Remove Sticker', style: TextStyle(color: isDark ? Colors.white : null)),
             onTap: () => Navigator.pop(ctx, 'remove'),
           ),
           ListTile(
-            leading: const Icon(Icons.zoom_in),
-            title: const Text('Increase Size'),
+            leading: Icon(Icons.zoom_in, color: isDark ? Colors.white : null),
+            title: Text('Increase Size', style: TextStyle(color: isDark ? Colors.white : null)),
             onTap: () => Navigator.pop(ctx, 'bigger'),
           ),
           ListTile(
-            leading: const Icon(Icons.zoom_out),
-            title: const Text('Decrease Size'),
+            leading: Icon(Icons.zoom_out, color: isDark ? Colors.white : null),
+            title: Text('Decrease Size', style: TextStyle(color: isDark ? Colors.white : null)),
             onTap: () => Navigator.pop(ctx, 'smaller'),
           ),
         ],
@@ -619,23 +731,26 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   }
 
   Widget _buildImageMenu(BuildContext ctx) {
+    final theme = Theme.of(ctx);
+    final isDark = theme.brightness == Brightness.dark;
+
     return SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           ListTile(
-            leading: const Icon(Icons.delete),
-            title: const Text('Remove Image'),
+            leading: Icon(Icons.delete, color: isDark ? Colors.white : null),
+            title: Text('Remove Image', style: TextStyle(color: isDark ? Colors.white : null)),
             onTap: () => Navigator.pop(ctx, 'remove'),
           ),
           ListTile(
-            leading: const Icon(Icons.zoom_in),
-            title: const Text('Increase Size'),
+            leading: Icon(Icons.zoom_in, color: isDark ? Colors.white : null),
+            title: Text('Increase Size', style: TextStyle(color: isDark ? Colors.white : null)),
             onTap: () => Navigator.pop(ctx, 'bigger'),
           ),
           ListTile(
-            leading: const Icon(Icons.zoom_out),
-            title: const Text('Decrease Size'),
+            leading: Icon(Icons.zoom_out, color: isDark ? Colors.white : null),
+            title: Text('Decrease Size', style: TextStyle(color: isDark ? Colors.white : null)),
             onTap: () => Navigator.pop(ctx, 'smaller'),
           ),
         ],
@@ -653,7 +768,6 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
       if (image != null && context.mounted) {
-        // Calculate position based on current scroll
         final position = _calculateCenterPosition();
         _bloc.add(ImageAdded(image.path, position.dx, position.dy));
       }
@@ -682,33 +796,25 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
 
   void _onStickerPressed() {
     DiaryUIHelpers.openStickerPicker(context, (sticker) {
-      // Calculate position based on current scroll
       final position = _calculateCenterPosition();
       _bloc.add(StickerAdded(sticker, position.dx, position.dy));
     });
   }
 
-  // Calculate the center position of the visible area
   Offset _calculateCenterPosition() {
     try {
-      // Get the render box of the description section
       final RenderBox renderBox =
           _descriptionKey.currentContext?.findRenderObject() as RenderBox;
       final size = renderBox.size;
 
-      // Calculate the visible area based on scroll position
       final scrollOffset = _scrollController.offset;
-      final viewportHeight =
-          MediaQuery.of(context).size.height - 200; // Approximate visible area
+      final viewportHeight = MediaQuery.of(context).size.height - 200;
 
-      // Calculate the center of the visible area
       final centerX = size.width / 2;
-      final centerY =
-          (scrollOffset + viewportHeight / 2) - 100; // Adjust for header height
+      final centerY = (scrollOffset + viewportHeight / 2) - 100;
 
       return Offset(centerX, centerY);
     } catch (e) {
-      // Fallback to center of the description section
       return const Offset(150, 150);
     }
   }
