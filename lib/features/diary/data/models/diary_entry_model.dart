@@ -1,4 +1,4 @@
-import 'package:consist/features/diary/domain/entities/diary_entry_model.dart';
+import 'package:routine/features/diary/domain/entities/diary_entry_model.dart';
 
 class DiaryEntryModel extends DiaryEntry {
   const DiaryEntryModel({

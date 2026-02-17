@@ -1,8 +1,8 @@
-import 'package:consist/core/theme/app_colors.dart';
-import 'package:consist/core/utils/converters.dart';
-import 'package:consist/features/diary/data/models/diary_entry_model.dart';
-import 'package:consist/features/diary/presentation/blocs/diary/diary_bloc.dart';
-import 'package:consist/features/diary/presentation/pages/preview/diary_preview.dart';
+import 'package:routine/core/theme/app_colors.dart';
+import 'package:routine/core/utils/converters.dart';
+import 'package:routine/features/diary/data/models/diary_entry_model.dart';
+import 'package:routine/features/diary/presentation/blocs/diary/diary_bloc.dart';
+import 'package:routine/features/diary/presentation/pages/preview/diary_preview.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

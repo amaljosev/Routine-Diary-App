@@ -1,6 +1,6 @@
 {
-    "name": "consist",
-    "short_name": "consist",
+    "name": "routine",
+    "short_name": "routine",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

@@ -1,11 +1,11 @@
 import 'dart:developer';
 
-import 'package:consist/core/theme/app_theme.dart';
-import 'package:consist/features/diary/data/datasources/diary_local_data_source.dart';
-import 'package:consist/features/diary/data/repository/diary_repo_implementation.dart';
-import 'package:consist/features/diary/domain/repository/diary_repository.dart';
-import 'package:consist/features/diary/presentation/blocs/diary/diary_bloc.dart';
-import 'package:consist/features/diary/presentation/pages/diary_screen.dart';
+import 'package:routine/core/theme/app_theme.dart';
+import 'package:routine/features/diary/data/datasources/diary_local_data_source.dart';
+import 'package:routine/features/diary/data/repository/diary_repo_implementation.dart';
+import 'package:routine/features/diary/domain/repository/diary_repository.dart';
+import 'package:routine/features/diary/presentation/blocs/diary/diary_bloc.dart';
+import 'package:routine/features/diary/presentation/pages/diary_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path/path.dart';
@@ -46,8 +46,10 @@ class MyApp extends StatelessWidget {
         ),
       ],
       child: MediaQuery(
+        
         data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(1.0)),
         child: MaterialApp(
+          title: 'Routine: Diary App',
           debugShowCheckedModeBanner: false,
            theme: AppTheme.light,
           darkTheme: AppTheme.dark,
@@ -62,7 +64,7 @@ class MyApp extends StatelessWidget {
 Future<void> resetDatabase() async {
   final dbPath = await getDatabasesPath();
   final habitPath = join(dbPath, 'habits.db');
-  final diaryPath = join(dbPath, 'consist_diary.db');
+  final diaryPath = join(dbPath, 'routine_diary.db');
   final userPath = join(dbPath, 'user.db');
 
   try {

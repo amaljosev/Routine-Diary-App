@@ -1,7 +1,7 @@
 import 'dart:developer';
-import 'package:consist/features/diary/data/datasources/diary_local_data_source.dart';
-import 'package:consist/features/diary/data/models/diary_entry_model.dart';
-import 'package:consist/features/diary/domain/repository/diary_repository.dart';
+import 'package:routine/features/diary/data/datasources/diary_local_data_source.dart';
+import 'package:routine/features/diary/data/models/diary_entry_model.dart';
+import 'package:routine/features/diary/domain/repository/diary_repository.dart';
 
 class DiaryRepositoryImpl implements DiaryRepository {
   final DiaryLocalDataSource localDataSource;

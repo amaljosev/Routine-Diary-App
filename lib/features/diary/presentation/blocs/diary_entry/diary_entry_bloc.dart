@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'package:consist/core/utils/converters.dart';
-import 'package:consist/features/diary/data/models/diary_entry_model.dart';
-import 'package:consist/features/diary/domain/entities/sticker_model.dart';
+import 'package:routine/core/utils/converters.dart';
+import 'package:routine/features/diary/data/models/diary_entry_model.dart';
+import 'package:routine/features/diary/domain/entities/sticker_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';

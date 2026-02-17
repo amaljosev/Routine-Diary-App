@@ -1,6 +1,6 @@
 import 'dart:developer';
 
-import 'package:consist/core/database/diary_db.dart';
+import 'package:routine/core/database/diary_db.dart';
 import 'package:sqflite/sqflite.dart';
 import '../models/diary_entry_model.dart';
 

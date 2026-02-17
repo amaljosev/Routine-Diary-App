@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:consist/core/theme/app_colors.dart';
-import 'package:consist/features/diary/data/models/diary_entry_model.dart';
-import 'package:consist/features/diary/domain/entities/sticker_model.dart';
-import 'package:consist/features/diary/presentation/blocs/diary/diary_bloc.dart';
-import 'package:consist/features/diary/presentation/blocs/diary_entry/diary_entry_bloc.dart';
-import 'package:consist/features/diary/presentation/pages/entry/diary_entry.dart';
+import 'package:routine/core/theme/app_colors.dart';
+import 'package:routine/features/diary/data/models/diary_entry_model.dart';
+import 'package:routine/features/diary/domain/entities/sticker_model.dart';
+import 'package:routine/features/diary/presentation/blocs/diary/diary_bloc.dart';
+import 'package:routine/features/diary/presentation/blocs/diary_entry/diary_entry_bloc.dart';
+import 'package:routine/features/diary/presentation/pages/entry/diary_entry.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

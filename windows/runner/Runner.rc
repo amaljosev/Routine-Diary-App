@@ -51,7 +51,7 @@ END
 //
 
 // Icon with lowest ID value placed first to ensure application icon
-// remains consistent on all systems.
+// remains routineent on all systems.
 IDI_APP_ICON            ICON                    "resources\\app_icon.ico"
 
 
@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "consist" "\0"
+            VALUE "FileDescription", "routine" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "consist" "\0"
+            VALUE "InternalName", "routine" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2025 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "consist.exe" "\0"
-            VALUE "ProductName", "consist" "\0"
+            VALUE "OriginalFilename", "routine.exe" "\0"
+            VALUE "ProductName", "routine" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

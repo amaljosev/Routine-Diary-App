@@ -1,4 +1,4 @@
-import 'package:consist/features/diary/data/models/diary_entry_model.dart';
+import 'package:routine/features/diary/data/models/diary_entry_model.dart';
 
 abstract class DiaryRepository {
   Future<List<DiaryEntryModel>> getAllEntries();

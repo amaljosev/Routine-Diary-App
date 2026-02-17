@@ -1,13 +1,13 @@
 import 'dart:developer';
 import 'dart:typed_data';
-import 'package:consist/features/diary/data/models/diary_entry_model.dart';
+import 'package:routine/features/diary/data/models/diary_entry_model.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image/image.dart' as img;
 
-import 'package:consist/features/diary/domain/repository/diary_repository.dart';
+import 'package:routine/features/diary/domain/repository/diary_repository.dart';
 
 part 'diary_event.dart';
 part 'diary_state.dart';

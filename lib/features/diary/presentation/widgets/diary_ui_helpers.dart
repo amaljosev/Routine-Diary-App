@@ -1,5 +1,5 @@
-import 'package:consist/core/theme/app_colors.dart';
-import 'package:consist/core/constants/diary_items.dart';
+import 'package:routine/core/theme/app_colors.dart';
+import 'package:routine/core/constants/diary_items.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 
