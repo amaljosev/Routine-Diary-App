@@ -20,18 +20,11 @@ void main() async {
     diaryLocalDataSource,
   );
 
-  runApp(
-    MyApp(
-      diaryRepo: diaryRepository,
-    ),
-  );
+  runApp(MyApp(diaryRepo: diaryRepository));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({
-    super.key,
-    required this.diaryRepo,
-  });
+  const MyApp({super.key, required this.diaryRepo});
 
   final DiaryRepository diaryRepo;
 
@@ -39,19 +32,19 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        
         BlocProvider(
           create: (_) =>
               DiaryBloc(repository: diaryRepo)..add(LoadDiaryEntries()),
         ),
       ],
       child: MediaQuery(
-        
-        data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(1.0)),
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(1.0)),
         child: MaterialApp(
           title: 'Routine: Diary App',
           debugShowCheckedModeBanner: false,
-           theme: AppTheme.light,
+          theme: AppTheme.light,
           darkTheme: AppTheme.dark,
           themeMode: ThemeMode.system,
           home: const DiaryScreen(),

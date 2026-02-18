@@ -1,8 +1,8 @@
-import 'dart:io';
 import 'package:routine/core/theme/app_colors.dart';
 import 'package:routine/features/diary/data/models/diary_entry_model.dart';
 import 'package:routine/features/diary/presentation/blocs/diary/diary_bloc.dart';
 import 'package:routine/features/diary/presentation/pages/entry/diary_entry.dart';
+import 'package:routine/features/diary/presentation/pages/settings/settings_screen.dart';
 import 'package:routine/features/diary/presentation/widgets/entry_card_widget.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -25,17 +25,16 @@ class DiaryScreen extends StatelessWidget {
               SliverAppBar(
                 expandedHeight: 200.0,
                 stretch: true,
-                backgroundColor: isDark ? AppColors.darkPrimary : AppColors.lightPrimary,
+                backgroundColor: isDark
+                    ? AppColors.darkPrimary
+                    : AppColors.lightPrimary,
                 foregroundColor: Colors.white,
                 flexibleSpace: FlexibleSpaceBar(
                   stretchModes: const [StretchMode.blurBackground],
                   background: Stack(
                     fit: StackFit.expand,
                     children: [
-                      Image.asset(
-                        'assets/img/diary.png',
-                        fit: BoxFit.cover,
-                      ),
+                      Image.asset('assets/img/diary.png', fit: BoxFit.cover),
                       // Add overlay for better text contrast
                       Container(
                         decoration: BoxDecoration(
@@ -44,7 +43,7 @@ class DiaryScreen extends StatelessWidget {
                             end: Alignment.bottomCenter,
                             colors: [
                               Colors.transparent,
-                              isDark 
+                              isDark
                                   ? Colors.black.withValues(alpha: 0.5)
                                   : Colors.black.withValues(alpha: 0.3),
                             ],
@@ -63,7 +62,7 @@ class DiaryScreen extends StatelessWidget {
                       shadows: [
                         Shadow(
                           blurRadius: 6,
-                          color: isDark 
+                          color: isDark
                               ? Colors.black.withValues(alpha: 0.7)
                               : Colors.black.withValues(alpha: 0.5),
                           offset: const Offset(1, 1),
@@ -77,15 +76,12 @@ class DiaryScreen extends StatelessWidget {
                 snap: false,
                 actions: [
                   IconButton(
-                    onPressed: () {
-                      // TODO: Implement settings
-                    },
-                    icon: Icon(
-                      Platform.isAndroid 
-                          ? Icons.settings 
-                          : CupertinoIcons.settings,
-                      color: Colors.white,
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const SettingsScreen(),
+                      ),
                     ),
+                    icon: Icon(CupertinoIcons.settings, color: Colors.white),
                   ),
                 ],
               ),
@@ -110,12 +106,14 @@ class DiaryScreen extends StatelessWidget {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: isDark 
+                          color: isDark
                               ? AppColors.darkSurface
                               : AppColors.lightSurface,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.2,
+                            ),
                             width: 1,
                           ),
                         ),
@@ -135,9 +133,7 @@ class DiaryScreen extends StatelessWidget {
               // Show appropriate state
               if (state.isLoading)
                 const SliverFillRemaining(
-                  child: Center(
-                    child: CircularProgressIndicator(),
-                  ),
+                  child: Center(child: CircularProgressIndicator()),
                 )
               else if (state.errorMessage != null)
                 SliverToBoxAdapter(
@@ -194,19 +190,23 @@ class DiaryScreen extends StatelessWidget {
                             width: 120,
                             height: 120,
                             decoration: BoxDecoration(
-                              color: isDark 
+                              color: isDark
                                   ? AppColors.darkSurface
                                   : AppColors.lightSurface,
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                                color: theme.colorScheme.primary.withValues(
+                                  alpha: 0.2,
+                                ),
                                 width: 2,
                               ),
                             ),
                             child: Icon(
                               Icons.edit_note,
                               size: 60,
-                              color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                              color: theme.colorScheme.primary.withValues(
+                                alpha: 0.5,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 24),
@@ -221,7 +221,9 @@ class DiaryScreen extends StatelessWidget {
                           Text(
                             "Start writing your thoughts...",
                             style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.6,
+                              ),
                             ),
                           ),
                         ],
@@ -231,13 +233,14 @@ class DiaryScreen extends StatelessWidget {
                 )
               else
                 // Entries list
-                SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
+                SliverSafeArea(
+                  top: false,
+                  sliver: SliverList(
+                    
+                    delegate: SliverChildBuilderDelegate((context, index) {
                       final DiaryEntryModel entry = state.entries[index];
                       return DiaryEntryCard(entry: entry);
-                    },
-                    childCount: state.entries.length,
+                    }, childCount: state.entries.length),
                   ),
                 ),
             ],
@@ -258,9 +261,7 @@ class DiaryScreen extends StatelessWidget {
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: theme.colorScheme.onPrimary,
         elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: const Icon(Icons.add, size: 28),
       ),
     );

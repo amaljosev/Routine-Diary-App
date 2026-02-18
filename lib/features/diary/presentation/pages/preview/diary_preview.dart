@@ -93,14 +93,18 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final Color? bgColor = _parseColorFromString(entry.bgColor);
+    final bool isDefaultColor =
+        bgColor != null &&
+        entry.bgColor ==
+            "Color(alpha: 1.0000, red: 1.0000, green: 1.0000, blue: 1.0000, colorSpace: ColorSpace.sRGB)";
     final Color defaultClr = isDark
-        ? AppColors.darkSurface
+        ? AppColors.darkBackground
         : AppColors.lightSurface;
     final bgImage = entry.bgImagePath ?? '';
 
     return Container(
       decoration: BoxDecoration(
-        color: bgColor ?? defaultClr,
+        color: isDefaultColor ? defaultClr : bgColor,
         image: bgImage.isNotEmpty
             ? DecorationImage(image: AssetImage(bgImage), fit: BoxFit.cover)
             : null,
@@ -133,6 +137,36 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
             },
             icon: Icon(CupertinoIcons.back),
           ),
+          title: Row(
+            children: [
+              // Mood emoji in AppBar
+              Container(
+                margin: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  entry.mood.isEmpty ? '😊' : entry.mood,
+                  style: const TextStyle(fontSize: 20),
+                ),
+              ),
+              // Title with overflow handling - max 2 lines
+              Expanded(
+                child: Text(
+                  (entry.title.isEmpty) 
+                      ? "Untitled Entry" 
+                      : entry.title,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
           backgroundColor: Colors.transparent,
           foregroundColor: theme.colorScheme.onSurface,
           forceMaterialTransparency: true,
@@ -159,8 +193,7 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
                 }
               },
               icon: Icon(
-                color: Theme.of(context).colorScheme.primary,
-                CupertinoIcons.pen,
+                Icons.edit,
               ),
               tooltip: 'Edit Entry',
             ),
@@ -169,7 +202,6 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
             IconButton(
               onPressed: () => _showDeleteConfirmation(context, entry),
               icon: Icon(
-                color: Theme.of(context).colorScheme.primary,
                 CupertinoIcons.delete,
               ),
               tooltip: 'Delete Entry',
@@ -263,15 +295,6 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildDateDisplay(context, date),
-        const SizedBox(height: 20),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildMoodSelector(context, entry.mood),
-            const SizedBox(width: 12),
-            Expanded(child: _buildTitleField(context, entry.title)),
-          ],
-        ),
         const SizedBox(height: 24),
       ],
     );
@@ -365,70 +388,6 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildMoodSelector(BuildContext context, String mood) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return Container(
-      width: 60,
-      height: 60,
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.2),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.3)
-                : theme.colorScheme.primary.withValues(alpha: 0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Center(child: Text(mood, style: const TextStyle(fontSize: 28))),
-    );
-  }
-
-  Widget _buildTitleField(BuildContext context, String? title) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.2),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.3)
-                : theme.colorScheme.primary.withValues(alpha: 0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Text(
-        (title == null || title.isEmpty) ? "Untitled Entry" : title,
-        style: theme.textTheme.headlineSmall?.copyWith(
-          fontWeight: FontWeight.w700,
-          fontSize: 22,
-          color: theme.colorScheme.onSurface,
-        ),
-        maxLines: 3,
-        overflow: TextOverflow.ellipsis,
       ),
     );
   }
