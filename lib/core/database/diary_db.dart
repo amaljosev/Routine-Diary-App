@@ -1,6 +1,5 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-
 class DiaryDatabase {
   DiaryDatabase._privateConstructor();
   static final DiaryDatabase instance = DiaryDatabase._privateConstructor();
@@ -19,7 +18,7 @@ class DiaryDatabase {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 1, 
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -37,6 +36,7 @@ class DiaryDatabase {
       image_path TEXT,
       bg_color TEXT,
       bg_image_path TEXT,
+      bg_gallery_image_path TEXT, -- Add this line
       stickers TEXT,
       images TEXT,
       created_at TEXT,          
@@ -47,7 +47,7 @@ class DiaryDatabase {
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
-      await db.execute('ALTER TABLE diary_entries ADD COLUMN date INTEGER;');
+      await db.execute('ALTER TABLE diary_entries ADD COLUMN bg_gallery_image_path TEXT;');
     }
   }
 

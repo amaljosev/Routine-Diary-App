@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:routine/core/version/app_version.dart';
 import 'package:routine/features/diary/presentation/pages/settings/contact_us.dart';
 import 'package:routine/features/diary/presentation/pages/settings/help_screen.dart';
-
+import 'package:routine/features/diary/presentation/pages/settings/home_bg_update.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -27,13 +27,12 @@ class SettingsScreen extends StatelessWidget {
               child: Column(
                 spacing: 20,
                 children: [
-                  
                   Image.asset(
                     'assets/icons/routine_icon.png',
                     height: 80,
                     width: 80,
                   ),
-             
+
                   Text(
                     'Routine: Diary App',
                     style: Theme.of(context).textTheme.titleLarge!.copyWith(
@@ -48,6 +47,23 @@ class SettingsScreen extends StatelessWidget {
             /// Main List Section
             SliverList(
               delegate: SliverChildListDelegate([
+                CupertinoListSection.insetGrouped(
+                  header: const Text('Settings'),
+                  children: [
+                    ListTile(
+                      leading: const Icon(CupertinoIcons.photo),
+                      title: const Text('Update Home Background'),
+                      titleTextStyle: Theme.of(context).textTheme.titleSmall,
+                      trailing: const CupertinoListTileChevron(),
+                      onTap: ()  => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const HomeBgUpdate(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
                 /// APP INFORMATION
                 CupertinoListSection.insetGrouped(
                   header: const Text('App'),
@@ -147,16 +163,13 @@ class SettingsScreen extends StatelessWidget {
         ),
         const SizedBox(height: 12),
 
-        Text(
-          '''
+        Text('''
 Routine is a simple and private diary application designed to help you capture your daily thoughts, experiences, and reflections in one secure place.
 
 With a clean and distraction-free interface, Routine makes journaling easy and consistent. Whether you want to record memories, track personal growth, or simply express your thoughts, Routine helps you build a meaningful daily writing habit.
 
 Write daily. Reflect deeply. Grow consistently.
-''',
-          style: textTheme.bodyMedium,
-        ),
+''', style: textTheme.bodyMedium),
 
         const SizedBox(height: 16),
 

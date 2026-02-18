@@ -6,6 +6,7 @@ abstract class DiaryEntryEvent extends Equatable {
   @override
   List<Object?> get props => [];
 }
+
 class InitializeDiaryEntry extends DiaryEntryEvent {
   final DiaryEntryModel? entry;
   const InitializeDiaryEntry(this.entry);
@@ -53,6 +54,16 @@ class BgImageChanged extends DiaryEntryEvent {
   @override
   List<Object?> get props => [image];
 }
+
+class BgGalleryImageChanged extends DiaryEntryEvent {
+  final String imagePath;
+  const BgGalleryImageChanged(this.imagePath);
+
+  @override
+  List<Object> get props => [imagePath];
+}
+
+class ClearBackground extends DiaryEntryEvent {}
 
 class StickerAdded extends DiaryEntryEvent {
   final String sticker;
@@ -103,7 +114,6 @@ class RemoveSticker extends DiaryEntryEvent {
   List<Object?> get props => [id];
 }
 
-// New image events
 class ImageAdded extends DiaryEntryEvent {
   final String imagePath;
   final double x;

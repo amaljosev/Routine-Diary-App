@@ -44,7 +44,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   void initState() {
     super.initState();
     _bloc = context.read<DiaryEntryBloc>();
-    
+
     // Initialize with entry data if available
     if (widget.entry != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -75,7 +75,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
             _titleController.text = state.title;
           }
         }
-        
+
         return Scaffold(body: _buildBackground(state, context));
       },
     );
@@ -84,12 +84,34 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   Widget _buildBackground(DiaryEntryState state, BuildContext context) {
     final theme = Theme.of(context);
 
+    // Determine which background image to use
+    ImageProvider? backgroundImage;
+    
+    // First try gallery image
+    if (state.bgGalleryImage != null && state.bgGalleryImage!.isNotEmpty) {
+      final file = File(state.bgGalleryImage!);
+      if (file.existsSync()) {
+        backgroundImage = FileImage(file);
+      } else {
+        // If gallery file doesn't exist, clear it from state
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _bloc.add(ClearBackground());
+          }
+        });
+      }
+    } 
+    // Then try asset image
+    else if (state.bgImage.isNotEmpty) {
+      backgroundImage = AssetImage(state.bgImage);
+    }
+
     return Container(
       decoration: BoxDecoration(
         color: state.bgColor ?? theme.colorScheme.surface,
-        image: state.bgImage.isNotEmpty
+        image: backgroundImage != null
             ? DecorationImage(
-                image: AssetImage(state.bgImage),
+                image: backgroundImage, 
                 fit: BoxFit.cover,
               )
             : null,
@@ -97,7 +119,9 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       child: SafeArea(
         child: Stack(
           children: [
-            Container(color: theme.colorScheme.surface.withValues(alpha: 0.4)),
+            Container(
+              color: theme.colorScheme.surface.withValues(alpha: 0.4),
+            ),
             _buildContent(state, context),
           ],
         ),
@@ -123,9 +147,13 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
             _buildAppBarSaveButton(context, state),
           ],
         ),
-        
+
         Expanded(
           child: GestureDetector(
+            onTap: () {
+              // Deselect any selected sticker or image when tapping empty area
+              _bloc.add(DeselectAll());
+            },
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: _buildCustomScrollView(state, context),
@@ -141,8 +169,9 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   Widget _buildAppBarSaveButton(BuildContext context, DiaryEntryState state) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final isValid = _titleController.text.trim().isNotEmpty ||
-                    _descriptionController.text.trim().isNotEmpty;
+    final isValid =
+        _titleController.text.trim().isNotEmpty ||
+        _descriptionController.text.trim().isNotEmpty;
 
     return Padding(
       padding: const EdgeInsets.only(right: 8.0),
@@ -151,8 +180,10 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
         style: ElevatedButton.styleFrom(
           foregroundColor: theme.colorScheme.onPrimary,
           backgroundColor: theme.colorScheme.primary,
-          disabledForegroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.3),
-          disabledBackgroundColor: isDark 
+          disabledForegroundColor: theme.colorScheme.onSurface.withValues(
+            alpha: 0.3,
+          ),
+          disabledBackgroundColor: isDark
               ? AppColors.darkSurface.withValues(alpha: 0.5)
               : Colors.grey.withValues(alpha: 0.2),
           elevation: isValid ? 2 : 0,
@@ -189,14 +220,11 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
           ? DateTime.now().toIso8601String()
           : widget.entry!.createdAt,
       updatedAt: DateTime.now().toIso8601String(),
-      bgColor: state.bgColor?.toString() ?? Colors.white.toString(),
-      stickersJson: jsonEncode(
-        state.stickers.map((s) => s.toJson()).toList(),
-      ),
-      imagesJson: jsonEncode(
-        state.images.map((i) => i.toJson()).toList(),
-      ),
-      bgImagePath: state.bgImage,
+      bgColor: state.bgColor?.toString(),
+      stickersJson: jsonEncode(state.stickers.map((s) => s.toJson()).toList()),
+      imagesJson: jsonEncode(state.images.map((i) => i.toJson()).toList()),
+      bgImagePath: state.bgImage.isNotEmpty ? state.bgImage : null,
+      bgGalleryImagePath: state.bgGalleryImage,
     );
 
     if (widget.entry != null) {
@@ -204,11 +232,8 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     } else {
       context.read<DiaryBloc>().add(AddDiaryEntry(entry));
     }
-    
-    Navigator.pop(
-      context,
-      widget.entry != null ? widget.entry!.id : true,
-    );
+
+    Navigator.pop(context, widget.entry != null ? widget.entry!.id : true);
   }
 
   Widget _buildCustomScrollView(DiaryEntryState state, BuildContext context) {
@@ -320,6 +345,9 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
           color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
         ),
         border: InputBorder.none,
+        counterStyle: TextStyle(
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+        ),
       ),
       style: theme.textTheme.bodyLarge?.copyWith(
         fontWeight: FontWeight.w900,
@@ -343,7 +371,9 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
             decoration: InputDecoration(
               hintText: "What's on your mind?",
               hintStyle: TextStyle(
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.5),
               ),
               border: InputBorder.none,
             ),
@@ -372,13 +402,13 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
           end: Alignment.bottomCenter,
           colors: [
             Colors.transparent,
-            isDark 
+            isDark
                 ? AppColors.darkSurface.withValues(alpha: 0.9)
                 : Colors.white.withValues(alpha: 0.9),
           ],
         ),
       ),
-      child: _buildActionButtons(context),
+      child: _buildActionButtons(context, state),
     );
   }
 
@@ -403,10 +433,15 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
         onLongPress: () => _showStickerMenu(sticker),
         onScaleUpdate: isSelected
             ? (details) {
-                final newX = (sticker.x + details.focalPointDelta.dx).toDouble();
-                final newY = (sticker.y + details.focalPointDelta.dy).toDouble();
+                final newX = (sticker.x + details.focalPointDelta.dx)
+                    .toDouble();
+                final newY = (sticker.y + details.focalPointDelta.dy)
+                    .toDouble();
                 _bloc.add(UpdateStickerPosition(sticker.id, newX, newY));
-                final scaledSize = (sticker.size * details.scale).clamp(12.0, 200.0);
+                final scaledSize = (sticker.size * details.scale).clamp(
+                  12.0,
+                  200.0,
+                );
                 _bloc.add(UpdateStickerSize(sticker.id, scaledSize.toDouble()));
               }
             : null,
@@ -489,11 +524,22 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
           padding: const EdgeInsets.all(4),
           child: Transform.scale(
             scale: image.scale,
-            child: Image.file(
-              File(image.imagePath),
-              width: image.width,
-              height: image.height,
-              fit: BoxFit.cover,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.file(
+                File(image.imagePath),
+                width: image.width,
+                height: image.height,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    width: image.width,
+                    height: image.height,
+                    color: Colors.grey,
+                    child: Icon(Icons.broken_image, color: Colors.white),
+                  );
+                },
+              ),
             ),
           ),
         ),
@@ -501,7 +547,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     );
   }
 
-  Widget _buildActionButtons(BuildContext context) {
+  Widget _buildActionButtons(BuildContext context, DiaryEntryState state) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -548,6 +594,15 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
               onPressed: _onBgImagePressed,
               context: context,
             ),
+            if (state.bgGalleryImage != null || state.bgImage.isNotEmpty || state.bgColor != null)
+              _buildActionButton(
+                icon: Icons.clear,
+                label: 'Clear BG',
+                onPressed: () {
+                  _bloc.add(ClearBackground());
+                },
+                context: context,
+              ),
             _buildActionButton(
               icon: Icons.format_list_bulleted,
               label: 'Bullet',
@@ -712,17 +767,26 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
         children: [
           ListTile(
             leading: Icon(Icons.delete, color: isDark ? Colors.white : null),
-            title: Text('Remove Sticker', style: TextStyle(color: isDark ? Colors.white : null)),
+            title: Text(
+              'Remove Sticker',
+              style: TextStyle(color: isDark ? Colors.white : null),
+            ),
             onTap: () => Navigator.pop(ctx, 'remove'),
           ),
           ListTile(
             leading: Icon(Icons.zoom_in, color: isDark ? Colors.white : null),
-            title: Text('Increase Size', style: TextStyle(color: isDark ? Colors.white : null)),
+            title: Text(
+              'Increase Size',
+              style: TextStyle(color: isDark ? Colors.white : null),
+            ),
             onTap: () => Navigator.pop(ctx, 'bigger'),
           ),
           ListTile(
             leading: Icon(Icons.zoom_out, color: isDark ? Colors.white : null),
-            title: Text('Decrease Size', style: TextStyle(color: isDark ? Colors.white : null)),
+            title: Text(
+              'Decrease Size',
+              style: TextStyle(color: isDark ? Colors.white : null),
+            ),
             onTap: () => Navigator.pop(ctx, 'smaller'),
           ),
         ],
@@ -740,17 +804,26 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
         children: [
           ListTile(
             leading: Icon(Icons.delete, color: isDark ? Colors.white : null),
-            title: Text('Remove Image', style: TextStyle(color: isDark ? Colors.white : null)),
+            title: Text(
+              'Remove Image',
+              style: TextStyle(color: isDark ? Colors.white : null),
+            ),
             onTap: () => Navigator.pop(ctx, 'remove'),
           ),
           ListTile(
             leading: Icon(Icons.zoom_in, color: isDark ? Colors.white : null),
-            title: Text('Increase Size', style: TextStyle(color: isDark ? Colors.white : null)),
+            title: Text(
+              'Increase Size',
+              style: TextStyle(color: isDark ? Colors.white : null),
+            ),
             onTap: () => Navigator.pop(ctx, 'bigger'),
           ),
           ListTile(
             leading: Icon(Icons.zoom_out, color: isDark ? Colors.white : null),
-            title: Text('Decrease Size', style: TextStyle(color: isDark ? Colors.white : null)),
+            title: Text(
+              'Decrease Size',
+              style: TextStyle(color: isDark ? Colors.white : null),
+            ),
             onTap: () => Navigator.pop(ctx, 'smaller'),
           ),
         ],
@@ -784,11 +857,20 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   }
 
   void _onBgImagePressed() {
-    DiaryUIHelpers.openBgImagePicker(
-      context,
-      (image) => _bloc.add(BgImageChanged(image)),
-    );
-  }
+  DiaryUIHelpers.openBgImagePicker(
+    context,
+    onPresetSelected: (assetPath) {
+      _bloc.add(BgImageChanged(assetPath));
+    },
+    onGallerySelected: (filePath) {
+      _bloc.add(BgGalleryImageChanged(filePath));
+    },
+    onClear: () {
+      _bloc.add(ClearBackground());
+    },
+  );
+}
+
 
   void _onBulletPressed() {
     DiaryUIHelpers.insertBullet(_descriptionController);

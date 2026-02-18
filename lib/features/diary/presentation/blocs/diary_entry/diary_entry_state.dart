@@ -1,71 +1,5 @@
 part of 'diary_entry_bloc.dart';
 
-class DiaryEntryState extends Equatable {
-  final String title;
-  final String description;
-  final String mood;
-  final Color? bgColor;
-  final String bgImage;
-  final List<StickerModel> stickers;
-  final List<DiaryImage> images;
-  final DateTime date;
-  final String? selectedStickerId;
-  final String? selectedImageId;
-
-  DiaryEntryState({
-    this.title = '',
-    this.description = '',
-    this.mood = '🙂',
-    this.bgColor,
-    this.bgImage = '',
-    this.stickers = const [],
-    this.images = const [],
-    this.selectedStickerId,
-    this.selectedImageId,
-    DateTime? date,
-  }) : date = date ?? DateTime.now();
-
-  DiaryEntryState copyWith({
-    String? title,
-    String? description,
-    String? mood,
-    Color? bgColor,
-    String? bgImage,
-    List<StickerModel>? stickers,
-    List<DiaryImage>? images,
-    DateTime? date,
-    String? selectedStickerId,
-    String? selectedImageId,
-  }) {
-    return DiaryEntryState(
-      title: title ?? this.title,
-      description: description ?? this.description,
-      mood: mood ?? this.mood,
-      bgColor: bgColor ?? this.bgColor,
-      bgImage: bgImage ?? this.bgImage,
-      stickers: stickers ?? this.stickers,
-      images: images ?? this.images,
-      date: date ?? this.date,
-      selectedStickerId: selectedStickerId ?? this.selectedStickerId,
-      selectedImageId: selectedImageId ?? this.selectedImageId,
-    );
-  }
-
-  @override
-  List<Object?> get props => [
-    title,
-    description,
-    mood,
-    bgColor,
-    bgImage,
-    stickers,
-    images,
-    date,
-    selectedStickerId,
-    selectedImageId,
-  ];
-}
-
 class DiaryImage extends Equatable {
   final String id;
   final String imagePath;
@@ -105,28 +39,101 @@ class DiaryImage extends Equatable {
     );
   }
 
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'imagePath': imagePath,
-        'x': x,
-        'y': y,
-        'width': width,
-        'height': height,
-        'scale': scale,
-      };
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'imagePath': imagePath,
+      'x': x,
+      'y': y,
+      'width': width,
+      'height': height,
+      'scale': scale,
+    };
+  }
 
   factory DiaryImage.fromJson(Map<String, dynamic> json) {
     return DiaryImage(
       id: json['id'],
       imagePath: json['imagePath'],
-      x: (json['x'] as num).toDouble(),
-      y: (json['y'] as num).toDouble(),
-      width: (json['width'] as num).toDouble(),
-      height: (json['height'] as num).toDouble(),
-      scale: (json['scale'] as num).toDouble(),
+      x: json['x'].toDouble(),
+      y: json['y'].toDouble(),
+      width: json['width'].toDouble(),
+      height: json['height'].toDouble(),
+      scale: json['scale'].toDouble(),
     );
   }
 
   @override
   List<Object?> get props => [id, imagePath, x, y, width, height, scale];
+}
+
+class DiaryEntryState extends Equatable {
+  final String title;
+  final String description;
+  final String mood;
+  final Color? bgColor;
+  final String bgImage;
+  final String? bgGalleryImage;
+  final List<StickerModel> stickers;
+  final List<DiaryImage> images;
+  final DateTime date;
+  final String selectedStickerId;
+  final String selectedImageId;
+
+  const DiaryEntryState({
+    this.title = '',
+    this.description = '',
+    this.mood = '😊',
+    this.bgColor,
+    this.bgImage = '',
+    this.bgGalleryImage,
+    this.stickers = const [],
+    this.images = const [],
+    required this.date,
+    this.selectedStickerId = '',
+    this.selectedImageId = '',
+  });
+
+  @override
+  List<Object?> get props => [
+        title,
+        description,
+        mood,
+        bgColor,
+        bgImage,
+        bgGalleryImage,
+        stickers,
+        images,
+        date,
+        selectedStickerId,
+        selectedImageId,
+      ];
+
+  DiaryEntryState copyWith({
+    String? title,
+    String? description,
+    String? mood,
+    Color? bgColor,
+    String? bgImage,
+    String? bgGalleryImage,
+    List<StickerModel>? stickers,
+    List<DiaryImage>? images,
+    DateTime? date,
+    String? selectedStickerId,
+    String? selectedImageId,
+  }) {
+    return DiaryEntryState(
+      title: title ?? this.title,
+      description: description ?? this.description,
+      mood: mood ?? this.mood,
+      bgColor: bgColor ?? this.bgColor,
+      bgImage: bgImage ?? this.bgImage,
+      bgGalleryImage: bgGalleryImage, 
+      stickers: stickers ?? this.stickers,
+      images: images ?? this.images,
+      date: date ?? this.date,
+      selectedStickerId: selectedStickerId ?? this.selectedStickerId,
+      selectedImageId: selectedImageId ?? this.selectedImageId,
+    );
+  }
 }

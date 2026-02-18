@@ -90,39 +90,62 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
   }
 
   Widget _buildBackground(BuildContext context, DiaryEntryModel entry) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final Color? bgColor = _parseColorFromString(entry.bgColor);
-    final bool isDefaultColor =
-        bgColor != null &&
-        entry.bgColor ==
-            "Color(alpha: 1.0000, red: 1.0000, green: 1.0000, blue: 1.0000, colorSpace: ColorSpace.sRGB)";
-    final Color defaultClr = isDark
-        ? AppColors.darkBackground
-        : AppColors.lightSurface;
-    final bgImage = entry.bgImagePath ?? '';
+  final theme = Theme.of(context);
+  final isDark = theme.brightness == Brightness.dark;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: isDefaultColor ? defaultClr : bgColor,
-        image: bgImage.isNotEmpty
-            ? DecorationImage(image: AssetImage(bgImage), fit: BoxFit.cover)
-            : null,
-      ),
-      child: SafeArea(
-        child: Stack(
-          children: [
-            Container(
-              color: isDark
-                  ? Colors.black.withValues(alpha: 0.4)
-                  : Colors.white.withValues(alpha: 0.4),
-            ),
-            _buildContent(context, entry),
-          ],
-        ),
-      ),
-    );
+  final Color? parsedColor = _parseColorFromString(entry.bgColor);
+
+  ImageProvider? backgroundImage;
+
+  /// 1️⃣ Gallery Image (Highest Priority)
+  if (entry.bgGalleryImagePath != null &&
+      entry.bgGalleryImagePath!.isNotEmpty) {
+    final file = File(entry.bgGalleryImagePath!);
+
+    if (file.existsSync()) {
+      backgroundImage = FileImage(file);
+    }
   }
+
+  /// 2️⃣ Asset Image (Preset Backgrounds)
+  else if (entry.bgImagePath != null &&
+      entry.bgImagePath!.isNotEmpty) {
+    backgroundImage = AssetImage(entry.bgImagePath!);
+  }
+
+  /// 3️⃣ Fallback Color
+  final Color fallbackColor =
+      parsedColor ??
+      (isDark ? AppColors.darkBackground : AppColors.lightSurface);
+
+  return Container(
+    decoration: BoxDecoration(
+      color: backgroundImage == null ? fallbackColor : null,
+      image: backgroundImage != null
+          ? DecorationImage(
+              image: backgroundImage,
+              fit: BoxFit.cover,
+            )
+          : null,
+    ),
+    child: SafeArea(
+      child: Stack(
+        children: [
+          /// Soft overlay for readability
+          Container(
+            color: isDark
+                ? Colors.black.withOpacity(0.4)
+                : Colors.white.withOpacity(0.4),
+          ),
+
+          /// Actual content
+          _buildContent(context, entry),
+        ],
+      ),
+    ),
+  );
+}
+
 
   Widget _buildContent(BuildContext context, DiaryEntryModel entry) {
     final theme = Theme.of(context);

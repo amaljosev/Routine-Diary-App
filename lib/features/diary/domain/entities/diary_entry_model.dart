@@ -1,4 +1,6 @@
-class DiaryEntry {
+import 'package:equatable/equatable.dart';
+
+class DiaryEntry extends Equatable {
   final String id;
   final String title;
   final String date;
@@ -8,6 +10,7 @@ class DiaryEntry {
   final String? imagePath;
   final String? bgColor;
   final String? bgImagePath;
+  final String? bgGalleryImagePath; 
   final String? stickersJson;
   final String? imagesJson;
   final String createdAt;
@@ -23,9 +26,28 @@ class DiaryEntry {
     this.imagePath,
     this.bgColor,
     this.bgImagePath,
+    this.bgGalleryImagePath, 
     this.stickersJson,
     this.imagesJson,
     required this.createdAt,
     required this.updatedAt,
   });
+
+  @override
+  List<Object?> get props => [
+        id,
+        title,
+        date,
+        preview,
+        mood,
+        content,
+        imagePath,
+        bgColor,
+        bgImagePath,
+        bgGalleryImagePath, 
+        stickersJson,
+        imagesJson,
+        createdAt,
+        updatedAt,
+      ];
 }
