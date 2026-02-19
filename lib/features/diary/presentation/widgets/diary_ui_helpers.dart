@@ -223,168 +223,175 @@ class DiaryUIHelpers {
   }
 
   /// Background image picker
-static void openBgImagePicker(
-  BuildContext context, {
-  required Function(String assetPath) onPresetSelected,
-  required Function(String filePath) onGallerySelected,
-  required VoidCallback onClear,
-}) {
-  final theme = Theme.of(context);
-  final isDark = theme.brightness == Brightness.dark;
+  static void openBgImagePicker(
+    BuildContext context, {
+    required Function(String assetPath) onPresetSelected,
+    required Function(String filePath) onGallerySelected,
+    required VoidCallback onClear,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-  showModalBottomSheet(
-    context: context,
-    backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
-    isScrollControlled: true,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
-    builder: (sheetContext) {
-      return SafeArea(
-        child: SizedBox(
-          height: MediaQuery.of(sheetContext).size.height * 0.65,
-          child: Column(
-            children: [
-              const SizedBox(height: 12),
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: SizedBox(
+            height: MediaQuery.of(sheetContext).size.height * 0.65,
+            child: Column(
+              children: [
+                const SizedBox(height: 12),
 
-              /// Handle bar
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              Text(
-                'Choose Background',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              /// ----------------------
-              /// Gallery Option
-              /// ----------------------
-              ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text('Choose from Gallery'),
-                onTap: () async {
-                  Navigator.pop(sheetContext);
-
-                  try {
-                    final ImagePicker picker = ImagePicker();
-                    final XFile? image = await picker.pickImage(
-                      source: ImageSource.gallery,
-                      imageQuality: 85,
-                    );
-
-                    if (image != null && context.mounted) {
-                      onGallerySelected(image.path);
-                    }
-                  } catch (e) {
-                    debugPrint('Gallery pick failed: $e');
-                  }
-                },
-              ),
-
-              const Divider(),
-
-              /// ----------------------
-              /// Preset Grid
-              /// ----------------------
-              Expanded(
-                child: GridView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 0.6,
+                /// Handle bar
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  itemCount: DiaryItems.bgImages.length + 1,
-                  itemBuilder: (gridContext, index) {
-                    /// Clear button
-                    if (index == 0) {
+                ),
+
+                const SizedBox(height: 16),
+
+                Text(
+                  'Choose Background',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                /// ----------------------
+                /// Gallery Option
+                /// ----------------------
+                ListTile(
+                  trailing: const Icon(Icons.photo_library),
+                  title: const Text('Choose from Gallery'),
+                  titleTextStyle: Theme.of(context).textTheme.titleSmall!.copyWith(
+                    fontWeight: FontWeight.bold
+                  ),
+                  onTap: () async {
+                    Navigator.pop(sheetContext);
+
+                    try {
+                      final ImagePicker picker = ImagePicker();
+                      final XFile? image = await picker.pickImage(
+                        source: ImageSource.gallery,
+                        imageQuality: 85,
+                      );
+
+                      if (image != null && context.mounted) {
+                        onGallerySelected(image.path);
+                      }
+                    } catch (e) {
+                      debugPrint('Gallery pick failed: $e');
+                    }
+                  },
+                ),
+
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 5),
+                  child: const Divider(
+                    thickness: 2,
+                    color: Colors.grey,
+                  ),
+                ),
+
+                /// ----------------------
+                /// Preset Grid
+                /// ----------------------
+                Expanded(
+                  child: GridView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          childAspectRatio: 0.6,
+                        ),
+                    itemCount: DiaryItems.bgImages.length + 1,
+                    itemBuilder: (gridContext, index) {
+                      /// Clear button
+                      if (index == 0) {
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.pop(sheetContext);
+                            onClear();
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              color: isDark
+                                  ? AppColors.darkBackground
+                                  : Colors.grey.shade200,
+                              border: Border.all(
+                                color: Colors.grey.withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: const Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.clear),
+                                  SizedBox(height: 6),
+                                  Text("Clear"),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+
+                      final imgPath = DiaryItems.bgImages[index - 1];
+
                       return GestureDetector(
                         onTap: () {
                           Navigator.pop(sheetContext);
-                          onClear();
+                          onPresetSelected(imgPath);
                         },
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            color: isDark
-                                ? AppColors.darkBackground
-                                : Colors.grey.shade200,
-                            border: Border.all(
-                              color: Colors.grey.withValues(alpha: 0.3),
-                            ),
-                          ),
-                          child: const Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.clear),
-                                SizedBox(height: 6),
-                                Text("Clear"),
-                              ],
-                            ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              Image.asset(
+                                imgPath,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: Colors.grey.shade300,
+                                    child: const Icon(Icons.broken_image),
+                                  );
+                                },
+                              ),
+                              if (isDark)
+                                Container(
+                                  color: Colors.black.withValues(alpha: 0.25),
+                                ),
+                            ],
                           ),
                         ),
                       );
-                    }
-
-                    final imgPath = DiaryItems.bgImages[index - 1];
-
-                    return GestureDetector(
-                      onTap: () {
-                        Navigator.pop(sheetContext);
-                        onPresetSelected(imgPath);
-                      },
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            Image.asset(
-                              imgPath,
-                              fit: BoxFit.cover,
-                              errorBuilder:
-                                  (context, error, stackTrace) {
-                                return Container(
-                                  color: Colors.grey.shade300,
-                                  child: const Icon(Icons.broken_image),
-                                );
-                              },
-                            ),
-                            if (isDark)
-                              Container(
-                                color: Colors.black.withValues(alpha: 0.25),
-                              ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
+                    },
+                  ),
                 ),
-              ),
 
-              const SizedBox(height: 16),
-            ],
+                const SizedBox(height: 16),
+              ],
+            ),
           ),
-        ),
-      );
-    },
-  );
-}
-
+        );
+      },
+    );
+  }
 
   /// Sticker picker
   static void openStickerPicker(

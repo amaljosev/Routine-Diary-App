@@ -63,7 +63,17 @@ class BgGalleryImageChanged extends DiaryEntryEvent {
   List<Object> get props => [imagePath];
 }
 
-class ClearBackground extends DiaryEntryEvent {}
+class CropAndSetBackgroundImage extends DiaryEntryEvent {
+  final String imagePath;
+  const CropAndSetBackgroundImage(this.imagePath);
+
+  @override
+  List<Object> get props => [imagePath];
+}
+
+class ClearBackground extends DiaryEntryEvent {
+  const ClearBackground();
+}
 
 class StickerAdded extends DiaryEntryEvent {
   final String sticker;
@@ -74,8 +84,6 @@ class StickerAdded extends DiaryEntryEvent {
   @override
   List<Object?> get props => [sticker, x, y];
 }
-
-class BulletInserted extends DiaryEntryEvent {}
 
 class SaveEntry extends DiaryEntryEvent {}
 
@@ -104,6 +112,17 @@ class UpdateStickerSize extends DiaryEntryEvent {
 
   @override
   List<Object?> get props => [id, size];
+}
+
+class UpdateStickerTransform extends DiaryEntryEvent {
+  final String id;
+  final double x;
+  final double y;
+  final double size;
+  const UpdateStickerTransform(this.id, this.x, this.y, this.size);
+
+  @override
+  List<Object?> get props => [id, x, y, size];
 }
 
 class RemoveSticker extends DiaryEntryEvent {
@@ -143,6 +162,17 @@ class UpdateImageSize extends DiaryEntryEvent {
   List<Object?> get props => [imageId, scale];
 }
 
+class UpdateImageTransform extends DiaryEntryEvent {
+  final String imageId;
+  final double x;
+  final double y;
+  final double scale;
+  const UpdateImageTransform(this.imageId, this.x, this.y, this.scale);
+
+  @override
+  List<Object?> get props => [imageId, x, y, scale];
+}
+
 class RemoveImage extends DiaryEntryEvent {
   final String imageId;
   const RemoveImage(this.imageId);
@@ -167,4 +197,18 @@ class SelectImage extends DiaryEntryEvent {
   List<Object?> get props => [id];
 }
 
-class DeselectAll extends DiaryEntryEvent {}
+class DeselectAll extends DiaryEntryEvent {
+  const DeselectAll();
+}
+
+class SetError extends DiaryEntryEvent {
+  final String message;
+  const SetError(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
+class ClearError extends DiaryEntryEvent {
+  const ClearError();
+}
