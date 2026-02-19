@@ -294,7 +294,7 @@ Widget _buildDateOnlyHeader(BuildContext context, DiaryEntryModel entry) {
           intl.DateFormat('MMMM yyyy').format(date),
           style: theme.textTheme.titleMedium!.copyWith(
             fontWeight: FontWeight.w900,
-            color: theme.colorScheme.primary.withOpacity(0.5),
+            color: theme.colorScheme.primary.withValues(alpha:0.5),
           ),
         ),
       ],

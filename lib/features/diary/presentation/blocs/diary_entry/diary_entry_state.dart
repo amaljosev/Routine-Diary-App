@@ -1,7 +1,7 @@
 part of 'diary_entry_bloc.dart';
 
 // Sentinel value to represent "no change" in copyWith
-const _Unset = Object();
+const unset = Object();
 
 class DiaryImage extends Equatable {
   final String id;
@@ -116,32 +116,32 @@ class DiaryEntryState extends Equatable {
       ];
 
   DiaryEntryState copyWith({
-    Object? title = _Unset,
-    Object? description = _Unset,
-    Object? mood = _Unset,
-    Object? bgColor = _Unset,
-    Object? bgImage = _Unset,
-    Object? bgGalleryImage = _Unset,
-    Object? stickers = _Unset,
-    Object? images = _Unset,
-    Object? date = _Unset,
-    Object? selectedStickerId = _Unset,
-    Object? selectedImageId = _Unset,
-    Object? errorMessage = _Unset,
+    Object? title = unset,
+    Object? description = unset,
+    Object? mood = unset,
+    Object? bgColor = unset,
+    Object? bgImage = unset,
+    Object? bgGalleryImage = unset,
+    Object? stickers = unset,
+    Object? images = unset,
+    Object? date = unset,
+    Object? selectedStickerId = unset,
+    Object? selectedImageId = unset,
+    Object? errorMessage = unset,
   }) {
     return DiaryEntryState(
-      title: title == _Unset ? this.title : title as String,
-      description: description == _Unset ? this.description : description as String,
-      mood: mood == _Unset ? this.mood : mood as String,
-      bgColor: bgColor == _Unset ? this.bgColor : bgColor as Color?,
-      bgImage: bgImage == _Unset ? this.bgImage : bgImage as String,
-      bgGalleryImage: bgGalleryImage == _Unset ? this.bgGalleryImage : bgGalleryImage as String?,
-      stickers: stickers == _Unset ? this.stickers : stickers as List<StickerModel>,
-      images: images == _Unset ? this.images : images as List<DiaryImage>,
-      date: date == _Unset ? this.date : date as DateTime,
-      selectedStickerId: selectedStickerId == _Unset ? this.selectedStickerId : selectedStickerId as String?,
-      selectedImageId: selectedImageId == _Unset ? this.selectedImageId : selectedImageId as String?,
-      errorMessage: errorMessage == _Unset ? this.errorMessage : errorMessage as String?,
+      title: title == unset ? this.title : title as String,
+      description: description == unset ? this.description : description as String,
+      mood: mood == unset ? this.mood : mood as String,
+      bgColor: bgColor == unset ? this.bgColor : bgColor as Color?,
+      bgImage: bgImage == unset ? this.bgImage : bgImage as String,
+      bgGalleryImage: bgGalleryImage == unset ? this.bgGalleryImage : bgGalleryImage as String?,
+      stickers: stickers == unset ? this.stickers : stickers as List<StickerModel>,
+      images: images == unset ? this.images : images as List<DiaryImage>,
+      date: date == unset ? this.date : date as DateTime,
+      selectedStickerId: selectedStickerId == unset ? this.selectedStickerId : selectedStickerId as String?,
+      selectedImageId: selectedImageId == unset ? this.selectedImageId : selectedImageId as String?,
+      errorMessage: errorMessage == unset ? this.errorMessage : errorMessage as String?,
     );
   }
 }

@@ -149,7 +149,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       child: SafeArea(
         child: Stack(
           children: [
-            Container(color: theme.colorScheme.surface.withOpacity(0.4)),
+            Container(color: theme.colorScheme.surface.withValues(alpha:0.4)),
             _buildContent(state, context),
           ],
         ),
@@ -196,10 +196,10 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
         style: ElevatedButton.styleFrom(
           foregroundColor: theme.colorScheme.onPrimary,
           backgroundColor: theme.colorScheme.primary,
-          disabledForegroundColor: theme.colorScheme.onSurface.withOpacity(0.3),
+          disabledForegroundColor: theme.colorScheme.onSurface.withValues(alpha:0.3),
           disabledBackgroundColor: isDark
-              ? AppColors.darkSurface.withOpacity(0.5)
-              : Colors.grey.withOpacity(0.2),
+              ? AppColors.darkSurface.withValues(alpha:0.5)
+              : Colors.grey.withValues(alpha:0.2),
           elevation: isValid ? 2 : 0,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -317,7 +317,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
           intl.DateFormat('MMMM yyyy').format(state.date),
           style: Theme.of(context).textTheme.titleMedium!.copyWith(
             fontWeight: FontWeight.w900,
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha:0.5),
           ),
         ),
       ],
@@ -346,11 +346,11 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
         hintStyle: theme.textTheme.bodyLarge?.copyWith(
           fontWeight: FontWeight.w900,
           fontSize: 24,
-          color: theme.colorScheme.onSurface.withOpacity(0.5),
+          color: theme.colorScheme.onSurface.withValues(alpha:0.5),
         ),
         border: InputBorder.none,
         counterStyle: TextStyle(
-          color: theme.colorScheme.onSurface.withOpacity(0.5),
+          color: theme.colorScheme.onSurface.withValues(alpha:0.5),
         ),
       ),
       style: theme.textTheme.bodyLarge?.copyWith(
@@ -606,8 +606,8 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
           colors: [
             Colors.transparent,
             isDark
-                ? AppColors.darkSurface.withOpacity(0.9)
-                : Colors.white.withOpacity(0.9),
+                ? AppColors.darkSurface.withValues(alpha:0.9)
+                : Colors.white.withValues(alpha:0.9),
           ],
         ),
       ),
@@ -622,13 +622,13 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface.withOpacity(0.9),
-        border: Border.all(color: theme.colorScheme.primary.withOpacity(0.2), width: 1),
+        color: isDark ? AppColors.darkSurface : AppColors.lightSurface.withValues(alpha:0.9),
+        border: Border.all(color: theme.colorScheme.primary.withValues(alpha:0.2), width: 1),
         boxShadow: [
           BoxShadow(
             color: isDark
-                ? Colors.black.withOpacity(0.5)
-                : theme.colorScheme.primary.withOpacity(0.08),
+                ? Colors.black.withValues(alpha:0.5)
+                : theme.colorScheme.primary.withValues(alpha:0.08),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -660,14 +660,14 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
         color: AppColors.darkSurface,
         borderRadius: BorderRadius.circular(radius),
         border: Border.all(color: theme.colorScheme.outline, width: 1),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.6), blurRadius: 12, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha:0.6), blurRadius: 12, offset: const Offset(0, 4))],
       );
     }
     return BoxDecoration(
       color: AppColors.lightSurface,
       borderRadius: BorderRadius.circular(radius),
-      border: Border.all(color: theme.colorScheme.primary.withOpacity(0.2), width: 1),
-      boxShadow: [BoxShadow(color: theme.colorScheme.primary.withOpacity(0.08), blurRadius: 8, offset: const Offset(0, 2))],
+      border: Border.all(color: theme.colorScheme.primary.withValues(alpha:0.2), width: 1),
+      boxShadow: [BoxShadow(color: theme.colorScheme.primary.withValues(alpha:0.08), blurRadius: 8, offset: const Offset(0, 2))],
     );
   }
 

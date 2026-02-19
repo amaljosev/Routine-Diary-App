@@ -1,5 +1,4 @@
 import 'dart:developer';
-import 'dart:typed_data';
 import 'package:routine/features/diary/data/models/diary_entry_model.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
