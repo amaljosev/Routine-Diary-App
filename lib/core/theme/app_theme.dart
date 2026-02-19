@@ -6,67 +6,807 @@ class AppTheme {
   static ThemeData get light => lightTheme;
   static ThemeData get dark => darkTheme;
 }
-// import 'package:flutter/material.dart';
 
-// class AppTheme {
-//   // ---------- LIGHT COLORS ----------
-//   static const Color lightPrimary = Color(0xFF3F51B5);
-//   static const Color lightSecondary = Color(0xFF7986CB);
-//   static const Color lightBackground = Color(0xFFF5F5F5);
-//   static const Color lightSurface = Color(0xFFFFFFFF);
-//   static const Color lightOnBackground = Color(0xFF212121);
+// ----- LIGHT THEME 1: Purple/Teal (Modern) -----
+// final ThemeData lightTheme1 = ThemeData.light().copyWith(
+//   primaryColor: AppColors.light1Primary,
+//   scaffoldBackgroundColor: AppColors.light1Background,
 
-//   // ---------- DARK COLORS ----------
-//   static const Color darkPrimary = Color(0xFF303F9F);
-//   static const Color darkSecondary = Color(0xFF03DAC6);
-//   static const Color darkBackground = Color(0xFF121212);
-//   static const Color darkSurface = Color(0xFF1E1E1E);
-//   static const Color darkOnBackground = Color(0xFFE0E0E0);
-//   static const Color darkOnSurface = Color(0xFFCCCCCC);
+//   floatingActionButtonTheme: const FloatingActionButtonThemeData(
+//     backgroundColor: AppColors.light1Primary,
+//     foregroundColor: Colors.white,
+//   ),
 
-//   // ================= LIGHT THEME =================
-//   static final ThemeData lightTheme = ThemeData(
-//     useMaterial3: true,
-//     brightness: Brightness.light,
-//     scaffoldBackgroundColor: lightBackground,
-//     fontFamily: 'Quicksand',
-//     colorScheme: const ColorScheme.light(
-//       primary: lightPrimary,
-//       secondary: lightSecondary,
-//       surface: lightSurface,
-//       onSurface: lightOnBackground,
-//       primaryContainer: Color(0xFFE8EAF6),
-//       outline: Color(0xFFBDBDBD),
+//   appBarTheme: const AppBarTheme(
+//     backgroundColor: AppColors.light1Primary,
+//     foregroundColor: Colors.white,
+//     elevation: 0,
+//     centerTitle: true,
+//     titleTextStyle: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w600,
+//       fontSize: 20,
+//       color: Colors.white,
 //     ),
-//     inputDecorationTheme: const InputDecorationTheme(
-//       border: InputBorder.none,
-//     ),
-//     appBarTheme: const AppBarTheme(
-//       elevation: 0,
-//       scrolledUnderElevation: 0,
-//     ),
-//   );
+//   ),
 
-//   // ================= DARK THEME =================
-//   static final ThemeData darkTheme = ThemeData(
-//     useMaterial3: true,
-//     brightness: Brightness.dark,
-//     scaffoldBackgroundColor: darkBackground,
-//     fontFamily: 'Quicksand',
-//     colorScheme: const ColorScheme.dark(
-//       primary: darkPrimary,
-//       secondary: darkSecondary,
-//       surface: darkSurface,
-//       onSurface: darkOnSurface,
-//       primaryContainer: Color(0xFF3949AB),
-//       outline: Color(0xFF424242),
+//   textTheme: const TextTheme(
+//     // Display
+//     displayLarge: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w700,
+//       color: AppColors.light1OnBackground,
 //     ),
-//     inputDecorationTheme: const InputDecorationTheme(
-//       border: InputBorder.none,
+//     displayMedium: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w600,
+//       color: AppColors.light1OnBackground,
 //     ),
-//     appBarTheme: const AppBarTheme(
-//       elevation: 0,
-//       scrolledUnderElevation: 0,
+//     displaySmall: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w600,
+//       color: AppColors.light1OnBackground,
 //     ),
-//   );
-// }
+
+//     // Headline
+//     headlineLarge: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w600,
+//       color: AppColors.light1OnBackground,
+//     ),
+//     headlineMedium: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w500,
+//       color: AppColors.light1OnBackground,
+//     ),
+//     headlineSmall: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w500,
+//       color: AppColors.light1OnBackground,
+//     ),
+
+//     // Titles
+//     titleLarge: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w500,
+//       color: AppColors.light1OnBackground,
+//     ),
+//     titleMedium: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w500,
+//       color: AppColors.light1OnBackground,
+//     ),
+//     titleSmall: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w400,
+//       color: AppColors.light1OnBackground,
+//     ),
+
+//     // Body (Nunito)
+//     bodyLarge: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w700,
+//       color: AppColors.light1OnBackground,
+//     ),
+//     bodyMedium: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w500,
+//       color: AppColors.light1OnBackground,
+//     ),
+//     bodySmall: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w400,
+//       color: AppColors.light1OnBackground,
+//     ),
+
+//     // Labels & Buttons (Nunito)
+//     labelLarge: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w700,
+//       color: Colors.white,
+//     ),
+//     labelMedium: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w500,
+//       color: Colors.white,
+//     ),
+//     labelSmall: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w500,
+//       color: Colors.white,
+//     ),
+//   ),
+
+//   tabBarTheme: TabBarThemeData(
+//     indicatorSize: TabBarIndicatorSize.tab,
+//     dividerColor: Colors.transparent,
+//     indicator: const BoxDecoration(
+//       borderRadius: BorderRadius.all(Radius.circular(20)),
+//     ),
+//     splashBorderRadius: const BorderRadius.all(Radius.circular(20)),
+//     labelStyle: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w600,
+//       color: AppColors.light1Background,
+//     ),
+//   ),
+
+//   colorScheme: const ColorScheme.light(
+//     primary: AppColors.light1Primary,
+//     secondary: AppColors.light1Secondary,
+//     surface: AppColors.light1Surface,
+//     onPrimary: Colors.white,
+//     onSurface: AppColors.light1OnBackground,
+//     error: AppColors.light1Error,
+//   ),
+// );
+
+// // ----- LIGHT THEME 2: Blue/Orange (Vibrant) -----
+// final ThemeData lightTheme2 = ThemeData.light().copyWith(
+//   primaryColor: AppColors.light2Primary,
+//   scaffoldBackgroundColor: AppColors.light2Background,
+
+//   floatingActionButtonTheme: const FloatingActionButtonThemeData(
+//     backgroundColor: AppColors.light2Primary,
+//     foregroundColor: Colors.white,
+//   ),
+
+//   appBarTheme: const AppBarTheme(
+//     backgroundColor: AppColors.light2Primary,
+//     foregroundColor: Colors.white,
+//     elevation: 0,
+//     centerTitle: true,
+//     titleTextStyle: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w600,
+//       fontSize: 20,
+//       color: Colors.white,
+//     ),
+//   ),
+
+//   textTheme: const TextTheme(
+//     // Display
+//     displayLarge: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w700,
+//       color: AppColors.light2OnBackground,
+//     ),
+//     displayMedium: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w600,
+//       color: AppColors.light2OnBackground,
+//     ),
+//     displaySmall: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w600,
+//       color: AppColors.light2OnBackground,
+//     ),
+
+//     // Headline
+//     headlineLarge: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w600,
+//       color: AppColors.light2OnBackground,
+//     ),
+//     headlineMedium: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w500,
+//       color: AppColors.light2OnBackground,
+//     ),
+//     headlineSmall: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w500,
+//       color: AppColors.light2OnBackground,
+//     ),
+
+//     // Titles
+//     titleLarge: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w500,
+//       color: AppColors.light2OnBackground,
+//     ),
+//     titleMedium: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w500,
+//       color: AppColors.light2OnBackground,
+//     ),
+//     titleSmall: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w400,
+//       color: AppColors.light2OnBackground,
+//     ),
+
+//     // Body (Nunito)
+//     bodyLarge: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w700,
+//       color: AppColors.light2OnBackground,
+//     ),
+//     bodyMedium: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w500,
+//       color: AppColors.light2OnBackground,
+//     ),
+//     bodySmall: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w400,
+//       color: AppColors.light2OnBackground,
+//     ),
+
+//     // Labels & Buttons (Nunito)
+//     labelLarge: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w700,
+//       color: Colors.white,
+//     ),
+//     labelMedium: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w500,
+//       color: Colors.white,
+//     ),
+//     labelSmall: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w500,
+//       color: Colors.white,
+//     ),
+//   ),
+
+//   tabBarTheme: TabBarThemeData(
+//     indicatorSize: TabBarIndicatorSize.tab,
+//     dividerColor: Colors.transparent,
+//     indicator: const BoxDecoration(
+//       borderRadius: BorderRadius.all(Radius.circular(20)),
+//     ),
+//     splashBorderRadius: const BorderRadius.all(Radius.circular(20)),
+//     labelStyle: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w600,
+//       color: AppColors.light2Background,
+//     ),
+//   ),
+
+//   colorScheme: const ColorScheme.light(
+//     primary: AppColors.light2Primary,
+//     secondary: AppColors.light2Secondary,
+//     surface: AppColors.light2Surface,
+//     onPrimary: Colors.white,
+//     onSurface: AppColors.light2OnBackground,
+//     error: AppColors.light2Error,
+//   ),
+// );
+
+// // ----- LIGHT THEME 3: Green/Coral (Fresh) -----
+// final ThemeData lightTheme3 = ThemeData.light().copyWith(
+//   primaryColor: AppColors.light3Primary,
+//   scaffoldBackgroundColor: AppColors.light3Background,
+
+//   floatingActionButtonTheme: const FloatingActionButtonThemeData(
+//     backgroundColor: AppColors.light3Primary,
+//     foregroundColor: Colors.white,
+//   ),
+
+//   appBarTheme: const AppBarTheme(
+//     backgroundColor: AppColors.light3Primary,
+//     foregroundColor: Colors.white,
+//     elevation: 0,
+//     centerTitle: true,
+//     titleTextStyle: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w600,
+//       fontSize: 20,
+//       color: Colors.white,
+//     ),
+//   ),
+
+//   textTheme: const TextTheme(
+//     // Display
+//     displayLarge: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w700,
+//       color: AppColors.light3OnBackground,
+//     ),
+//     displayMedium: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w600,
+//       color: AppColors.light3OnBackground,
+//     ),
+//     displaySmall: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w600,
+//       color: AppColors.light3OnBackground,
+//     ),
+
+//     // Headline
+//     headlineLarge: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w600,
+//       color: AppColors.light3OnBackground,
+//     ),
+//     headlineMedium: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w500,
+//       color: AppColors.light3OnBackground,
+//     ),
+//     headlineSmall: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w500,
+//       color: AppColors.light3OnBackground,
+//     ),
+
+//     // Titles
+//     titleLarge: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w500,
+//       color: AppColors.light3OnBackground,
+//     ),
+//     titleMedium: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w500,
+//       color: AppColors.light3OnBackground,
+//     ),
+//     titleSmall: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w400,
+//       color: AppColors.light3OnBackground,
+//     ),
+
+//     // Body (Nunito)
+//     bodyLarge: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w700,
+//       color: AppColors.light3OnBackground,
+//     ),
+//     bodyMedium: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w500,
+//       color: AppColors.light3OnBackground,
+//     ),
+//     bodySmall: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w400,
+//       color: AppColors.light3OnBackground,
+//     ),
+
+//     // Labels & Buttons (Nunito)
+//     labelLarge: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w700,
+//       color: Colors.white,
+//     ),
+//     labelMedium: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w500,
+//       color: Colors.white,
+//     ),
+//     labelSmall: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w500,
+//       color: Colors.white,
+//     ),
+//   ),
+
+//   tabBarTheme: TabBarThemeData(
+//     indicatorSize: TabBarIndicatorSize.tab,
+//     dividerColor: Colors.transparent,
+//     indicator: const BoxDecoration(
+//       borderRadius: BorderRadius.all(Radius.circular(20)),
+//     ),
+//     splashBorderRadius: const BorderRadius.all(Radius.circular(20)),
+//     labelStyle: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w600,
+//       color: AppColors.light3Background,
+//     ),
+//   ),
+
+//   colorScheme: const ColorScheme.light(
+//     primary: AppColors.light3Primary,
+//     secondary: AppColors.light3Secondary,
+//     surface: AppColors.light3Surface,
+//     onPrimary: Colors.white,
+//     onSurface: AppColors.light3OnBackground,
+//     error: AppColors.light3Error,
+//   ),
+// );
+
+// // ----- DARK THEME 1: Deep Purple/Amber (Rich) -----
+// final ThemeData darkTheme1 = ThemeData.dark().copyWith(
+//   primaryColor: AppColors.dark1Primary,
+//   scaffoldBackgroundColor: AppColors.dark1Background,
+
+//   floatingActionButtonTheme: const FloatingActionButtonThemeData(
+//     backgroundColor: AppColors.dark1Primary,
+//     foregroundColor: Colors.white,
+//   ),
+
+//   appBarTheme: const AppBarTheme(
+//     backgroundColor: AppColors.dark1Surface,
+//     foregroundColor: Colors.white,
+//     elevation: 0,
+//     centerTitle: true,
+//     titleTextStyle: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w600,
+//       fontSize: 20,
+//       color: Colors.white,
+//     ),
+//   ),
+
+//   textTheme: const TextTheme(
+//     // Display
+//     displayLarge: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w700,
+//       color: AppColors.dark1OnBackground,
+//     ),
+//     displayMedium: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w600,
+//       color: AppColors.dark1OnBackground,
+//     ),
+//     displaySmall: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w600,
+//       color: AppColors.dark1OnBackground,
+//     ),
+
+//     // Headline
+//     headlineLarge: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w600,
+//       color: AppColors.dark1OnBackground,
+//     ),
+//     headlineMedium: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w500,
+//       color: AppColors.dark1OnBackground,
+//     ),
+//     headlineSmall: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w500,
+//       color: AppColors.dark1OnBackground,
+//     ),
+
+//     // Titles
+//     titleLarge: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w500,
+//       color: AppColors.dark1OnBackground,
+//     ),
+//     titleMedium: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w500,
+//       color: AppColors.dark1OnBackground,
+//     ),
+//     titleSmall: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w400,
+//       color: AppColors.dark1OnBackground,
+//     ),
+
+//     // Body (Nunito)
+//     bodyLarge: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w700,
+//       color: AppColors.dark1OnBackground,
+//     ),
+//     bodyMedium: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w500,
+//       color: AppColors.dark1OnBackground,
+//     ),
+//     bodySmall: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w400,
+//       color: AppColors.dark1OnBackground,
+//     ),
+
+//     // Labels & Buttons (Nunito)
+//     labelLarge: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w700,
+//       color: Colors.white,
+//     ),
+//     labelMedium: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w500,
+//       color: Colors.white,
+//     ),
+//     labelSmall: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w500,
+//       color: Colors.white,
+//     ),
+//   ),
+
+//   tabBarTheme: TabBarThemeData(
+//     indicatorSize: TabBarIndicatorSize.tab,
+//     dividerColor: Colors.transparent,
+//     indicator: const BoxDecoration(
+//       borderRadius: BorderRadius.all(Radius.circular(20)),
+//     ),
+//     splashBorderRadius: const BorderRadius.all(Radius.circular(20)),
+//     labelStyle: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w600,
+//       color: AppColors.dark1Background,
+//     ),
+//   ),
+
+//   colorScheme: const ColorScheme.dark(
+//     primary: AppColors.dark1Primary,
+//     secondary: AppColors.dark1Secondary,
+//     surface: AppColors.dark1Surface,
+//     onPrimary: Colors.white,
+//     onSurface: AppColors.dark1OnBackground,
+//     error: AppColors.dark1Error,
+//   ),
+// );
+
+// // ----- DARK THEME 2: Blue/Grey (Professional) -----
+// final ThemeData darkTheme2 = ThemeData.dark().copyWith(
+//   primaryColor: AppColors.dark2Primary,
+//   scaffoldBackgroundColor: AppColors.dark2Background,
+
+//   floatingActionButtonTheme: const FloatingActionButtonThemeData(
+//     backgroundColor: AppColors.dark2Primary,
+//     foregroundColor: Colors.white,
+//   ),
+
+//   appBarTheme: const AppBarTheme(
+//     backgroundColor: AppColors.dark2Surface,
+//     foregroundColor: Colors.white,
+//     elevation: 0,
+//     centerTitle: true,
+//     titleTextStyle: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w600,
+//       fontSize: 20,
+//       color: Colors.white,
+//     ),
+//   ),
+
+//   textTheme: const TextTheme(
+//     // Display
+//     displayLarge: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w700,
+//       color: AppColors.dark2OnBackground,
+//     ),
+//     displayMedium: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w600,
+//       color: AppColors.dark2OnBackground,
+//     ),
+//     displaySmall: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w600,
+//       color: AppColors.dark2OnBackground,
+//     ),
+
+//     // Headline
+//     headlineLarge: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w600,
+//       color: AppColors.dark2OnBackground,
+//     ),
+//     headlineMedium: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w500,
+//       color: AppColors.dark2OnBackground,
+//     ),
+//     headlineSmall: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w500,
+//       color: AppColors.dark2OnBackground,
+//     ),
+
+//     // Titles
+//     titleLarge: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w500,
+//       color: AppColors.dark2OnBackground,
+//     ),
+//     titleMedium: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w500,
+//       color: AppColors.dark2OnBackground,
+//     ),
+//     titleSmall: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w400,
+//       color: AppColors.dark2OnBackground,
+//     ),
+
+//     // Body (Nunito)
+//     bodyLarge: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w700,
+//       color: AppColors.dark2OnBackground,
+//     ),
+//     bodyMedium: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w500,
+//       color: AppColors.dark2OnBackground,
+//     ),
+//     bodySmall: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w400,
+//       color: AppColors.dark2OnBackground,
+//     ),
+
+//     // Labels & Buttons (Nunito)
+//     labelLarge: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w700,
+//       color: Colors.white,
+//     ),
+//     labelMedium: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w500,
+//       color: Colors.white,
+//     ),
+//     labelSmall: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w500,
+//       color: Colors.white,
+//     ),
+//   ),
+
+//   tabBarTheme: TabBarThemeData(
+//     indicatorSize: TabBarIndicatorSize.tab,
+//     dividerColor: Colors.transparent,
+//     indicator: const BoxDecoration(
+//       borderRadius: BorderRadius.all(Radius.circular(20)),
+//     ),
+//     splashBorderRadius: const BorderRadius.all(Radius.circular(20)),
+//     labelStyle: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w600,
+//       color: AppColors.dark2Background,
+//     ),
+//   ),
+
+//   colorScheme: const ColorScheme.dark(
+//     primary: AppColors.dark2Primary,
+//     secondary: AppColors.dark2Secondary,
+//     surface: AppColors.dark2Surface,
+//     onPrimary: Colors.white,
+//     onSurface: AppColors.dark2OnBackground,
+//     error: AppColors.dark2Error,
+//   ),
+// );
+
+// // ----- DARK THEME 3: Forest Green/Amber (Nature) -----
+// final ThemeData darkTheme3 = ThemeData.dark().copyWith(
+//   primaryColor: AppColors.dark3Primary,
+//   scaffoldBackgroundColor: AppColors.dark3Background,
+
+//   floatingActionButtonTheme: const FloatingActionButtonThemeData(
+//     backgroundColor: AppColors.dark3Primary,
+//     foregroundColor: Colors.white,
+//   ),
+
+//   appBarTheme: const AppBarTheme(
+//     backgroundColor: AppColors.dark3Surface,
+//     foregroundColor: Colors.white,
+//     elevation: 0,
+//     centerTitle: true,
+//     titleTextStyle: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w600,
+//       fontSize: 20,
+//       color: Colors.white,
+//     ),
+//   ),
+
+//   textTheme: const TextTheme(
+//     // Display
+//     displayLarge: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w700,
+//       color: AppColors.dark3OnBackground,
+//     ),
+//     displayMedium: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w600,
+//       color: AppColors.dark3OnBackground,
+//     ),
+//     displaySmall: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w600,
+//       color: AppColors.dark3OnBackground,
+//     ),
+
+//     // Headline
+//     headlineLarge: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w600,
+//       color: AppColors.dark3OnBackground,
+//     ),
+//     headlineMedium: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w500,
+//       color: AppColors.dark3OnBackground,
+//     ),
+//     headlineSmall: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w500,
+//       color: AppColors.dark3OnBackground,
+//     ),
+
+//     // Titles
+//     titleLarge: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w500,
+//       color: AppColors.dark3OnBackground,
+//     ),
+//     titleMedium: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w500,
+//       color: AppColors.dark3OnBackground,
+//     ),
+//     titleSmall: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w400,
+//       color: AppColors.dark3OnBackground,
+//     ),
+
+//     // Body (Nunito)
+//     bodyLarge: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w700,
+//       color: AppColors.dark3OnBackground,
+//     ),
+//     bodyMedium: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w500,
+//       color: AppColors.dark3OnBackground,
+//     ),
+//     bodySmall: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w400,
+//       color: AppColors.dark3OnBackground,
+//     ),
+
+//     // Labels & Buttons (Nunito)
+//     labelLarge: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w700,
+//       color: Colors.white,
+//     ),
+//     labelMedium: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w500,
+//       color: Colors.white,
+//     ),
+//     labelSmall: TextStyle(
+//       fontFamily: 'Nunito',
+//       fontWeight: FontWeight.w500,
+//       color: Colors.white,
+//     ),
+//   ),
+
+//   tabBarTheme: TabBarThemeData(
+//     indicatorSize: TabBarIndicatorSize.tab,
+//     dividerColor: Colors.transparent,
+//     indicator: const BoxDecoration(
+//       borderRadius: BorderRadius.all(Radius.circular(20)),
+//     ),
+//     splashBorderRadius: const BorderRadius.all(Radius.circular(20)),
+//     labelStyle: TextStyle(
+//       fontFamily: 'Quicksand',
+//       fontWeight: FontWeight.w600,
+//       color: AppColors.dark3Background,
+//     ),
+//   ),
+
+//   colorScheme: const ColorScheme.dark(
+//     primary: AppColors.dark3Primary,
+//     secondary: AppColors.dark3Secondary,
+//     surface: AppColors.dark3Surface,
+//     onPrimary: Colors.white,
+//     onSurface: AppColors.dark3OnBackground,
+//     error: AppColors.dark3Error,
+//   ),
+// );

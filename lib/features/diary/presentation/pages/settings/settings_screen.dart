@@ -4,6 +4,7 @@ import 'package:routine/core/version/app_version.dart';
 import 'package:routine/features/diary/presentation/pages/settings/contact_us.dart';
 import 'package:routine/features/diary/presentation/pages/settings/help_screen.dart';
 import 'package:routine/features/diary/presentation/pages/settings/home_bg_update.dart';
+import 'package:routine/features/diary/presentation/pages/theme/theme_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -58,6 +59,17 @@ class SettingsScreen extends StatelessWidget {
                       onTap: ()  => Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (context) => const HomeBgUpdate(),
+                        ),
+                      ),
+                    ),
+                     ListTile(
+                      leading: const Icon(Icons.color_lens_outlined),
+                      title: const Text('Theme'),
+                      titleTextStyle: Theme.of(context).textTheme.titleSmall,
+                      trailing: const CupertinoListTileChevron(),
+                      onTap: ()  => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) =>  ThemeSwitcherScreen(),
                         ),
                       ),
                     ),
