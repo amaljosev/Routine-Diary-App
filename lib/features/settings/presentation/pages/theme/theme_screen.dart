@@ -126,8 +126,6 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return BlocBuilder<ThemeBloc, ThemeState>(
       builder: (context, state) {
         final selectedThemeIndex = state.themeIndex;
@@ -138,9 +136,13 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
           backgroundColor: _getPreviewBackgroundColor(_currentPage),
           appBar: AppBar(
             title: const Text('Choose Your Diary Theme'),
+            titleTextStyle: Theme.of(context).textTheme.titleMedium!.copyWith(
+              color: previewPrimary,
+              fontWeight: FontWeight.bold,
+            ),
             centerTitle: true,
             backgroundColor: Colors.transparent,
-            foregroundColor: theme.colorScheme.onSurface,
+            foregroundColor: previewPrimary,
             elevation: 0,
           ),
           body: Padding(
@@ -320,7 +322,9 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               elevation: 5,
-                              shadowColor: previewPrimary.withValues(alpha: 0.3),
+                              shadowColor: previewPrimary.withValues(
+                                alpha: 0.3,
+                              ),
                             ),
                             child: const Text(
                               'Use It',

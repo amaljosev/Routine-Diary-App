@@ -50,26 +50,33 @@ class SettingsScreen extends StatelessWidget {
               delegate: SliverChildListDelegate([
                 CupertinoListSection.insetGrouped(
                   header: const Text('Settings'),
+                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                   children: [
                     ListTile(
-                      leading: const Icon(CupertinoIcons.photo),
+                      leading: Icon(
+                        CupertinoIcons.photo,
+                        color: Theme.of(context).primaryColor,
+                      ),
                       title: const Text('Update Home Background'),
                       titleTextStyle: Theme.of(context).textTheme.titleSmall,
                       trailing: const CupertinoListTileChevron(),
-                      onTap: ()  => Navigator.of(context).push(
+                      onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (context) => const HomeBgUpdate(),
                         ),
                       ),
                     ),
-                     ListTile(
-                      leading: const Icon(Icons.color_lens_outlined),
+                    ListTile(
+                      leading: Icon(
+                        Icons.color_lens_outlined,
+                        color: Theme.of(context).primaryColor,
+                      ),
                       title: const Text('Theme'),
                       titleTextStyle: Theme.of(context).textTheme.titleSmall,
                       trailing: const CupertinoListTileChevron(),
-                      onTap: ()  => Navigator.of(context).push(
+                      onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (context) =>  ThemeSwitcherScreen(),
+                          builder: (context) => ThemeSwitcherScreen(),
                         ),
                       ),
                     ),
@@ -79,9 +86,13 @@ class SettingsScreen extends StatelessWidget {
                 /// APP INFORMATION
                 CupertinoListSection.insetGrouped(
                   header: const Text('App'),
+                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                   children: [
                     ListTile(
-                      leading: const Icon(Icons.support_agent),
+                      leading: Icon(
+                        color: Theme.of(context).primaryColor,
+                        Icons.support_agent,
+                      ),
                       title: const Text('Help'),
                       titleTextStyle: Theme.of(context).textTheme.titleSmall,
                       trailing: const CupertinoListTileChevron(),
@@ -90,7 +101,10 @@ class SettingsScreen extends StatelessWidget {
                       ),
                     ),
                     ListTile(
-                      leading: const Icon(Icons.shield_outlined),
+                      leading: Icon(
+                        color: Theme.of(context).primaryColor,
+                        Icons.shield_outlined,
+                      ),
                       title: const Text('Privacy Policy'),
                       titleTextStyle: Theme.of(context).textTheme.titleSmall,
                       trailing: const CupertinoListTileChevron(),
@@ -104,7 +118,10 @@ class SettingsScreen extends StatelessWidget {
                         dividerColor: Colors.transparent,
                       ),
                       child: ExpansionTile(
-                        leading: const Icon(Icons.info_outline),
+                        leading: Icon(
+                          color: Theme.of(context).primaryColor,
+                          Icons.info_outline,
+                        ),
                         title: Text(
                           'About this app',
                           style: Theme.of(context).textTheme.titleSmall,
@@ -143,9 +160,13 @@ class SettingsScreen extends StatelessWidget {
                 /// SUPPORT
                 CupertinoListSection.insetGrouped(
                   header: const Text('Support'),
+                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                   children: [
                     ListTile(
-                      leading: const Icon(CupertinoIcons.mail),
+                      leading: Icon(
+                        CupertinoIcons.mail,
+                        color: Theme.of(context).primaryColor,
+                      ),
                       title: const Text('Contact us'),
                       titleTextStyle: Theme.of(context).textTheme.titleSmall,
                       trailing: const CupertinoListTileChevron(),
