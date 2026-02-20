@@ -20,19 +20,17 @@ class DiaryScreen extends StatelessWidget {
         builder: (context, state) {
           return CustomScrollView(
             slivers: [
-              // Custom Sliver App Bar with image
               SliverAppBar(
                 expandedHeight: 200.0,
                 stretch: true,
-                backgroundColor: theme.colorScheme.primary, // ← uses current theme's primary
+                backgroundColor: theme.colorScheme.primary,
                 foregroundColor: Colors.white,
                 flexibleSpace: FlexibleSpaceBar(
                   stretchModes: const [StretchMode.blurBackground],
                   background: Stack(
                     fit: StackFit.expand,
                     children: [
-                      Image.asset('assets/img/diary.png', fit: BoxFit.cover),
-                      // Add overlay for better text contrast
+                      Image.asset('assets/img/themes/theme_1.png', fit: BoxFit.cover),
                       Container(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
@@ -83,7 +81,6 @@ class DiaryScreen extends StatelessWidget {
                 ],
               ),
 
-              // Header with month/year
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
@@ -113,7 +110,7 @@ class DiaryScreen extends StatelessWidget {
                           ),
                         ),
                         child: Text(
-                          "${DateTime.now().month}/${DateTime.now().year}",
+                          "${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}",
                           style: theme.textTheme.labelMedium?.copyWith(
                             color: theme.colorScheme.primary,
                             fontWeight: FontWeight.w600,
@@ -125,7 +122,6 @@ class DiaryScreen extends StatelessWidget {
                 ),
               ),
 
-              // Show appropriate state
               if (state.isLoading)
                 const SliverFillRemaining(
                   child: Center(child: CircularProgressIndicator()),
@@ -185,11 +181,11 @@ class DiaryScreen extends StatelessWidget {
                             width: 120,
                             height: 120,
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.surface, // ← uses theme surface
+                              color: theme.colorScheme.surface, 
                               shape: BoxShape.circle,
                               border: Border.all(
                                 color: theme.colorScheme.primary.withValues(
-                                  alpha: 0.2,
+                                  alpha: 0.4,
                                 ),
                                 width: 2,
                               ),
@@ -225,7 +221,6 @@ class DiaryScreen extends StatelessWidget {
                   ),
                 )
               else
-                // Entries list
                 SliverSafeArea(
                   top: false,
                   sliver: SliverList(

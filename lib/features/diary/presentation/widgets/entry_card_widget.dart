@@ -14,10 +14,8 @@ class DiaryEntryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-
-    // Generate a color based on the entry's mood or content
     final color = _generateColorFromText(entry.mood + entry.title);
-
+    final colorD = _generateDarkColorFromText(entry.mood + entry.title);
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       decoration: BoxDecoration(
@@ -58,14 +56,13 @@ class DiaryEntryCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Date indicator
                 Container(
                   width: 60,
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   decoration: BoxDecoration(
                     color: isDark
-                        ? color.withValues(alpha: 0.3)
-                        : color.withValues(alpha: 0.1),
+                        ? color.withValues(alpha: 0.1)
+                        : color.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: isDark
@@ -80,7 +77,7 @@ class DiaryEntryCard extends StatelessWidget {
                         _getDay(entry.date),
                         style: theme.textTheme.titleLarge!.copyWith(
                           fontWeight: FontWeight.w900,
-                          color: isDark ? Colors.white : color,
+                          color: isDark ? Colors.white : colorD,
                         ),
                       ),
                       Text(
@@ -89,7 +86,7 @@ class DiaryEntryCard extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                           color: isDark
                               ? Colors.white.withValues(alpha: 0.8)
-                              : color.withValues(alpha: 0.8),
+                              : colorD.withValues(alpha: 0.5),
                         ),
                       ),
                     ],
@@ -110,7 +107,7 @@ class DiaryEntryCard extends StatelessWidget {
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
                               color: isDark
-                                  ? theme.colorScheme.background.withValues(
+                                  ? theme.colorScheme.onSurface.withValues(
                                       alpha: 0.5,
                                     )
                                   : Colors.grey[100],
@@ -270,11 +267,16 @@ class DiaryEntryCard extends StatelessWidget {
     }
   }
 
-  // Helper function to generate a color from text
   Color _generateColorFromText(String text) {
     final hash = text.hashCode;
-    // Generate a pastel color by using lower saturation and higher lightness
     final hue = (hash.abs() % 360).toDouble();
     return HSLColor.fromAHSL(1.0, hue, 0.7, 0.8).toColor();
+  }
+
+  Color _generateDarkColorFromText(String text) {
+    final hash = text.hashCode;
+    final hue = (hash.abs() % 360).toDouble();
+    // Using lower lightness (0.3) for dark shade and slightly lower saturation (0.6)
+    return HSLColor.fromAHSL(1.0, hue, 0.6, 0.3).toColor();
   }
 }

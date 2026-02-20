@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import 'package:routine/core/theme/app_colors.dart';
 import 'package:routine/features/settings/presentation/bloc/apptheme_bloc.dart';
 
 class ThemeSwitcherScreen extends StatefulWidget {
@@ -14,15 +14,97 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
   final PageController _pageController = PageController(viewportFraction: 0.85);
   int _currentPage = 0;
 
-  // Map indices to asset images (0-5)
   final List<String> _themes = [
     'assets/img/themes/theme_1.png',
-    'assets/img/themes/theme_2.png',
+    'assets/img/themes/theme_2.jpg',
     'assets/img/themes/theme_3.png',
-    'assets/img/themes/theme_1.png',
-    'assets/img/themes/theme_2.png',
-    'assets/img/themes/theme_3.png',
+    'assets/img/themes/theme_4.jpg',
+    'assets/img/themes/theme_5.jpg',
+    'assets/img/themes/theme_6.jpg',
   ];
+
+  // Helper to get background color for preview based on index
+  Color _getPreviewBackgroundColor(int index) {
+    switch (index) {
+      case 0:
+        return AppColors.light1Background;
+      case 1:
+        return AppColors.light2Background;
+      case 2:
+        return AppColors.light3Background;
+      case 3:
+        return AppColors.dark1Background;
+      case 4:
+        return AppColors.dark2Background;
+      case 5:
+        return AppColors.dark3Background;
+      default:
+        return Theme.of(context).scaffoldBackgroundColor;
+    }
+  }
+
+  // Get primary color for a given theme index
+  Color _getThemePrimaryColor(int index) {
+    switch (index) {
+      case 0:
+        return AppColors.light1Primary;
+      case 1:
+        return AppColors.light2Primary;
+      case 2:
+        return AppColors.light3Primary;
+      case 3:
+        return AppColors.dark1Primary;
+      case 4:
+        return AppColors.dark2Primary;
+      case 5:
+        return AppColors.dark3Primary;
+      default:
+        return Theme.of(context).colorScheme.primary;
+    }
+  }
+
+  // Get secondary color for a given theme index
+  Color _getThemeSecondaryColor(int index) {
+    switch (index) {
+      case 0:
+        return AppColors.light1Secondary;
+      case 1:
+        return AppColors.light2Secondary;
+      case 2:
+        return AppColors.light3Secondary;
+      case 3:
+        return AppColors.dark1Secondary;
+      case 4:
+        return AppColors.dark2Secondary;
+      case 5:
+        return AppColors.dark3Secondary;
+      default:
+        return Theme.of(context).colorScheme.secondary;
+    }
+  }
+
+  // Get surface color for a given theme index
+  Color _getThemeSurfaceColor(int index) {
+    switch (index) {
+      case 0:
+        return AppColors.light1Surface;
+      case 1:
+        return AppColors.light2Surface;
+      case 2:
+        return AppColors.light3Surface;
+      case 3:
+        return AppColors.dark1Surface;
+      case 4:
+        return AppColors.dark2Surface;
+      case 5:
+        return AppColors.dark3Surface;
+      default:
+        return Theme.of(context).colorScheme.surface;
+    }
+  }
+
+  // Determine if the theme at given index is dark (indices 3-5 are dark)
+  bool _isPreviewDark(int index) => index >= 3;
 
   @override
   void initState() {
@@ -45,16 +127,21 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return BlocBuilder<ThemeBloc, ThemeState>(
       builder: (context, state) {
         final selectedThemeIndex = state.themeIndex;
+        final previewPrimary = _getThemePrimaryColor(_currentPage);
+        final previewSecondary = _getThemeSecondaryColor(_currentPage);
 
         return Scaffold(
+          backgroundColor: _getPreviewBackgroundColor(_currentPage),
           appBar: AppBar(
             title: const Text('Choose Your Diary Theme'),
             centerTitle: true,
+            backgroundColor: Colors.transparent,
+            foregroundColor: theme.colorScheme.onSurface,
+            elevation: 0,
           ),
           body: Padding(
             padding: const EdgeInsets.symmetric(vertical: 20.0),
@@ -70,10 +157,8 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                         PageView.builder(
                           controller: _pageController,
                           itemCount: _themes.length,
-                          onPageChanged: (index) {
-                            // No need to set selectedThemeIndex here; it's handled by bloc on button press.
-                          },
                           itemBuilder: (context, index) {
+                            final isDarkPreview = _isPreviewDark(index);
                             return AnimatedContainer(
                               duration: const Duration(milliseconds: 300),
                               curve: Curves.easeOutCubic,
@@ -83,26 +168,39 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                                 right: 10,
                                 left: 10,
                               ),
+
                               child: Transform.scale(
                                 scale: _currentPage == index ? 1.0 : 0.9,
                                 child: GestureDetector(
                                   onTap: () {
-                                    // Just scroll to this theme; selection happens on button press.
+                                    context.read<ThemeBloc>().add(
+                                      ChangeTheme(_currentPage),
+                                    );
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Theme ${_currentPage + 1} selected!',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        backgroundColor: previewPrimary,
+                                        behavior: SnackBarBehavior.floating,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                        ),
+                                      ),
+                                    );
                                   },
                                   child: Container(
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(32),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withValues(
-                                            alpha: 0.08,
-                                          ),
-                                          blurRadius: 20,
-                                          offset: const Offset(0, 8),
-                                          spreadRadius:
-                                              _currentPage == index ? 2 : 0,
-                                        ),
-                                      ],
+
+                                      color: isDarkPreview
+                                          ? Colors.white10
+                                          : Colors.black12,
                                     ),
                                     child: ClipRRect(
                                       borderRadius: BorderRadius.circular(32),
@@ -118,19 +216,21 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                                               ),
                                               Expanded(
                                                 child: ListView.builder(
-                                                  padding:
-                                                      const EdgeInsets.all(8),
+                                                  padding: const EdgeInsets.all(
+                                                    8,
+                                                  ),
                                                   itemCount: 4,
-                                                  itemBuilder:
-                                                      (context, idx) =>
-                                                          _buildPreviewItem(
-                                                            context,
-                                                            isDark,
-                                                          ),
+                                                  itemBuilder: (context, idx) =>
+                                                      // Pass the theme index to the preview item builder
+                                                      _buildPreviewItem(
+                                                        context,
+                                                        index,
+                                                      ),
                                                 ),
                                               ),
                                             ],
                                           ),
+                                          // Border for the selected (saved) theme – use its own primary color
                                           if (selectedThemeIndex == index)
                                             Positioned.fill(
                                               child: Container(
@@ -138,9 +238,10 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                                                   borderRadius:
                                                       BorderRadius.circular(32),
                                                   border: Border.all(
-                                                    color: Theme.of(context)
-                                                        .colorScheme
-                                                        .primary,
+                                                    color:
+                                                        _getThemePrimaryColor(
+                                                          selectedThemeIndex,
+                                                        ),
                                                     width: 4,
                                                   ),
                                                 ),
@@ -155,6 +256,7 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                             );
                           },
                         ),
+                        // Page indicator dots – use previewed theme's colors
                         Positioned(
                           bottom: 20,
                           left: 0,
@@ -165,17 +267,15 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                               _themes.length,
                               (index) => AnimatedContainer(
                                 duration: const Duration(milliseconds: 300),
-                                margin:
-                                    const EdgeInsets.symmetric(horizontal: 4),
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
                                 height: 6,
                                 width: _currentPage == index ? 24 : 6,
                                 decoration: BoxDecoration(
                                   color: _currentPage == index
-                                      ? Theme.of(context).colorScheme.primary
-                                      : Theme.of(context)
-                                          .colorScheme
-                                          .secondary
-                                          .withValues(alpha: 0.3),
+                                      ? previewPrimary
+                                      : previewSecondary.withValues(alpha: 0.3),
                                   borderRadius: BorderRadius.circular(3),
                                 ),
                               ),
@@ -187,52 +287,53 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                   ),
                 ),
                 SafeArea(
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 60,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        context.read<ThemeBloc>().add(
-                              ChangeTheme(_currentPage),
-                            );
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Theme ${_currentPage + 1} selected!',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w500,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 25),
+                          child: ElevatedButton(
+                            onPressed: () {
+                              context.read<ThemeBloc>().add(
+                                ChangeTheme(_currentPage),
+                              );
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Theme ${_currentPage + 1} selected!',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  backgroundColor: previewPrimary,
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: previewPrimary,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              elevation: 5,
+                              shadowColor: previewPrimary.withValues(alpha: 0.3),
+                            ),
+                            child: const Text(
+                              'Use It',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 1,
                               ),
                             ),
-                            backgroundColor:
-                                Theme.of(context).colorScheme.primary,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
                           ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        elevation: 5,
-                        shadowColor: Theme.of(context)
-                            .colorScheme
-                            .primary
-                            .withValues(alpha: 0.3),
-                      ),
-                      child: const Text(
-                        'Use It',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 1,
                         ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
               ],
@@ -243,24 +344,39 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
     );
   }
 
-  Widget _buildPreviewItem(BuildContext context, bool isDark) {
-    final theme = Theme.of(context);
+  /// Builds a single preview item inside the theme card.
+  /// [themeIndex] is the index of the theme this preview belongs to.
+  Widget _buildPreviewItem(BuildContext context, int themeIndex) {
+    final isDarkPreview = _isPreviewDark(themeIndex);
+    final surfaceColor = _getThemeSurfaceColor(themeIndex);
+    final primaryColor = _getThemePrimaryColor(themeIndex);
+
+    // Define grayscale colors based on preview brightness
+    final List<Color> gradientColors = isDarkPreview
+        ? [Colors.grey[800]!, Colors.grey[700]!, Colors.grey[800]!]
+        : [Colors.grey[300]!, Colors.grey[100]!, Colors.grey[300]!];
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
       decoration: BoxDecoration(
-        color: isDark
-            ? theme.colorScheme.surface.withValues(alpha: 0.6)
-            : theme.colorScheme.surface,
+        // Use previewed theme's surface color for the card background
+        color: isDarkPreview
+            ? surfaceColor.withValues(alpha: 0.6)
+            : surfaceColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.1),
+          color: primaryColor.withValues(
+            alpha: 0.1,
+          ), // Use previewed theme's primary
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark
+            color: isDarkPreview
                 ? Colors.black.withValues(alpha: 0.3)
-                : theme.colorScheme.primary.withValues(alpha: 0.08),
+                : primaryColor.withValues(
+                    alpha: 0.08,
+                  ), // Use previewed theme's primary
             blurRadius: 6,
             offset: const Offset(0, 1),
           ),
@@ -271,6 +387,7 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            // Left avatar placeholder
             Container(
               width: 45,
               height: 45,
@@ -279,17 +396,7 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: isDark
-                      ? [
-                          Colors.grey[800]!,
-                          Colors.grey[700]!,
-                          Colors.grey[800]!,
-                        ]
-                      : [
-                          Colors.grey[300]!,
-                          Colors.grey[100]!,
-                          Colors.grey[300]!,
-                        ],
+                  colors: gradientColors,
                   stops: const [0.0, 0.5, 1.0],
                 ),
               ),
@@ -300,6 +407,7 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  // First line: circle + line
                   Row(
                     children: [
                       Container(
@@ -310,17 +418,7 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                           gradient: LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
-                            colors: isDark
-                                ? [
-                                    Colors.grey[800]!,
-                                    Colors.grey[700]!,
-                                    Colors.grey[800]!,
-                                  ]
-                                : [
-                                    Colors.grey[300]!,
-                                    Colors.grey[100]!,
-                                    Colors.grey[300]!,
-                                  ],
+                            colors: gradientColors,
                           ),
                         ),
                       ),
@@ -333,17 +431,7 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                             gradient: LinearGradient(
                               begin: Alignment.centerLeft,
                               end: Alignment.centerRight,
-                              colors: isDark
-                                  ? [
-                                      Colors.grey[800]!,
-                                      Colors.grey[700]!,
-                                      Colors.grey[800]!,
-                                    ]
-                                  : [
-                                      Colors.grey[300]!,
-                                      Colors.grey[100]!,
-                                      Colors.grey[300]!,
-                                    ],
+                              colors: gradientColors,
                             ),
                           ),
                         ),
@@ -351,6 +439,7 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                     ],
                   ),
                   const SizedBox(height: 8),
+                  // Second line: full width bar
                   Container(
                     height: 12,
                     width: double.infinity,
@@ -359,21 +448,12 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                       gradient: LinearGradient(
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
-                        colors: isDark
-                            ? [
-                                Colors.grey[800]!,
-                                Colors.grey[700]!,
-                                Colors.grey[800]!,
-                              ]
-                            : [
-                                Colors.grey[300]!,
-                                Colors.grey[100]!,
-                                Colors.grey[300]!,
-                              ],
+                        colors: gradientColors,
                       ),
                     ),
                   ),
                   const SizedBox(height: 6),
+                  // Third line: half width bar
                   Container(
                     height: 12,
                     width: MediaQuery.of(context).size.width * 0.5,
@@ -382,21 +462,12 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                       gradient: LinearGradient(
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
-                        colors: isDark
-                            ? [
-                                Colors.grey[800]!,
-                                Colors.grey[700]!,
-                                Colors.grey[800]!,
-                              ]
-                            : [
-                                Colors.grey[300]!,
-                                Colors.grey[100]!,
-                                Colors.grey[300]!,
-                              ],
+                        colors: gradientColors,
                       ),
                     ),
                   ),
                   const SizedBox(height: 8),
+                  // Fourth line: small circle + short bar
                   Row(
                     children: [
                       Container(
@@ -407,17 +478,7 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                           gradient: LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
-                            colors: isDark
-                                ? [
-                                    Colors.grey[800]!,
-                                    Colors.grey[700]!,
-                                    Colors.grey[800]!,
-                                  ]
-                                : [
-                                    Colors.grey[300]!,
-                                    Colors.grey[100]!,
-                                    Colors.grey[300]!,
-                                  ],
+                            colors: gradientColors,
                           ),
                         ),
                       ),
@@ -430,17 +491,7 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                           gradient: LinearGradient(
                             begin: Alignment.centerLeft,
                             end: Alignment.centerRight,
-                            colors: isDark
-                                ? [
-                                    Colors.grey[800]!,
-                                    Colors.grey[700]!,
-                                    Colors.grey[800]!,
-                                  ]
-                                : [
-                                    Colors.grey[300]!,
-                                    Colors.grey[100]!,
-                                    Colors.grey[300]!,
-                                  ],
+                            colors: gradientColors,
                           ),
                         ),
                       ),
