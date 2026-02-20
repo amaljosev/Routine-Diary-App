@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:routine/core/theme/app_colors.dart';
+import 'package:routine/core/theme/theme_extenstions.dart';
 
 final ThemeData lightTheme1 = ThemeData.light().copyWith(
   primaryColor: AppColors.light1Primary,
@@ -132,6 +133,11 @@ final ThemeData lightTheme1 = ThemeData.light().copyWith(
     onSurface: AppColors.light1OnBackground,
     error: AppColors.light1Error,
   ),
+
+  // Add background image
+  extensions: [
+    const BackgroundImageTheme(imagePath: 'assets/img/themes/theme_1.png'),
+  ],
 );
 
 // ----- LIGHT THEME 2: Blue/Orange (Vibrant) -----
@@ -266,6 +272,10 @@ final ThemeData lightTheme2 = ThemeData.light().copyWith(
     onSurface: AppColors.light2OnBackground,
     error: AppColors.light2Error,
   ),
+
+  extensions: [
+    const BackgroundImageTheme(imagePath: 'assets/img/themes/theme_2.jpg'),
+  ],
 );
 
 // ----- LIGHT THEME 3: Green/Coral (Fresh) -----
@@ -400,6 +410,10 @@ final ThemeData lightTheme3 = ThemeData.light().copyWith(
     onSurface: AppColors.light3OnBackground,
     error: AppColors.light3Error,
   ),
+
+  extensions: [
+    const BackgroundImageTheme(imagePath: 'assets/img/themes/theme_3.png'),
+  ],
 );
 
 // ----- DARK THEME 1: Deep Purple/Amber (Rich) -----
@@ -534,6 +548,10 @@ final ThemeData darkTheme1 = ThemeData.dark().copyWith(
     onSurface: AppColors.dark1OnBackground,
     error: AppColors.dark1Error,
   ),
+
+  extensions: [
+    const BackgroundImageTheme(imagePath: 'assets/img/themes/theme_4.jpg'),
+  ],
 );
 
 // ----- DARK THEME 2: Blue/Grey (Professional) -----
@@ -668,6 +686,10 @@ final ThemeData darkTheme2 = ThemeData.dark().copyWith(
     onSurface: AppColors.dark2OnBackground,
     error: AppColors.dark2Error,
   ),
+
+  extensions: [
+    const BackgroundImageTheme(imagePath: 'assets/img/themes/theme_5.jpg'),
+  ],
 );
 
 // ----- DARK THEME 3: Forest Green/Amber (Nature) -----
@@ -802,4 +824,8 @@ final ThemeData darkTheme3 = ThemeData.dark().copyWith(
     onSurface: AppColors.dark3OnBackground,
     error: AppColors.dark3Error,
   ),
+
+  extensions: [
+    const BackgroundImageTheme(imagePath: 'assets/img/themes/theme_6.jpg'),
+  ],
 );

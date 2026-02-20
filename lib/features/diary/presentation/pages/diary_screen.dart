@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:routine/core/theme/theme_extenstions.dart';
 import 'package:routine/features/diary/data/models/diary_entry_model.dart';
 import 'package:routine/features/diary/presentation/blocs/diary/diary_bloc.dart';
 import 'package:routine/features/diary/presentation/pages/entry/diary_entry.dart';
@@ -13,7 +14,6 @@ class DiaryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       body: BlocBuilder<DiaryBloc, DiaryState>(
@@ -24,47 +24,21 @@ class DiaryScreen extends StatelessWidget {
                 expandedHeight: 200.0,
                 stretch: true,
                 backgroundColor: theme.colorScheme.primary,
-                foregroundColor: Colors.white,
                 flexibleSpace: FlexibleSpaceBar(
                   stretchModes: const [StretchMode.blurBackground],
                   background: Stack(
                     fit: StackFit.expand,
                     children: [
-                      Image.asset('assets/img/themes/theme_1.png', fit: BoxFit.cover),
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              isDark
-                                  ? Colors.black.withValues(alpha: 0.5)
-                                  : Colors.black.withValues(alpha: 0.3),
-                            ],
-                          ),
-                        ),
+                      Image.asset(
+                        Theme.of(
+                              context,
+                            ).extension<BackgroundImageTheme>()?.imagePath ??
+                            'assets/img/themes/theme_1.png',
+                        fit: BoxFit.cover,
                       ),
                     ],
                   ),
-                  centerTitle: true,
-                  titlePadding: const EdgeInsets.only(bottom: 16),
-                  title: Text(
-                    "My Diary",
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      shadows: [
-                        Shadow(
-                          blurRadius: 6,
-                          color: isDark
-                              ? Colors.black.withValues(alpha: 0.7)
-                              : Colors.black.withValues(alpha: 0.5),
-                          offset: const Offset(1, 1),
-                        ),
-                      ],
-                    ),
-                  ),
+                  // ... other properties
                 ),
                 floating: false,
                 pinned: false,
@@ -100,7 +74,7 @@ class DiaryScreen extends StatelessWidget {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.surface, 
+                          color: theme.colorScheme.surface,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: theme.colorScheme.primary.withValues(
@@ -181,7 +155,7 @@ class DiaryScreen extends StatelessWidget {
                             width: 120,
                             height: 120,
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.surface, 
+                              color: theme.colorScheme.surface,
                               shape: BoxShape.circle,
                               border: Border.all(
                                 color: theme.colorScheme.primary.withValues(
@@ -224,13 +198,10 @@ class DiaryScreen extends StatelessWidget {
                 SliverSafeArea(
                   top: false,
                   sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final DiaryEntryModel entry = state.entries[index];
-                        return DiaryEntryCard(entry: entry);
-                      },
-                      childCount: state.entries.length,
-                    ),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final DiaryEntryModel entry = state.entries[index];
+                      return DiaryEntryCard(entry: entry);
+                    }, childCount: state.entries.length),
                   ),
                 ),
             ],
