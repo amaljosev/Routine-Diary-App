@@ -415,6 +415,134 @@ final ThemeData lightTheme3 = ThemeData.light().copyWith(
     const BackgroundImageTheme(imagePath: 'assets/img/themes/theme_3.png'),
   ],
 );
+// ----- LIGHT THEME 4: Orange (Vibrant) -----
+final ThemeData lightTheme4 = ThemeData.light().copyWith(
+  primaryColor: AppColors.light4Primary,
+  scaffoldBackgroundColor: AppColors.light4Background,
+
+  floatingActionButtonTheme: const FloatingActionButtonThemeData(
+    backgroundColor: AppColors.light4Primary,
+    foregroundColor: Colors.white,
+  ),
+
+  appBarTheme: const AppBarTheme(
+    backgroundColor: AppColors.light4Primary,
+    foregroundColor: Colors.white,
+    elevation: 0,
+    centerTitle: true,
+    titleTextStyle: TextStyle(
+      fontFamily: 'Quicksand',
+      fontWeight: FontWeight.w600,
+      fontSize: 20,
+      color: Colors.white,
+    ),
+  ),
+
+  textTheme: const TextTheme(
+    displayLarge: TextStyle(
+      fontFamily: 'Quicksand',
+      fontWeight: FontWeight.w700,
+      color: AppColors.light4OnBackground,
+    ),
+    displayMedium: TextStyle(
+      fontFamily: 'Quicksand',
+      fontWeight: FontWeight.w600,
+      color: AppColors.light4OnBackground,
+    ),
+    displaySmall: TextStyle(
+      fontFamily: 'Quicksand',
+      fontWeight: FontWeight.w600,
+      color: AppColors.light4OnBackground,
+    ),
+    headlineLarge: TextStyle(
+      fontFamily: 'Quicksand',
+      fontWeight: FontWeight.w600,
+      color: AppColors.light4OnBackground,
+    ),
+    headlineMedium: TextStyle(
+      fontFamily: 'Quicksand',
+      fontWeight: FontWeight.w500,
+      color: AppColors.light4OnBackground,
+    ),
+    headlineSmall: TextStyle(
+      fontFamily: 'Quicksand',
+      fontWeight: FontWeight.w500,
+      color: AppColors.light4OnBackground,
+    ),
+    titleLarge: TextStyle(
+      fontFamily: 'Quicksand',
+      fontWeight: FontWeight.w500,
+      color: AppColors.light4OnBackground,
+    ),
+    titleMedium: TextStyle(
+      fontFamily: 'Quicksand',
+      fontWeight: FontWeight.w500,
+      color: AppColors.light4OnBackground,
+    ),
+    titleSmall: TextStyle(
+      fontFamily: 'Quicksand',
+      fontWeight: FontWeight.w400,
+      color: AppColors.light4OnBackground,
+    ),
+    bodyLarge: TextStyle(
+      fontFamily: 'Nunito',
+      fontWeight: FontWeight.w700,
+      color: AppColors.light4OnBackground,
+    ),
+    bodyMedium: TextStyle(
+      fontFamily: 'Nunito',
+      fontWeight: FontWeight.w500,
+      color: AppColors.light4OnBackground,
+    ),
+    bodySmall: TextStyle(
+      fontFamily: 'Nunito',
+      fontWeight: FontWeight.w400,
+      color: AppColors.light4OnBackground,
+    ),
+    labelLarge: TextStyle(
+      fontFamily: 'Nunito',
+      fontWeight: FontWeight.w700,
+      color: Colors.white,
+    ),
+    labelMedium: TextStyle(
+      fontFamily: 'Nunito',
+      fontWeight: FontWeight.w500,
+      color: Colors.white,
+    ),
+    labelSmall: TextStyle(
+      fontFamily: 'Nunito',
+      fontWeight: FontWeight.w500,
+      color: Colors.white,
+    ),
+  ),
+
+  tabBarTheme: TabBarThemeData(
+    indicatorSize: TabBarIndicatorSize.tab,
+    dividerColor: Colors.transparent,
+    indicator: const BoxDecoration(
+      borderRadius: BorderRadius.all(Radius.circular(20)),
+    ),
+    splashBorderRadius: const BorderRadius.all(Radius.circular(20)),
+    labelStyle: TextStyle(
+      fontFamily: 'Quicksand',
+      fontWeight: FontWeight.w600,
+      color: AppColors.light4Background,
+    ),
+  ),
+
+  colorScheme: const ColorScheme.light(
+    primary: AppColors.light4Primary,
+    secondary: AppColors.light4Secondary,
+    surface: AppColors.light4Surface,
+    onPrimary: Colors.white,
+    onSurface: AppColors.light4OnBackground,
+    error: AppColors.light4Error,
+  ),
+
+  extensions: [
+    const BackgroundImageTheme(imagePath: 'assets/img/themes/theme_7.png'),
+  ],
+);
 
 // ----- DARK THEME 1: Deep Purple/Amber (Rich) -----
 final ThemeData darkTheme1 = ThemeData.dark().copyWith(
@@ -829,3 +957,12 @@ final ThemeData darkTheme3 = ThemeData.dark().copyWith(
     const BackgroundImageTheme(imagePath: 'assets/img/themes/theme_6.jpg'),
   ],
 );
+final List<ThemeData> allThemes = [
+  lightTheme1, // 0 - Purple/Teal (Light)
+  lightTheme2, // 1 - Blue/Orange (Light)
+  lightTheme3, // 2 - Green/Coral (Light)
+  lightTheme4, // 3 - Orange/Purple (Light)
+  darkTheme1,  // 4 - Deep Purple/Amber (Dark)
+  darkTheme2,  // 5 - Blue/Grey (Dark)
+  darkTheme3,  // 6 - Forest Green/Amber (Dark)
+];

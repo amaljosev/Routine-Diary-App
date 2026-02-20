@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 class AppColors {
   // ----- LIGHT THEME 1: Purple/Teal (Modern) -----
   static const Color light1Primary = Color(0xFF7B1FA2); // Deep Purple 700
@@ -25,6 +24,14 @@ class AppColors {
   static const Color light3Background = Color(0xFFE8F5E9); // Green 50
   static const Color light3OnBackground = Color(0xFF1A1A1A); // Near black
   static const Color light3Error = Color(0xFFC2185B); // Pink 700
+
+  // ----- LIGHT THEME 4: Orange (Vibrant) -----
+  static const Color light4Primary = Color(0xFFF57C00); // Orange 700
+  static const Color light4Secondary = Color(0xFF7B1FA2); // Purple 700 (complement)
+  static const Color light4Surface = Color(0xFFFFFFFF); // White
+  static const Color light4Background = Color(0xFFFFF3E0); // Orange 50
+  static const Color light4OnBackground = Color(0xFF1A1A1A); // Near black
+  static const Color light4Error = Color(0xFFD32F2F); // Red 700
 
   // ----- DARK THEME 1: Deep Purple/Amber (Rich) -----
   static const Color dark1Primary = Color(0xFFB39DDB); // Deep Purple 200

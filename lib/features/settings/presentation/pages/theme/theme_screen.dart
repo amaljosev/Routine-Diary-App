@@ -18,6 +18,7 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
     'assets/img/themes/theme_1.png',
     'assets/img/themes/theme_2.jpg',
     'assets/img/themes/theme_3.png',
+    'assets/img/themes/theme_7.png', 
     'assets/img/themes/theme_4.jpg',
     'assets/img/themes/theme_5.jpg',
     'assets/img/themes/theme_6.jpg',
@@ -33,10 +34,12 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
       case 2:
         return AppColors.light3Background;
       case 3:
-        return AppColors.dark1Background;
+        return AppColors.light4Background; // Orange theme background
       case 4:
-        return AppColors.dark2Background;
+        return AppColors.dark1Background;
       case 5:
+        return AppColors.dark2Background;
+      case 6:
         return AppColors.dark3Background;
       default:
         return Theme.of(context).scaffoldBackgroundColor;
@@ -53,10 +56,12 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
       case 2:
         return AppColors.light3Primary;
       case 3:
-        return AppColors.dark1Primary;
+        return AppColors.light4Primary; // Orange theme primary
       case 4:
-        return AppColors.dark2Primary;
+        return AppColors.dark1Primary;
       case 5:
+        return AppColors.dark2Primary;
+      case 6:
         return AppColors.dark3Primary;
       default:
         return Theme.of(context).colorScheme.primary;
@@ -73,10 +78,12 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
       case 2:
         return AppColors.light3Secondary;
       case 3:
-        return AppColors.dark1Secondary;
+        return AppColors.light4Secondary; // Orange theme secondary (Purple)
       case 4:
-        return AppColors.dark2Secondary;
+        return AppColors.dark1Secondary;
       case 5:
+        return AppColors.dark2Secondary;
+      case 6:
         return AppColors.dark3Secondary;
       default:
         return Theme.of(context).colorScheme.secondary;
@@ -93,18 +100,20 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
       case 2:
         return AppColors.light3Surface;
       case 3:
-        return AppColors.dark1Surface;
+        return AppColors.light4Surface; 
       case 4:
-        return AppColors.dark2Surface;
+        return AppColors.dark1Surface;
       case 5:
+        return AppColors.dark2Surface;
+      case 6:
         return AppColors.dark3Surface;
       default:
         return Theme.of(context).colorScheme.surface;
     }
   }
 
-  // Determine if the theme at given index is dark (indices 3-5 are dark)
-  bool _isPreviewDark(int index) => index >= 3;
+  // Determine if the theme at given index is dark (indices 4-6 are dark)
+  bool _isPreviewDark(int index) => index >= 4;
 
   @override
   void initState() {
@@ -181,7 +190,7 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(
-                                          'Theme ${_currentPage + 1} selected!',
+                                          _getThemeName(_currentPage),
                                           style: const TextStyle(
                                             fontWeight: FontWeight.w500,
                                           ),
@@ -210,11 +219,26 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                                         children: [
                                           Column(
                                             children: [
+                                              // Theme preview image
                                               Image.asset(
                                                 _themes[index],
                                                 width: double.infinity,
                                                 height: 150,
-                                                fit: BoxFit.fitWidth,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (context, error, stackTrace) {
+                                                  return Container(
+                                                    width: double.infinity,
+                                                    height: 150,
+                                                    color: _getThemePrimaryColor(index).withValues(alpha: 0.3),
+                                                    child: Center(
+                                                      child: Icon(
+                                                        Icons.image_not_supported,
+                                                        color: _getThemePrimaryColor(index),
+                                                        size: 40,
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
                                               ),
                                               Expanded(
                                                 child: ListView.builder(
@@ -223,7 +247,6 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                                                   ),
                                                   itemCount: 4,
                                                   itemBuilder: (context, idx) =>
-                                                      // Pass the theme index to the preview item builder
                                                       _buildPreviewItem(
                                                         context,
                                                         index,
@@ -302,7 +325,7 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                    'Theme ${_currentPage + 1} selected!',
+                                    _getThemeName(_currentPage),
                                     style: const TextStyle(
                                       fontWeight: FontWeight.w500,
                                     ),
@@ -346,6 +369,28 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
         );
       },
     );
+  }
+
+  /// Get friendly theme name for snackbar
+  String _getThemeName(int index) {
+    switch (index) {
+      case 0:
+        return 'Purple Teal Theme selected!';
+      case 1:
+        return 'Blue Orange Theme selected!';
+      case 2:
+        return 'Green Coral Theme selected!';
+      case 3:
+        return 'Orange Purple Theme selected!';
+      case 4:
+        return 'Deep Purple Amber Theme selected!';
+      case 5:
+        return 'Blue Grey Theme selected!';
+      case 6:
+        return 'Forest Green Theme selected!';
+      default:
+        return 'Theme ${index + 1} selected!';
+    }
   }
 
   /// Builds a single preview item inside the theme card.
