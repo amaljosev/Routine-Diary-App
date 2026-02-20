@@ -1,12 +1,11 @@
-import 'package:routine/core/theme/app_colors.dart';
-import 'package:routine/features/diary/data/models/diary_entry_model.dart';
-import 'package:routine/features/diary/presentation/blocs/diary/diary_bloc.dart';
-import 'package:routine/features/diary/presentation/pages/entry/diary_entry.dart';
-import 'package:routine/features/diary/presentation/pages/settings/settings_screen.dart';
-import 'package:routine/features/diary/presentation/widgets/entry_card_widget.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:routine/features/diary/data/models/diary_entry_model.dart';
+import 'package:routine/features/diary/presentation/blocs/diary/diary_bloc.dart';
+import 'package:routine/features/diary/presentation/pages/entry/diary_entry.dart';
+import 'package:routine/features/settings/presentation/pages/settings_screen.dart';
+import 'package:routine/features/diary/presentation/widgets/entry_card_widget.dart';
 
 class DiaryScreen extends StatelessWidget {
   const DiaryScreen({super.key});
@@ -25,9 +24,7 @@ class DiaryScreen extends StatelessWidget {
               SliverAppBar(
                 expandedHeight: 200.0,
                 stretch: true,
-                backgroundColor: isDark
-                    ? AppColors.darkPrimary
-                    : AppColors.lightPrimary,
+                backgroundColor: theme.colorScheme.primary, // ← uses current theme's primary
                 foregroundColor: Colors.white,
                 flexibleSpace: FlexibleSpaceBar(
                   stretchModes: const [StretchMode.blurBackground],
@@ -106,9 +103,7 @@ class DiaryScreen extends StatelessWidget {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: isDark
-                              ? AppColors.darkSurface
-                              : AppColors.lightSurface,
+                          color: theme.colorScheme.surface, // ← uses theme surface
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: theme.colorScheme.primary.withValues(
@@ -190,9 +185,7 @@ class DiaryScreen extends StatelessWidget {
                             width: 120,
                             height: 120,
                             decoration: BoxDecoration(
-                              color: isDark
-                                  ? AppColors.darkSurface
-                                  : AppColors.lightSurface,
+                              color: theme.colorScheme.surface, // ← uses theme surface
                               shape: BoxShape.circle,
                               border: Border.all(
                                 color: theme.colorScheme.primary.withValues(
@@ -236,11 +229,13 @@ class DiaryScreen extends StatelessWidget {
                 SliverSafeArea(
                   top: false,
                   sliver: SliverList(
-                    
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      final DiaryEntryModel entry = state.entries[index];
-                      return DiaryEntryCard(entry: entry);
-                    }, childCount: state.entries.length),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final DiaryEntryModel entry = state.entries[index];
+                        return DiaryEntryCard(entry: entry);
+                      },
+                      childCount: state.entries.length,
+                    ),
                   ),
                 ),
             ],

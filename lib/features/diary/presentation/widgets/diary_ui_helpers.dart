@@ -18,14 +18,15 @@ class DiaryUIHelpers {
       context: context,
       builder: (_) => Container(
         height: 300,
-        color: isDark ? AppColors.darkSurface : Colors.white,
+        // Use theme surface color
+        color: isDark ? theme.colorScheme.surface : Colors.white,  // Updated
         child: SafeArea(
           child: Column(
             children: [
               Expanded(
                 child: CupertinoDatePicker(
                   backgroundColor: isDark
-                      ? AppColors.darkSurface
+                      ? theme.colorScheme.surface  // Updated
                       : Colors.white,
                   initialDateTime: initialDate,
                   mode: CupertinoDatePickerMode.date,
@@ -54,7 +55,7 @@ class DiaryUIHelpers {
                       child: Text(
                         'Done',
                         style: TextStyle(
-                          color: isDark ? Colors.white : AppColors.lightPrimary,
+                          color: isDark ? Colors.white : theme.colorScheme.primary,  // Updated
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
@@ -80,7 +81,8 @@ class DiaryUIHelpers {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
+      // Use theme surface color
+      backgroundColor: theme.colorScheme.surface,  // Updated
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -102,9 +104,10 @@ class DiaryUIHelpers {
               },
               child: Container(
                 decoration: BoxDecoration(
+                  // Use theme surface color with opacity
                   color: isDark
-                      ? AppColors.darkBackground.withValues(alpha: 0.3)
-                      : AppColors.lightBackground.withValues(alpha: 0.5),
+                      ? theme.colorScheme.surface.withValues(alpha: 0.5)  // Updated
+                      : theme.colorScheme.surface.withValues(alpha: 0.5),  // Updated
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
@@ -129,7 +132,8 @@ class DiaryUIHelpers {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
+      // Use theme surface color
+      backgroundColor: theme.colorScheme.surface,  // Updated
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -162,30 +166,27 @@ class DiaryUIHelpers {
                     // Clear selection item
                     return GestureDetector(
                       onTap: () {
-                        onSelected(
-                          isDark ? AppColors.darkSurface : Colors.white,
-                        );
+                        // Use theme surface color for clear
+                        onSelected(theme.colorScheme.surface);  // Updated
                         Navigator.pop(context);
                       },
                       child: Container(
                         decoration: BoxDecoration(
                           color: isDark
-                              ? AppColors.darkBackground
+                              ? theme.colorScheme.surface  // Updated
                               : Colors.white,
                           shape: BoxShape.circle,
                           border: Border.all(
                             width: 2,
                             color: isDark
-                                ? AppColors.darkOnBackground.withValues(
-                                    alpha: 0.2,
-                                  )
+                                ? theme.colorScheme.onSurface.withValues(alpha: 0.2)  // Updated
                                 : Colors.black12,
                           ),
                         ),
                         child: Icon(
                           Icons.clear,
                           color: isDark
-                              ? AppColors.darkOnBackground
+                              ? theme.colorScheme.onSurface  // Updated
                               : Colors.black54,
                         ),
                       ),
@@ -234,7 +235,8 @@ class DiaryUIHelpers {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
+      // Use theme surface color
+      backgroundColor: theme.colorScheme.surface,  // Updated
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -330,7 +332,7 @@ class DiaryUIHelpers {
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(16),
                               color: isDark
-                                  ? AppColors.darkBackground
+                                  ? theme.colorScheme.surface  // Updated
                                   : Colors.grey.shade200,
                               border: Border.all(
                                 color: Colors.grey.withValues(alpha: 0.3),
@@ -403,7 +405,8 @@ class DiaryUIHelpers {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
+      // Use theme surface color
+      backgroundColor: theme.colorScheme.surface,  // Updated
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -441,8 +444,8 @@ class DiaryUIHelpers {
                     child: Container(
                       decoration: BoxDecoration(
                         color: isDark
-                            ? AppColors.darkBackground.withValues(alpha: 0.3)
-                            : AppColors.lightBackground.withValues(alpha: 0.5),
+                            ? theme.colorScheme.surface.withValues(alpha: 0.5)  // Updated
+                            : theme.colorScheme.surface.withValues(alpha: 0.5),  // Updated
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Center(

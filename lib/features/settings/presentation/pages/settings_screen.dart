@@ -1,10 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:routine/core/version/app_version.dart';
-import 'package:routine/features/diary/presentation/pages/settings/contact_us.dart';
-import 'package:routine/features/diary/presentation/pages/settings/help_screen.dart';
-import 'package:routine/features/diary/presentation/pages/settings/home_bg_update.dart';
-import 'package:routine/features/diary/presentation/pages/theme/theme_screen.dart';
+import 'package:routine/features/settings/presentation/pages/contact_us.dart';
+import 'package:routine/features/settings/presentation/pages/help_screen.dart';
+import 'package:routine/features/settings/presentation/pages/home_bg_update.dart';
+import 'package:routine/features/settings/presentation/pages/theme/theme_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});

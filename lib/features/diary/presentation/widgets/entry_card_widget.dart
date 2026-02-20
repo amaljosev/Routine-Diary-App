@@ -1,10 +1,9 @@
-import 'package:routine/core/theme/app_colors.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:routine/core/utils/converters.dart';
 import 'package:routine/features/diary/data/models/diary_entry_model.dart';
 import 'package:routine/features/diary/presentation/blocs/diary/diary_bloc.dart';
 import 'package:routine/features/diary/presentation/pages/preview/diary_preview.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 class DiaryEntryCard extends StatelessWidget {
   final DiaryEntryModel entry;
@@ -23,8 +22,8 @@ class DiaryEntryCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       decoration: BoxDecoration(
         color: isDark
-            ? AppColors.darkSurface.withValues(alpha: 0.6)
-            : AppColors.lightSurface,
+            ? theme.colorScheme.surface.withValues(alpha: 0.6)
+            : theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: theme.colorScheme.primary.withValues(alpha: 0.1),
@@ -111,7 +110,7 @@ class DiaryEntryCard extends StatelessWidget {
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
                               color: isDark
-                                  ? AppColors.darkBackground.withValues(
+                                  ? theme.colorScheme.background.withValues(
                                       alpha: 0.5,
                                     )
                                   : Colors.grey[100],

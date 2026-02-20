@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:routine/core/theme/app_colors.dart';
 import 'package:routine/features/diary/data/models/diary_entry_model.dart';
 import 'package:routine/features/diary/domain/entities/sticker_model.dart';
 import 'package:routine/features/diary/presentation/blocs/diary/diary_bloc.dart';
@@ -114,9 +113,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
           return true;
         },
         builder: (context, state) {
-          return Scaffold(
-            body: _buildBackground(state, context),
-          );
+          return Scaffold(body: _buildBackground(state, context));
         },
       ),
     );
@@ -141,6 +138,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
 
     return Container(
       decoration: BoxDecoration(
+        // Use theme surface color as fallback
         color: state.bgColor ?? theme.colorScheme.surface,
         image: backgroundImage != null
             ? DecorationImage(image: backgroundImage, fit: BoxFit.cover)
@@ -149,7 +147,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       child: SafeArea(
         child: Stack(
           children: [
-            Container(color: theme.colorScheme.surface.withValues(alpha:0.4)),
+            Container(color: theme.colorScheme.surface.withValues(alpha: 0.4)),
             _buildContent(state, context),
           ],
         ),
@@ -187,7 +185,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   Widget _buildAppBarSaveButton(BuildContext context, DiaryEntryState state) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final isValid = state.title.isNotEmpty || state.description.isNotEmpty;
+    final isValid = state.title.isNotEmpty && state.description.isNotEmpty;
 
     return Padding(
       padding: const EdgeInsets.only(right: 8.0),
@@ -196,12 +194,16 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
         style: ElevatedButton.styleFrom(
           foregroundColor: theme.colorScheme.onPrimary,
           backgroundColor: theme.colorScheme.primary,
-          disabledForegroundColor: theme.colorScheme.onSurface.withValues(alpha:0.3),
+          disabledForegroundColor: theme.colorScheme.onSurface.withValues(
+            alpha: 0.3,
+          ),
           disabledBackgroundColor: isDark
-              ? AppColors.darkSurface.withValues(alpha:0.5)
-              : Colors.grey.withValues(alpha:0.2),
+              ? theme.colorScheme.surface.withValues(alpha: 0.5)
+              : Colors.grey.withValues(alpha: 0.2),
           elevation: isValid ? 2 : 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           minimumSize: const Size(70, 36),
         ),
@@ -265,9 +267,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   Widget _buildHeaderSection(DiaryEntryState state, BuildContext context) {
     return Row(
       children: [
-        Expanded(
-          child: _buildDateSelector(state, context),
-        ),
+        Expanded(child: _buildDateSelector(state, context)),
         const SizedBox(width: 10),
         _buildMoodSelector(state, context),
       ],
@@ -317,7 +317,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
           intl.DateFormat('MMMM yyyy').format(state.date),
           style: Theme.of(context).textTheme.titleMedium!.copyWith(
             fontWeight: FontWeight.w900,
-            color: Theme.of(context).colorScheme.primary.withValues(alpha:0.5),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
           ),
         ),
       ],
@@ -346,11 +346,11 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
         hintStyle: theme.textTheme.bodyLarge?.copyWith(
           fontWeight: FontWeight.w900,
           fontSize: 24,
-          color: theme.colorScheme.onSurface.withValues(alpha:0.5),
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
         ),
         border: InputBorder.none,
         counterStyle: TextStyle(
-          color: theme.colorScheme.onSurface.withValues(alpha:0.5),
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
         ),
       ),
       style: theme.textTheme.bodyLarge?.copyWith(
@@ -442,12 +442,14 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
 
         onScaleEnd: (_) {
           if (_draggingSticker != null) {
-            _bloc.add(UpdateStickerTransform(
-              _draggingSticker!.id,
-              _draggingSticker!.x,
-              _draggingSticker!.y,
-              _draggingSticker!.size,
-            ));
+            _bloc.add(
+              UpdateStickerTransform(
+                _draggingSticker!.id,
+                _draggingSticker!.x,
+                _draggingSticker!.y,
+                _draggingSticker!.size,
+              ),
+            );
           }
 
           _draggingSticker = null;
@@ -538,12 +540,14 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
 
         onScaleEnd: (_) {
           if (_draggingImage != null) {
-            _bloc.add(UpdateImageTransform(
-              _draggingImage!.id,
-              _draggingImage!.x,
-              _draggingImage!.y,
-              _draggingImage!.scale,
-            ));
+            _bloc.add(
+              UpdateImageTransform(
+                _draggingImage!.id,
+                _draggingImage!.x,
+                _draggingImage!.y,
+                _draggingImage!.scale,
+              ),
+            );
           }
 
           _draggingImage = null;
@@ -581,7 +585,10 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
                       width: display.width,
                       height: display.height,
                       color: Colors.grey,
-                      child: const Icon(Icons.broken_image, color: Colors.white),
+                      child: const Icon(
+                        Icons.broken_image,
+                        color: Colors.white,
+                      ),
                     );
                   },
                 ),
@@ -595,23 +602,21 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
 
   Widget _buildBottomSection(BuildContext context, DiaryEntryState state) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.transparent,
-            isDark
-                ? AppColors.darkSurface.withValues(alpha:0.9)
-                : Colors.white.withValues(alpha:0.9),
+    return SafeArea(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: theme.colorScheme.primary.withValues(alpha: 0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
           ],
         ),
+        child: _buildActionButtons(context, state),
       ),
-      child: _buildActionButtons(context, state),
     );
   }
 
@@ -622,30 +627,66 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface.withValues(alpha:0.9),
-        border: Border.all(color: theme.colorScheme.primary.withValues(alpha:0.2), width: 1),
+        // Use theme surface color
+        color: isDark
+            ? theme.colorScheme.surface
+            : theme.colorScheme.surface.withValues(alpha: 0.9), // Updated
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.2),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha:0.5)
-                : theme.colorScheme.primary.withValues(alpha:0.08),
+            color: theme.colorScheme.primary.withValues(alpha: 0.08),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.only(top: 15,bottom: 15,left: 15),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
           children: [
-            _buildActionButton(icon: Icons.photo, label: 'Photo', onPressed: _onPhotoPressed, context: context),
-            _buildActionButton(icon: Icons.palette, label: 'BG Color', onPressed: _onBgColorPressed, context: context),
-            _buildActionButton(icon: Icons.image, label: 'BG Image', onPressed: _onBgImagePressed, context: context),
-            if (state.bgGalleryImage != null || state.bgImage.isNotEmpty || state.bgColor != null)
-              _buildActionButton(icon: Icons.clear, label: 'Clear BG', onPressed: () => _bloc.add(const ClearBackground()), context: context),
-            _buildActionButton(icon: Icons.format_list_bulleted, label: 'Bullet', onPressed: _onBulletPressed, context: context),
-            _buildActionButton(icon: Icons.emoji_emotions, label: 'Sticker', onPressed: _onStickerPressed, context: context),
+            _buildActionButton(
+              icon: Icons.photo,
+              label: 'Photo',
+              onPressed: _onPhotoPressed,
+              context: context,
+            ),
+            _buildActionButton(
+              icon: Icons.palette,
+              label: 'BG Color',
+              onPressed: _onBgColorPressed,
+              context: context,
+            ),
+            _buildActionButton(
+              icon: Icons.image,
+              label: 'BG Image',
+              onPressed: _onBgImagePressed,
+              context: context,
+            ),
+            if (state.bgGalleryImage != null ||
+                state.bgImage.isNotEmpty ||
+                state.bgColor != null)
+              _buildActionButton(
+                icon: Icons.clear,
+                label: 'Clear BG',
+                onPressed: () => _bloc.add(const ClearBackground()),
+                context: context,
+              ),
+            _buildActionButton(
+              icon: Icons.format_list_bulleted,
+              label: 'Bullet',
+              onPressed: _onBulletPressed,
+              context: context,
+            ),
+            _buildActionButton(
+              icon: Icons.emoji_emotions,
+              label: 'Sticker',
+              onPressed: _onStickerPressed,
+              context: context,
+            ),
           ],
         ),
       ),
@@ -657,17 +698,34 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     final isDark = theme.brightness == Brightness.dark;
     if (isDark) {
       return BoxDecoration(
-        color: AppColors.darkSurface,
+        // Use theme surface color instead of AppColors.darkSurface
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(radius),
         border: Border.all(color: theme.colorScheme.outline, width: 1),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha:0.6), blurRadius: 12, offset: const Offset(0, 4))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.6),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       );
     }
     return BoxDecoration(
-      color: AppColors.lightSurface,
+      // Use theme surface color instead of AppColors.lightSurface
+      color: theme.colorScheme.surface,
       borderRadius: BorderRadius.circular(radius),
-      border: Border.all(color: theme.colorScheme.primary.withValues(alpha:0.2), width: 1),
-      boxShadow: [BoxShadow(color: theme.colorScheme.primary.withValues(alpha:0.08), blurRadius: 8, offset: const Offset(0, 2))],
+      border: Border.all(
+        color: theme.colorScheme.primary.withValues(alpha: 0.2),
+        width: 1,
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: theme.colorScheme.primary.withValues(alpha: 0.08),
+          blurRadius: 8,
+          offset: const Offset(0, 2),
+        ),
+      ],
     );
   }
 
@@ -687,7 +745,9 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
           foregroundColor: theme.colorScheme.onPrimary,
           backgroundColor: theme.colorScheme.primary,
           elevation: isDark ? 4 : 2,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         ),
         child: Row(
@@ -695,7 +755,13 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
           children: [
             Icon(icon, size: 18),
             const SizedBox(width: 6),
-            Text(label, style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.onPrimary)),
+            Text(
+              label,
+              style: theme.textTheme.labelMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onPrimary,
+              ),
+            ),
           ],
         ),
       ),
@@ -703,18 +769,28 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   }
 
   void _selectDate(BuildContext context, DiaryEntryState state) {
-    DiaryUIHelpers.showDatePicker(context, state.date, (val) => _bloc.add(DateChanged(val)));
+    DiaryUIHelpers.showDatePicker(
+      context,
+      state.date,
+      (val) => _bloc.add(DateChanged(val)),
+    );
   }
 
   void _selectMood(BuildContext context) {
-    DiaryUIHelpers.openEmojiPicker(context, (emoji) => _bloc.add(MoodChanged(emoji)));
+    DiaryUIHelpers.openEmojiPicker(
+      context,
+      (emoji) => _bloc.add(MoodChanged(emoji)),
+    );
   }
 
   Future<void> _showStickerMenu(StickerModel sticker) async {
     final action = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppColors.darkSurface : Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      // Use theme surface color
+      backgroundColor: Theme.of(context).colorScheme.surface, // Updated
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (ctx) => _buildStickerMenu(ctx),
     );
     if (action == 'remove' && mounted) {
@@ -722,15 +798,20 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     } else if (action == 'bigger' && mounted) {
       _bloc.add(UpdateStickerSize(sticker.id, sticker.size + 4));
     } else if (action == 'smaller' && mounted) {
-      _bloc.add(UpdateStickerSize(sticker.id, (sticker.size - 4).clamp(12, 100)));
+      _bloc.add(
+        UpdateStickerSize(sticker.id, (sticker.size - 4).clamp(12, 100)),
+      );
     }
   }
 
   Future<void> _showImageMenu(DiaryImage image) async {
     final action = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppColors.darkSurface : Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      // Use theme surface color
+      backgroundColor: Theme.of(context).colorScheme.surface, // Updated
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (ctx) => _buildImageMenu(ctx),
     );
     if (action == 'remove' && mounted) {
@@ -751,17 +832,26 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
         children: [
           ListTile(
             leading: Icon(Icons.delete, color: isDark ? Colors.white : null),
-            title: Text('Remove Sticker', style: TextStyle(color: isDark ? Colors.white : null)),
+            title: Text(
+              'Remove Sticker',
+              style: TextStyle(color: isDark ? Colors.white : null),
+            ),
             onTap: () => Navigator.pop(ctx, 'remove'),
           ),
           ListTile(
             leading: Icon(Icons.zoom_in, color: isDark ? Colors.white : null),
-            title: Text('Increase Size', style: TextStyle(color: isDark ? Colors.white : null)),
+            title: Text(
+              'Increase Size',
+              style: TextStyle(color: isDark ? Colors.white : null),
+            ),
             onTap: () => Navigator.pop(ctx, 'bigger'),
           ),
           ListTile(
             leading: Icon(Icons.zoom_out, color: isDark ? Colors.white : null),
-            title: Text('Decrease Size', style: TextStyle(color: isDark ? Colors.white : null)),
+            title: Text(
+              'Decrease Size',
+              style: TextStyle(color: isDark ? Colors.white : null),
+            ),
             onTap: () => Navigator.pop(ctx, 'smaller'),
           ),
         ],
@@ -778,17 +868,26 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
         children: [
           ListTile(
             leading: Icon(Icons.delete, color: isDark ? Colors.white : null),
-            title: Text('Remove Image', style: TextStyle(color: isDark ? Colors.white : null)),
+            title: Text(
+              'Remove Image',
+              style: TextStyle(color: isDark ? Colors.white : null),
+            ),
             onTap: () => Navigator.pop(ctx, 'remove'),
           ),
           ListTile(
             leading: Icon(Icons.zoom_in, color: isDark ? Colors.white : null),
-            title: Text('Increase Size', style: TextStyle(color: isDark ? Colors.white : null)),
+            title: Text(
+              'Increase Size',
+              style: TextStyle(color: isDark ? Colors.white : null),
+            ),
             onTap: () => Navigator.pop(ctx, 'bigger'),
           ),
           ListTile(
             leading: Icon(Icons.zoom_out, color: isDark ? Colors.white : null),
-            title: Text('Decrease Size', style: TextStyle(color: isDark ? Colors.white : null)),
+            title: Text(
+              'Decrease Size',
+              style: TextStyle(color: isDark ? Colors.white : null),
+            ),
             onTap: () => Navigator.pop(ctx, 'smaller'),
           ),
         ],
@@ -812,14 +911,18 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   }
 
   void _onBgColorPressed() {
-    DiaryUIHelpers.openColorPicker(context, (color) => _bloc.add(BgColorChanged(color)));
+    DiaryUIHelpers.openColorPicker(
+      context,
+      (color) => _bloc.add(BgColorChanged(color)),
+    );
   }
 
   void _onBgImagePressed() {
     DiaryUIHelpers.openBgImagePicker(
       context,
       onPresetSelected: (assetPath) => _bloc.add(BgImageChanged(assetPath)),
-      onGallerySelected: (filePath) => _bloc.add(CropAndSetBackgroundImage(filePath)),
+      onGallerySelected: (filePath) =>
+          _bloc.add(CropAndSetBackgroundImage(filePath)),
       onClear: () => _bloc.add(const ClearBackground()),
     );
   }
@@ -848,7 +951,8 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
 
   Offset _calculateCenterPosition() {
     try {
-      final RenderBox renderBox = _descriptionKey.currentContext!.findRenderObject() as RenderBox;
+      final RenderBox renderBox =
+          _descriptionKey.currentContext!.findRenderObject() as RenderBox;
       final size = renderBox.size;
       return Offset(size.width / 2, size.height / 2);
     } catch (e) {

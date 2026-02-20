@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:routine/core/theme/app_colors.dart';
 import 'package:routine/features/diary/data/models/diary_entry_model.dart';
 import 'package:routine/features/diary/domain/entities/sticker_model.dart';
 import 'package:routine/features/diary/presentation/blocs/diary/diary_bloc.dart';
@@ -118,9 +117,9 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
       backgroundImage = AssetImage(entry.bgImagePath!);
     }
 
+    // Use scaffold background color as fallback (this matches the theme's background)
     final Color fallbackColor =
-        parsedColor ??
-        (isDark ? AppColors.darkBackground : AppColors.lightSurface);
+        parsedColor ?? theme.scaffoldBackgroundColor;
 
     return Container(
       decoration: BoxDecoration(
@@ -137,8 +136,8 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
           children: [
             Container(
               color: isDark
-                  ? Colors.black.withValues(alpha:0.4)
-                  : Colors.white.withValues(alpha:0.4),
+                  ? Colors.black.withValues(alpha: 0.4)
+                  : Colors.white.withValues(alpha: 0.4),
             ),
             _buildContent(context, entry),
           ],
@@ -148,172 +147,166 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
   }
 
   Widget _buildContent(BuildContext context, DiaryEntryModel entry) {
-  final theme = Theme.of(context);
+    final theme = Theme.of(context);
 
-  return Column(
-    children: [
-      AppBar(
-        leading: IconButton(
-          onPressed: () {
-            Navigator.pop(context);
-            context.read<DiaryBloc>().add(LoadDiaryEntries());
-          },
-          icon: Icon(CupertinoIcons.back),
-        ),
-        title: Row(
-          children: [
-            Container(
-              margin: const EdgeInsets.only(right: 8),
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                entry.mood.isEmpty ? '😊' : entry.mood,
-                style: const TextStyle(fontSize: 20),
-              ),
-            ),
-            Expanded(
-              child: Text(
-                (entry.title.isEmpty) ? "Untitled Entry" : entry.title,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
+    return Column(
+      children: [
+        AppBar(
+          leading: IconButton(
+            onPressed: () {
+              Navigator.pop(context);
+              context.read<DiaryBloc>().add(LoadDiaryEntries());
+            },
+            icon: Icon(CupertinoIcons.back),
+          ),
+          title: Row(
+            children: [
+              Container(
+                margin: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+                child: Text(
+                  entry.mood.isEmpty ? '😊' : entry.mood,
+                  style: const TextStyle(fontSize: 20),
+                ),
               ),
+              Expanded(
+                child: Text(
+                  (entry.title.isEmpty) ? "Untitled Entry" : entry.title,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.transparent,
+          foregroundColor: theme.colorScheme.onSurface,
+          forceMaterialTransparency: true,
+          automaticallyImplyLeading: true,
+          elevation: 0,
+          actions: [
+            IconButton(
+              onPressed: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => DiaryEntryScreen(entry: entry),
+                  ),
+                );
+                if (context.mounted) {
+                  Future.delayed(const Duration(milliseconds: 100), () {
+                    if (context.mounted) {
+                      context.read<DiaryBloc>().add(FetchEntryById(entry.id));
+                    }
+                  });
+                }
+              },
+              icon: Icon(Icons.edit),
+              tooltip: 'Edit Entry',
+            ),
+            IconButton(
+              onPressed: () => _showDeleteConfirmation(context, entry),
+              icon: Icon(CupertinoIcons.delete),
+              tooltip: 'Delete Entry',
             ),
           ],
         ),
-        backgroundColor: Colors.transparent,
-        foregroundColor: theme.colorScheme.onSurface,
-        forceMaterialTransparency: true,
-        automaticallyImplyLeading: true,
-        elevation: 0,
-        actions: [
-          IconButton(
-            onPressed: () async {
-              await Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => DiaryEntryScreen(entry: entry),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: CustomScrollView(
+              controller: _scrollController,
+              slivers: [
+                SliverToBoxAdapter(child: _buildDateOnlyHeader(context, entry)),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 20),
+                    child: _buildDescriptionSection(context, entry),
+                  ),
                 ),
-              );
-              if (context.mounted) {
-                Future.delayed(const Duration(milliseconds: 100), () {
-                  if (context.mounted) {
-                    context.read<DiaryBloc>().add(FetchEntryById(entry.id));
-                  }
-                });
-              }
-            },
-            icon: Icon(Icons.edit),
-            tooltip: 'Edit Entry',
+                const SliverToBoxAdapter(child: SizedBox(height: 20)),
+              ],
+            ),
           ),
-          IconButton(
-            onPressed: () => _showDeleteConfirmation(context, entry),
-            icon: Icon(CupertinoIcons.delete),
-            tooltip: 'Delete Entry',
+        ),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  Widget _buildDateOnlyHeader(BuildContext context, DiaryEntryModel entry) {
+    final date = entry.date.isNotEmpty
+        ? DateTime.tryParse(entry.date) ?? DateTime.now()
+        : DateTime.now();
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      decoration: BoxDecoration(
+        // Use surface color from the current theme (matches dialog/card backgrounds)
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.2),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.3)
+                : theme.colorScheme.primary.withValues(alpha: 0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
-      Expanded(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: CustomScrollView(
-            controller: _scrollController,
-            slivers: [
-              // Header section now only contains date selector (mood removed)
-              SliverToBoxAdapter(child: _buildDateOnlyHeader(context, entry)),
-              
-              // Title is no longer displayed here (already in app bar)
-              
-              // Description section with same spacing as DiaryEntryScreen
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 20), // Maintain spacing after date
-                  child: _buildDescriptionSection(context, entry),
-                ),
-              ),
-              
-              const SliverToBoxAdapter(child: SizedBox(height: 20)),
-            ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            intl.DateFormat('dd').format(date),
+            style: theme.textTheme.headlineLarge!.copyWith(
+              fontWeight: FontWeight.w900,
+              color: theme.colorScheme.onSurface,
+            ),
           ),
-        ),
+          Text(
+            intl.DateFormat('EEEE').format(date),
+            style: theme.textTheme.headlineLarge!.copyWith(
+              fontWeight: FontWeight.w700,
+              color: theme.colorScheme.primary,
+            ),
+          ),
+          Text(
+            intl.DateFormat('MMMM yyyy').format(date),
+            style: theme.textTheme.titleMedium!.copyWith(
+              fontWeight: FontWeight.w900,
+              color: theme.colorScheme.primary.withValues(alpha: 0.5),
+            ),
+          ),
+        ],
       ),
-      const SizedBox(height: 20),
-    ],
-  );
-}
-
-// New header widget that only shows the date (no mood)
-Widget _buildDateOnlyHeader(BuildContext context, DiaryEntryModel entry) {
-  final date = entry.date.isNotEmpty
-      ? DateTime.tryParse(entry.date) ?? DateTime.now()
-      : DateTime.now();
-  final theme = Theme.of(context);
-  final isDark = theme.brightness == Brightness.dark;
-
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-    decoration: BoxDecoration(
-      color: isDark ? AppColors.darkSurface : Colors.white,
-      borderRadius: BorderRadius.circular(24),
-      border: Border.all(
-        color: theme.colorScheme.primary.withValues(alpha: 0.2),
-        width: 1,
-      ),
-      boxShadow: [
-        BoxShadow(
-          color: isDark
-              ? Colors.black.withValues(alpha: 0.3)
-              : theme.colorScheme.primary.withValues(alpha: 0.08),
-          blurRadius: 8,
-          offset: const Offset(0, 2),
-        ),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          intl.DateFormat('dd').format(date),
-          style: theme.textTheme.headlineLarge!.copyWith(
-            fontWeight: FontWeight.w900,
-            color: theme.colorScheme.onSurface,
-          ),
-        ),
-        Text(
-          intl.DateFormat('EEEE').format(date),
-          style: theme.textTheme.headlineLarge!.copyWith(
-            fontWeight: FontWeight.w700,
-            color: theme.colorScheme.primary,
-          ),
-        ),
-        Text(
-          intl.DateFormat('MMMM yyyy').format(date),
-          style: theme.textTheme.titleMedium!.copyWith(
-            fontWeight: FontWeight.w900,
-            color: theme.colorScheme.primary.withValues(alpha:0.5),
-          ),
-        ),
-      ],
-    ),
-  );
-}
+    );
+  }
 
   Future<void> _showDeleteConfirmation(
     BuildContext context,
     DiaryEntryModel entry,
   ) async {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
+          // Use surface color from theme for the dialog background
+          backgroundColor: theme.colorScheme.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -359,100 +352,92 @@ Widget _buildDateOnlyHeader(BuildContext context, DiaryEntryModel entry) {
     );
   }
 
-  
-
   Widget _buildDescriptionSection(BuildContext context, DiaryEntryModel entry) {
-  final theme = Theme.of(context);
+    final theme = Theme.of(context);
 
-  List<StickerModel> stickers = [];
-  List<DiaryImage> images = [];
+    List<StickerModel> stickers = [];
+    List<DiaryImage> images = [];
 
-  try {
-    stickers = (entry.stickersJson != null)
-        ? (List<Map<String, dynamic>>.from(
-            jsonDecode(entry.stickersJson ?? '[]'),
-          )).map((m) => StickerModel.fromJson(m)).toList()
-        : [];
-  } catch (_) {}
+    try {
+      stickers = (entry.stickersJson != null)
+          ? (List<Map<String, dynamic>>.from(
+              jsonDecode(entry.stickersJson ?? '[]'),
+            )).map((m) => StickerModel.fromJson(m)).toList()
+          : [];
+    } catch (_) {}
 
-  try {
-    images = (entry.imagesJson != null)
-        ? (List<Map<String, dynamic>>.from(
-            jsonDecode(entry.imagesJson ?? '[]'),
-          )).map((m) => DiaryImage.fromJson(m)).toList()
-        : [];
-  } catch (_) {}
+    try {
+      images = (entry.imagesJson != null)
+          ? (List<Map<String, dynamic>>.from(
+              jsonDecode(entry.imagesJson ?? '[]'),
+            )).map((m) => DiaryImage.fromJson(m)).toList()
+          : [];
+    } catch (_) {}
 
-  return Container(
-    key: _descriptionKey,
-    constraints: const BoxConstraints(minHeight: 400),
-    child: Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: SelectableText(
-            entry.content.isEmpty ? "What's on your mind?" : entry.content,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: theme.colorScheme.onSurface,
-              height: 1.5,
+    return Container(
+      key: _descriptionKey,
+      constraints: const BoxConstraints(minHeight: 400),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: SelectableText(
+              entry.content.isEmpty ? "What's on your mind?" : entry.content,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.onSurface,
+                height: 1.5,
+              ),
             ),
           ),
-        ),
-        
-        // Stickers – no scroll offset adjustment
-        ...stickers.map((sticker) {
-          return Positioned(
-            left: sticker.x,
-            top: sticker.y,
-            child: RepaintBoundary(
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                color: Colors.transparent,
+          ...stickers.map((sticker) {
+            return Positioned(
+              left: sticker.x,
+              top: sticker.y,
+              child: RepaintBoundary(
                 child: Container(
-                  padding: const EdgeInsets.all(4),
-                  child: Text(
-                    sticker.sticker,
-                    style: TextStyle(
-                      fontSize: sticker.size,
-                      color: theme.colorScheme.onSurface,
+                  padding: const EdgeInsets.all(20),
+                  color: Colors.transparent,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    child: Text(
+                      sticker.sticker,
+                      style: TextStyle(
+                        fontSize: sticker.size,
+                        color: theme.colorScheme.onSurface,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          );
-        }),
-        
-        // Images – no scroll offset adjustment
-        ...images.map((image) {
-          return Positioned(
-            left: image.x,
-            top: image.y,
-            child: RepaintBoundary(
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                color: Colors.transparent,
+            );
+          }),
+          ...images.map((image) {
+            return Positioned(
+              left: image.x,
+              top: image.y,
+              child: RepaintBoundary(
                 child: Container(
-                  padding: const EdgeInsets.all(4),
-                  child: Transform.scale(
-                    scale: image.scale,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: _buildImageWidget(image, theme),
+                  padding: const EdgeInsets.all(20),
+                  color: Colors.transparent,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    child: Transform.scale(
+                      scale: image.scale,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: _buildImageWidget(image, theme),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          );
-        }),
-      ],
-    ),
-  );
-}
-
-  
+            );
+          }),
+        ],
+      ),
+    );
+  }
 
   Widget _buildImageWidget(DiaryImage image, ThemeData theme) {
     try {
@@ -463,7 +448,7 @@ Widget _buildDateOnlyHeader(BuildContext context, DiaryEntryModel entry) {
           width: image.width,
           height: image.height,
           decoration: BoxDecoration(
-            color: theme.colorScheme.error.withValues(alpha:0.1),
+            color: theme.colorScheme.error.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: theme.colorScheme.error),
           ),
