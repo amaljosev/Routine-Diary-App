@@ -138,7 +138,6 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
 
     return Container(
       decoration: BoxDecoration(
-        // Use theme surface color as fallback
         color: state.bgColor ?? theme.colorScheme.surface,
         image: backgroundImage != null
             ? DecorationImage(image: backgroundImage, fit: BoxFit.cover)
@@ -403,8 +402,8 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
             _bloc.add(SelectSticker(sticker.id));
           }
         },
-        onDoubleTap: () => _showStickerMenu(sticker),
-        onLongPress: () => _showStickerMenu(sticker),
+        onDoubleTap: () => _showStickerSizeAdjuster(sticker),
+        onLongPress: () => _showStickerSizeAdjuster(sticker),
 
         // Scale gesture handles both pan and zoom
         onScaleStart: (details) {
@@ -501,8 +500,8 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
             _bloc.add(SelectImage(image.id));
           }
         },
-        onDoubleTap: () => _showImageMenu(image),
-        onLongPress: () => _showImageMenu(image),
+        onDoubleTap: () => _showImageSizeAdjuster(image),
+        onLongPress: () => _showImageSizeAdjuster(image),
 
         // Scale gesture handles both pan and zoom
         onScaleStart: (details) {
@@ -627,10 +626,9 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        // Use theme surface color
         color: isDark
             ? theme.colorScheme.surface
-            : theme.colorScheme.surface.withValues(alpha: 0.9), // Updated
+            : theme.colorScheme.surface.withValues(alpha: 0.9),
         border: Border.all(
           color: theme.colorScheme.primary.withValues(alpha: 0.2),
           width: 1,
@@ -643,7 +641,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
           ),
         ],
       ),
-      padding: const EdgeInsets.only(top: 15,bottom: 15,left: 15),
+      padding: const EdgeInsets.only(top: 15, bottom: 15, left: 15),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
@@ -698,7 +696,6 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     final isDark = theme.brightness == Brightness.dark;
     if (isDark) {
       return BoxDecoration(
-        // Use theme surface color instead of AppColors.darkSurface
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(radius),
         border: Border.all(color: theme.colorScheme.outline, width: 1),
@@ -712,7 +709,6 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       );
     }
     return BoxDecoration(
-      // Use theme surface color instead of AppColors.lightSurface
       color: theme.colorScheme.surface,
       borderRadius: BorderRadius.circular(radius),
       border: Border.all(
@@ -783,114 +779,38 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     );
   }
 
-  Future<void> _showStickerMenu(StickerModel sticker) async {
-    final action = await showModalBottomSheet<String>(
+  Future<void> _showStickerSizeAdjuster(StickerModel sticker) async {
+    final RenderBox? renderBox = _descriptionKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox == null) return;
+
+    await showModalBottomSheet(
       context: context,
-      // Use theme surface color
-      backgroundColor: Theme.of(context).colorScheme.surface, // Updated
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => BlocProvider.value(
+        value: _bloc,
+        child: _StickerSizeAdjuster(
+          sticker: sticker,
+          descriptionRenderBox: renderBox,
+        ),
       ),
-      builder: (ctx) => _buildStickerMenu(ctx),
     );
-    if (action == 'remove' && mounted) {
-      _bloc.add(RemoveSticker(sticker.id));
-    } else if (action == 'bigger' && mounted) {
-      _bloc.add(UpdateStickerSize(sticker.id, sticker.size + 4));
-    } else if (action == 'smaller' && mounted) {
-      _bloc.add(
-        UpdateStickerSize(sticker.id, (sticker.size - 4).clamp(12, 100)),
-      );
-    }
   }
 
-  Future<void> _showImageMenu(DiaryImage image) async {
-    final action = await showModalBottomSheet<String>(
+  Future<void> _showImageSizeAdjuster(DiaryImage image) async {
+    final RenderBox? renderBox = _descriptionKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox == null) return;
+
+    await showModalBottomSheet(
       context: context,
-      // Use theme surface color
-      backgroundColor: Theme.of(context).colorScheme.surface, // Updated
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => _buildImageMenu(ctx),
-    );
-    if (action == 'remove' && mounted) {
-      _bloc.add(RemoveImage(image.id));
-    } else if (action == 'bigger' && mounted) {
-      _bloc.add(UpdateImageSize(image.id, image.scale + 0.2));
-    } else if (action == 'smaller' && mounted) {
-      _bloc.add(UpdateImageSize(image.id, (image.scale - 0.2).clamp(0.5, 3.0)));
-    }
-  }
-
-  Widget _buildStickerMenu(BuildContext ctx) {
-    final theme = Theme.of(ctx);
-    final isDark = theme.brightness == Brightness.dark;
-    return SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            leading: Icon(Icons.delete, color: isDark ? Colors.white : null),
-            title: Text(
-              'Remove Sticker',
-              style: TextStyle(color: isDark ? Colors.white : null),
-            ),
-            onTap: () => Navigator.pop(ctx, 'remove'),
-          ),
-          ListTile(
-            leading: Icon(Icons.zoom_in, color: isDark ? Colors.white : null),
-            title: Text(
-              'Increase Size',
-              style: TextStyle(color: isDark ? Colors.white : null),
-            ),
-            onTap: () => Navigator.pop(ctx, 'bigger'),
-          ),
-          ListTile(
-            leading: Icon(Icons.zoom_out, color: isDark ? Colors.white : null),
-            title: Text(
-              'Decrease Size',
-              style: TextStyle(color: isDark ? Colors.white : null),
-            ),
-            onTap: () => Navigator.pop(ctx, 'smaller'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildImageMenu(BuildContext ctx) {
-    final theme = Theme.of(ctx);
-    final isDark = theme.brightness == Brightness.dark;
-    return SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            leading: Icon(Icons.delete, color: isDark ? Colors.white : null),
-            title: Text(
-              'Remove Image',
-              style: TextStyle(color: isDark ? Colors.white : null),
-            ),
-            onTap: () => Navigator.pop(ctx, 'remove'),
-          ),
-          ListTile(
-            leading: Icon(Icons.zoom_in, color: isDark ? Colors.white : null),
-            title: Text(
-              'Increase Size',
-              style: TextStyle(color: isDark ? Colors.white : null),
-            ),
-            onTap: () => Navigator.pop(ctx, 'bigger'),
-          ),
-          ListTile(
-            leading: Icon(Icons.zoom_out, color: isDark ? Colors.white : null),
-            title: Text(
-              'Decrease Size',
-              style: TextStyle(color: isDark ? Colors.white : null),
-            ),
-            onTap: () => Navigator.pop(ctx, 'smaller'),
-          ),
-        ],
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => BlocProvider.value(
+        value: _bloc,
+        child: _ImageSizeAdjuster(
+          image: image,
+          descriptionRenderBox: renderBox,
+        ),
       ),
     );
   }
@@ -958,5 +878,330 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     } catch (e) {
       return const Offset(150, 150);
     }
+  }
+}
+
+// ============================================================
+// =================== SIZE ADJUSTER WIDGETS ==================
+// ============================================================
+
+class _StickerSizeAdjuster extends StatefulWidget {
+  final StickerModel sticker;
+  final RenderBox descriptionRenderBox;
+
+  const _StickerSizeAdjuster({
+    required this.sticker,
+    required this.descriptionRenderBox,
+  });
+
+  @override
+  State<_StickerSizeAdjuster> createState() => __StickerSizeAdjusterState();
+}
+
+class __StickerSizeAdjusterState extends State<_StickerSizeAdjuster> {
+  late double _currentSize;
+  static const double minSize = 12.0;
+  static const double maxSize = 200.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentSize = widget.sticker.size;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final bloc = context.read<DiaryEntryBloc>();
+
+    return SafeArea(
+      child: Container(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+          top: 16,
+          left: 16,
+          right: 16,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            
+            // Preview of sticker
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Text(
+                widget.sticker.sticker,
+                style: TextStyle(fontSize: _currentSize),
+              ),
+            ),
+            const SizedBox(height: 20),
+            
+            // Size label
+            Text(
+              'Size: ${_currentSize.round()}px',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            
+            // Slider
+            Slider(
+              value: _currentSize,
+              min: minSize,
+              max: maxSize,
+              divisions: 50,
+              label: _currentSize.round().toString(),
+              onChanged: (value) {
+                setState(() => _currentSize = value);
+                bloc.add(UpdateStickerSize(widget.sticker.id, value));
+              },
+            ),
+            const SizedBox(height: 8),
+            
+            // + and - buttons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildSizeButton(
+                  icon: Icons.remove,
+                  onPressed: () {
+                    final newSize = (_currentSize - 4).clamp(minSize, maxSize);
+                    setState(() => _currentSize = newSize);
+                    bloc.add(UpdateStickerSize(widget.sticker.id, newSize));
+                  },
+                ),
+                _buildSizeButton(
+                  icon: Icons.add,
+                  onPressed: () {
+                    final newSize = (_currentSize + 4).clamp(minSize, maxSize);
+                    setState(() => _currentSize = newSize);
+                    bloc.add(UpdateStickerSize(widget.sticker.id, newSize));
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            
+            // Remove button
+            ListTile(
+              leading: Icon(Icons.delete, color: isDark ? Colors.white : theme.colorScheme.error),
+              title: Text(
+                'Remove Sticker',
+                style: TextStyle(
+                  color: isDark ? Colors.white : theme.colorScheme.error,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              onTap: () {
+                bloc.add(RemoveSticker(widget.sticker.id));
+                Navigator.pop(context);
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSizeButton({required IconData icon, required VoidCallback onPressed}) {
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+      ),
+      child: IconButton(
+        icon: Icon(icon),
+        onPressed: onPressed,
+        color: Theme.of(context).colorScheme.primary,
+      ),
+    );
+  }
+}
+
+class _ImageSizeAdjuster extends StatefulWidget {
+  final DiaryImage image;
+  final RenderBox descriptionRenderBox;
+
+  const _ImageSizeAdjuster({
+    required this.image,
+    required this.descriptionRenderBox,
+  });
+
+  @override
+  State<_ImageSizeAdjuster> createState() => __ImageSizeAdjusterState();
+}
+
+class __ImageSizeAdjusterState extends State<_ImageSizeAdjuster> {
+  late double _currentScale;
+  static const double minScale = 0.5;
+  static const double maxScale = 3.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentScale = widget.image.scale;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final bloc = context.read<DiaryEntryBloc>();
+
+    return SafeArea(
+      child: Container(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+          top: 16,
+          left: 16,
+          right: 16,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            
+            // Preview of image (small thumbnail)
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.file(
+                  File(widget.image.imagePath),
+                  width: 100,
+                  height: 100,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      width: 100,
+                      height: 100,
+                      color: Colors.grey,
+                      child: const Icon(Icons.broken_image),
+                    );
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            
+            // Scale label
+            Text(
+              'Scale: ${(_currentScale * 100).round()}%',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            
+            // Slider
+            Slider(
+              value: _currentScale,
+              min: minScale,
+              max: maxScale,
+              divisions: 25,
+              label: '${(_currentScale * 100).round()}%',
+              onChanged: (value) {
+                setState(() => _currentScale = value);
+                bloc.add(UpdateImageSize(widget.image.id, value));
+              },
+            ),
+            const SizedBox(height: 8),
+            
+            // + and - buttons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildSizeButton(
+                  icon: Icons.remove,
+                  onPressed: () {
+                    final newScale = (_currentScale - 0.2).clamp(minScale, maxScale);
+                    setState(() => _currentScale = newScale);
+                    bloc.add(UpdateImageSize(widget.image.id, newScale));
+                  },
+                ),
+                _buildSizeButton(
+                  icon: Icons.add,
+                  onPressed: () {
+                    final newScale = (_currentScale + 0.2).clamp(minScale, maxScale);
+                    setState(() => _currentScale = newScale);
+                    bloc.add(UpdateImageSize(widget.image.id, newScale));
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            
+            // Remove button
+            ListTile(
+              leading: Icon(Icons.delete, color: isDark ? Colors.white : theme.colorScheme.error),
+              title: Text(
+                'Remove Image',
+                style: TextStyle(
+                  color: isDark ? Colors.white : theme.colorScheme.error,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              onTap: () {
+                bloc.add(RemoveImage(widget.image.id));
+                Navigator.pop(context);
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSizeButton({required IconData icon, required VoidCallback onPressed}) {
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+      ),
+      child: IconButton(
+        icon: Icon(icon),
+        onPressed: onPressed,
+        color: Theme.of(context).colorScheme.primary,
+      ),
+    );
   }
 }
