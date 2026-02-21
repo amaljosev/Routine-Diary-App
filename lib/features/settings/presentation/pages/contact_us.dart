@@ -40,7 +40,7 @@ class ContactUsSheet extends StatelessWidget {
                 Navigator.pop(context);
                 _launchEmail(
                   context,
-                  subject: 'Pursuit App - General Feedback',
+                  subject: 'Routine App - General Feedback',
                 );
               },
             ),
@@ -52,7 +52,7 @@ class ContactUsSheet extends StatelessWidget {
               subtitle: "Need help? Contact support",
               onTap: () {
                 Navigator.pop(context);
-                _launchEmail(context, subject: 'Pursuit App - Support Request');
+                _launchEmail(context, subject: 'Routine App - Support Request');
               },
             ),
 
@@ -63,7 +63,7 @@ class ContactUsSheet extends StatelessWidget {
               subtitle: "Found a problem? Let us know",
               onTap: () {
                 Navigator.pop(context);
-                _launchEmail(context, subject: 'Pursuit App - Bug Report');
+                _launchEmail(context, subject: 'Routine App - Bug Report');
               },
             ),
 
@@ -76,7 +76,7 @@ class ContactUsSheet extends StatelessWidget {
                 Navigator.pop(context);
                 _launchEmail(
                   context,
-                  subject: 'Pursuit App - Feature Suggestion',
+                  subject: 'Routine App - Feature Suggestion',
                 );
               },
             ),

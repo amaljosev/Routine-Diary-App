@@ -1,10 +1,12 @@
+import 'dart:developer';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:routine/core/version/app_version.dart';
 import 'package:routine/features/settings/presentation/pages/contact_us.dart';
 import 'package:routine/features/settings/presentation/pages/help_screen.dart';
-import 'package:routine/features/settings/presentation/pages/home_bg_update.dart';
 import 'package:routine/features/settings/presentation/pages/theme/theme_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -54,20 +56,6 @@ class SettingsScreen extends StatelessWidget {
                   children: [
                     ListTile(
                       leading: Icon(
-                        CupertinoIcons.photo,
-                        color: Theme.of(context).primaryColor,
-                      ),
-                      title: const Text('Update Home Background'),
-                      titleTextStyle: Theme.of(context).textTheme.titleSmall,
-                      trailing: const CupertinoListTileChevron(),
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => const HomeBgUpdate(),
-                        ),
-                      ),
-                    ),
-                    ListTile(
-                      leading: Icon(
                         Icons.color_lens_outlined,
                         color: Theme.of(context).primaryColor,
                       ),
@@ -108,7 +96,7 @@ class SettingsScreen extends StatelessWidget {
                       title: const Text('Privacy Policy'),
                       titleTextStyle: Theme.of(context).textTheme.titleSmall,
                       trailing: const CupertinoListTileChevron(),
-                      // onTap: () async => await _lunchPrivacyPolicy(context),
+                      onTap: () async => await _lunchPrivacyPolicy(context),
                     ),
                     Theme(
                       data: Theme.of(context).copyWith(
@@ -215,16 +203,20 @@ Write daily. Reflect deeply. Grow consistently.
     );
   }
 
-  // Future<void> _lunchPrivacyPolicy(BuildContext context) async {
-  //   final Uri _url = Uri.parse(
-  //     'https://amaljosev.github.io/Pursuit-Privacy-Policy/',
-  //   );
-  //   if (!await launchUrl(_url, mode: LaunchMode.inAppBrowserView)) {
-  //     ScaffoldMessenger.of(
-  //       context,
-  //     ).showSnackBar(SnackBar(content: Text('Sorry we are facing an issue')));
-  //   }
-  // }
+  Future<void> _lunchPrivacyPolicy(BuildContext context) async {
+    final Uri url = Uri.parse(
+      'https://amaljosev.github.io/Routine-privacy-policy/',
+    );
+    if (!await launchUrl(url, mode: LaunchMode.inAppBrowserView)) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Sorry we are facing an issue')));
+      } else {
+        log('not mounted');
+      }
+    }
+  }
 
   // Future<void> _rateApp(BuildContext context) async {
   //   final Uri _url = Uri.parse(AppConstants.playStoreUrl);

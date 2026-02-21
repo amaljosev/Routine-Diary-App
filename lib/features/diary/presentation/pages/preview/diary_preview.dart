@@ -59,43 +59,47 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: BlocBuilder<DiaryBloc, DiaryState>(
-        buildWhen: (previous, current) {
-          return current.entries.any((e) => e.id == widget.entryId) ||
-              previous.isLoading != current.isLoading ||
-              previous.errorMessage != current.errorMessage;
-        },
-        builder: (context, state) {
-          if (state.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+    return PopScope(
+      onPopInvokedWithResult: (didPop, result) =>
+          context.read<DiaryBloc>().add(LoadDiaryEntries()),
+      child: Scaffold(
+        body: BlocBuilder<DiaryBloc, DiaryState>(
+          buildWhen: (previous, current) {
+            return current.entries.any((e) => e.id == widget.entryId) ||
+                previous.isLoading != current.isLoading ||
+                previous.errorMessage != current.errorMessage;
+          },
+          builder: (context, state) {
+            if (state.isLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          if (state.errorMessage != null) {
-            return Center(
-              child: Text(
-                "Error: ${state.errorMessage}",
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-              ),
-            );
-          }
-
-          try {
-            final entry = state.entries.firstWhere(
-              (e) => e.id == widget.entryId,
-            );
-            return _buildBackground(context, entry);
-          } catch (e) {
-            return Center(
-              child: Text(
-                "Diary entry not found",
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface,
+            if (state.errorMessage != null) {
+              return Center(
+                child: Text(
+                  "Error: ${state.errorMessage}",
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
-              ),
-            );
-          }
-        },
+              );
+            }
+
+            try {
+              final entry = state.entries.firstWhere(
+                (e) => e.id == widget.entryId,
+              );
+              return _buildBackground(context, entry);
+            } catch (e) {
+              return Center(
+                child: Text(
+                  "Diary entry not found",
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+              );
+            }
+          },
+        ),
       ),
     );
   }
@@ -118,17 +122,13 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
     }
 
     // Use scaffold background color as fallback (this matches the theme's background)
-    final Color fallbackColor =
-        parsedColor ?? theme.scaffoldBackgroundColor;
+    final Color fallbackColor = parsedColor ?? theme.scaffoldBackgroundColor;
 
     return Container(
       decoration: BoxDecoration(
         color: backgroundImage == null ? fallbackColor : null,
         image: backgroundImage != null
-            ? DecorationImage(
-                image: backgroundImage,
-                fit: BoxFit.cover,
-              )
+            ? DecorationImage(image: backgroundImage, fit: BoxFit.cover)
             : null,
       ),
       child: SafeArea(
