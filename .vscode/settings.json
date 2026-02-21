@@ -9,6 +9,8 @@
         "journaling",
         "Neumorphic",
         "Nunito",
+        "okhttp",
+        "okio",
         "prefs",
         "sqflite",
         "stati",
