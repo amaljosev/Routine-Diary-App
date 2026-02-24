@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:routine/core/services/app_update_service.dart';
 import 'package:routine/core/version/app_version.dart';
 import 'package:routine/features/diary/presentation/pages/diary_screen.dart';
 import 'package:routine/features/onboarding/onboarding_screens.dart';
@@ -11,7 +12,8 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
   bool _hasNavigated = false;
   late AnimationController _animationController;
   late Animation<double> _opacityAnimation;
@@ -20,22 +22,23 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize animations
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     );
-    
+
     _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
     );
-    
+
     _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeOutBack),
     );
-    
+
     _animationController.forward();
+    AppUpdateService().checkForBackgroundUpdate();
     _navigateToHome();
   }
 
@@ -48,13 +51,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   Future<void> _navigateToHome() async {
     // Reduced delay for better UX (2 seconds instead of 10 minutes)
     await Future.delayed(const Duration(seconds: 2));
-    
+
     if (!_hasNavigated && mounted) {
       final prefs = await SharedPreferences.getInstance();
-      final showOnboarding = prefs.getBool('showOnboarding') ?? true; 
-      
+      final showOnboarding = prefs.getBool('showOnboarding') ?? true;
+
       _hasNavigated = true;
-      
+
       if (!showOnboarding) {
         // User has completed onboarding, go to diary
         Navigator.pushReplacement(
@@ -76,7 +79,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
     final colorScheme = theme.colorScheme;
-    
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -84,8 +87,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              colorScheme.primary.withValues(alpha:0.05),
-              colorScheme.secondary.withValues(alpha:0.05),
+              colorScheme.primary.withValues(alpha: 0.05),
+              colorScheme.secondary.withValues(alpha: 0.05),
             ],
           ),
         ),
@@ -108,7 +111,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                             height: size.width * 0.3,
                             width: size.width * 0.3,
                             decoration: BoxDecoration(
-                              color: colorScheme.primary.withValues(alpha:0.1),
+                              color: colorScheme.primary.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
                             child: Center(
@@ -130,9 +133,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       );
                     },
                   ),
-                  
+
                   SizedBox(height: size.height * 0.03),
-                  
+
                   // App name with animation
                   AnimatedBuilder(
                     animation: _animationController,
@@ -140,7 +143,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       return Opacity(
                         opacity: _opacityAnimation.value,
                         child: Text(
-                          'Pursuit',
+                          'Routine',
                           style: theme.textTheme.displaySmall?.copyWith(
                             fontWeight: FontWeight.w900,
                             letterSpacing: 1.2,
@@ -149,9 +152,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       );
                     },
                   ),
-                  
+
                   SizedBox(height: size.height * 0.02),
-                  
+
                   // Tagline
                   AnimatedBuilder(
                     animation: _animationController,
@@ -161,15 +164,15 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                         child: Text(
                           "Capture your journey",
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onSurface.withValues(alpha:0.6),
+                            color: colorScheme.onSurface.withValues(alpha: 0.6),
                           ),
                         ),
                       );
                     },
                   ),
-                  
+
                   SizedBox(height: size.height * 0.06),
-                  
+
                   // Theme-adaptive progress bar
                   SizedBox(
                     width: size.width * 0.6,
@@ -177,16 +180,18 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       children: [
                         // Theme-adaptive LinearProgressIndicator
                         LinearProgressIndicator(
-                          backgroundColor: colorScheme.primary.withValues(alpha:0.1),
+                          backgroundColor: colorScheme.primary.withValues(
+                            alpha: 0.1,
+                          ),
                           valueColor: AlwaysStoppedAnimation<Color>(
                             colorScheme.primary,
                           ),
                           minHeight: 4,
                           borderRadius: BorderRadius.circular(2),
                         ),
-                        
+
                         SizedBox(height: size.height * 0.01),
-                        
+
                         // Loading text
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -194,13 +199,17 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                             Text(
                               'Loading...',
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onSurface.withValues(alpha:0.5),
+                                color: colorScheme.onSurface.withValues(
+                                  alpha: 0.5,
+                                ),
                               ),
                             ),
                             Text(
                               'v${AppVersion.version}',
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onSurface.withValues(alpha:0.3),
+                                color: colorScheme.onSurface.withValues(
+                                  alpha: 0.3,
+                                ),
                               ),
                             ),
                           ],
