@@ -184,7 +184,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   Widget _buildAppBarSaveButton(BuildContext context, DiaryEntryState state) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final isValid = state.title.isNotEmpty && state.description.isNotEmpty;
+    final isValid = state.title.isNotEmpty || state.description.isNotEmpty;
 
     return Padding(
       padding: const EdgeInsets.only(right: 8.0),

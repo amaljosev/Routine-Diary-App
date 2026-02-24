@@ -121,7 +121,6 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
       backgroundImage = AssetImage(entry.bgImagePath!);
     }
 
-    // Use scaffold background color as fallback (this matches the theme's background)
     final Color fallbackColor = parsedColor ?? theme.scaffoldBackgroundColor;
     return Container(
       decoration: BoxDecoration(
@@ -159,32 +158,7 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
             },
             icon: Icon(CupertinoIcons.back),
           ),
-          title: Row(
-            children: [
-              Container(
-                margin: const EdgeInsets.only(right: 8),
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  entry.mood.isEmpty ? '😊' : entry.mood,
-                  style: const TextStyle(fontSize: 20),
-                ),
-              ),
-              Expanded(
-                child: Text(
-                  (entry.title.isEmpty) ? "Untitled Entry" : entry.title,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
+          title: null,
           backgroundColor: Colors.transparent,
           foregroundColor: theme.colorScheme.onSurface,
           forceMaterialTransparency: true,
@@ -223,6 +197,7 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
               controller: _scrollController,
               slivers: [
                 SliverToBoxAdapter(child: _buildDateOnlyHeader(context, entry)),
+                SliverToBoxAdapter(child: _buildMoodAndTitle(context, entry)),
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.only(top: 20),
@@ -239,59 +214,75 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
     );
   }
 
+  // New method for mood and title display
+  Widget _buildMoodAndTitle(BuildContext context, DiaryEntryModel entry) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12.0),
+      child: Row(
+        children: [
+          // Mood emoji with background
+          Container(
+            margin: const EdgeInsets.only(right: 12),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              entry.mood.isEmpty ? '😊' : entry.mood,
+              style: const TextStyle(fontSize: 24),
+            ),
+          ),
+          // Title
+          Expanded(
+            child: Text(
+              entry.title.isEmpty ? "Untitled Entry" : entry.title,
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.onSurface,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Updated date header - removed container decoration
   Widget _buildDateOnlyHeader(BuildContext context, DiaryEntryModel entry) {
     final date = entry.date.isNotEmpty
         ? DateTime.tryParse(entry.date) ?? DateTime.now()
         : DateTime.now();
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      decoration: BoxDecoration(
-        // Use surface color from the current theme (matches dialog/card backgrounds)
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.2),
-          width: 1,
+    return Row(
+      spacing: 10,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text(
+          intl.DateFormat('dd').format(date),
+          style: Theme.of(context).textTheme.headlineLarge!.copyWith(
+            fontWeight: FontWeight.w900,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.3)
-                : theme.colorScheme.primary.withValues(alpha: 0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+        Text(
+          intl.DateFormat('MMM').format(date),
+          style: Theme.of(context).textTheme.titleLarge!.copyWith(
+            fontWeight: FontWeight.w700,
+            color: Theme.of(context).colorScheme.primary,
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            intl.DateFormat('dd').format(date),
-            style: theme.textTheme.headlineLarge!.copyWith(
-              fontWeight: FontWeight.w900,
-              color: theme.colorScheme.onSurface,
-            ),
+        ),
+        Text(
+          intl.DateFormat('yyyy').format(date),
+          style: Theme.of(context).textTheme.titleLarge!.copyWith(
+            fontWeight: FontWeight.w900,
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
           ),
-          Text(
-            intl.DateFormat('EEEE').format(date),
-            style: theme.textTheme.headlineLarge!.copyWith(
-              fontWeight: FontWeight.w700,
-              color: theme.colorScheme.primary,
-            ),
-          ),
-          Text(
-            intl.DateFormat('MMMM yyyy').format(date),
-            style: theme.textTheme.titleMedium!.copyWith(
-              fontWeight: FontWeight.w900,
-              color: theme.colorScheme.primary.withValues(alpha: 0.5),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -390,6 +381,7 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
               ),
             ),
           ),
+          // Stickers - positions preserved exactly as saved
           ...stickers.map((sticker) {
             return Positioned(
               left: sticker.x,
@@ -412,6 +404,7 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
               ),
             );
           }),
+          // Images - positions preserved exactly as saved
           ...images.map((image) {
             return Positioned(
               left: image.x,
