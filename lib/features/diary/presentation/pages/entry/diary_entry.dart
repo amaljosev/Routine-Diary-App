@@ -232,7 +232,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
           ? DateTime.now().toIso8601String()
           : widget.entry!.createdAt,
       updatedAt: DateTime.now().toIso8601String(),
-      bgColor: state.bgColor?.toString(),
+      bgColor: state.bgColor?.toARGB32().toRadixString(16).padLeft(8, '0'),
       stickersJson: jsonEncode(state.stickers.map((s) => s.toJson()).toList()),
       imagesJson: jsonEncode(state.images.map((i) => i.toJson()).toList()),
       bgImagePath: state.bgImage.isNotEmpty ? state.bgImage : null,

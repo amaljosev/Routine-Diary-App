@@ -108,7 +108,7 @@ class DiaryEntryCard extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: isDark
                                   ? theme.colorScheme.onSurface.withValues(
-                                      alpha: 0.5,
+                                      alpha: 0.2,
                                     )
                                   : Colors.grey[100],
                               shape: BoxShape.circle,
@@ -130,11 +130,11 @@ class DiaryEntryCard extends StatelessWidget {
                           Expanded(
                             child: Text(
                               entry.title.isEmpty ? "Untitled" : entry.title,
-                              style: theme.textTheme.titleLarge!.copyWith(
+                              style: theme.textTheme.titleMedium!.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: theme.colorScheme.onSurface,
                               ),
-                              maxLines: 2,
+                              maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -147,7 +147,7 @@ class DiaryEntryCard extends StatelessWidget {
                       if (entry.preview.isNotEmpty)
                         Text(
                           entry.preview,
-                          maxLines: 3,
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: theme.colorScheme.onSurface.withValues(
@@ -276,7 +276,6 @@ class DiaryEntryCard extends StatelessWidget {
   Color _generateDarkColorFromText(String text) {
     final hash = text.hashCode;
     final hue = (hash.abs() % 360).toDouble();
-    // Using lower lightness (0.3) for dark shade and slightly lower saturation (0.6)
     return HSLColor.fromAHSL(1.0, hue, 0.6, 0.3).toColor();
   }
 }

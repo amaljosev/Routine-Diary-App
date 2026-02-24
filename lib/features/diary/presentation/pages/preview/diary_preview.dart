@@ -123,10 +123,9 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
 
     // Use scaffold background color as fallback (this matches the theme's background)
     final Color fallbackColor = parsedColor ?? theme.scaffoldBackgroundColor;
-
     return Container(
       decoration: BoxDecoration(
-        color: backgroundImage == null ? fallbackColor : null,
+        color: fallbackColor,
         image: backgroundImage != null
             ? DecorationImage(image: backgroundImage, fit: BoxFit.cover)
             : null,
@@ -134,11 +133,12 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
       child: SafeArea(
         child: Stack(
           children: [
-            Container(
-              color: isDark
-                  ? Colors.black.withValues(alpha: 0.4)
-                  : Colors.white.withValues(alpha: 0.4),
-            ),
+            if (backgroundImage != null)
+              Container(
+                color: isDark
+                    ? Colors.black.withValues(alpha: 0.4)
+                    : Colors.white.withValues(alpha: 0.4),
+              ),
             _buildContent(context, entry),
           ],
         ),
@@ -480,38 +480,55 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
   }
 
   Color? _parseColorFromString(String? input) {
-    if (input == null) return null;
-    final s = input.trim();
+    if (input == null || input.isEmpty) return null;
+    final String s = input.trim();
 
-    if (s.startsWith('Color(') && s.contains('red:')) {
+    // 1. Handle hex string format (8 chars, no prefix)
+    if (RegExp(r'^[0-9a-fA-F]{8}$').hasMatch(s)) {
+      return Color(int.parse(s, radix: 16));
+    }
+
+    // 2. Handle "Color(0xaarrggbb)" format (from old entries)
+    final colorRegex = RegExp(r'^Color\(0x([0-9a-fA-F]{8})\)$');
+    final match = colorRegex.firstMatch(s);
+    if (match != null) {
+      final hex = match.group(1);
+      if (hex != null) {
+        return Color(int.parse(hex, radix: 16));
+      }
+    }
+
+    // 3. Handle custom "Color(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)" format
+    final customRegex = RegExp(
+      r'red:\s*([0-9.]+),\s*green:\s*([0-9.]+),\s*blue:\s*([0-9.]+),\s*alpha:\s*([0-9.]+)',
+    );
+    final customMatch = customRegex.firstMatch(s);
+    if (customMatch != null) {
       try {
-        final redMatch = RegExp(r'red:\s*([0-9.]+)').firstMatch(s);
-        final greenMatch = RegExp(r'green:\s*([0-9.]+)').firstMatch(s);
-        final blueMatch = RegExp(r'blue:\s*([0-9.]+)').firstMatch(s);
-        final alphaMatch = RegExp(r'alpha:\s*([0-9.]+)').firstMatch(s);
-        final r = double.parse(redMatch?.group(1) ?? '1.0');
-        final g = double.parse(greenMatch?.group(1) ?? '1.0');
-        final b = double.parse(blueMatch?.group(1) ?? '1.0');
-        final a = double.parse(alphaMatch?.group(1) ?? '1.0');
+        final r = double.parse(customMatch.group(1)!);
+        final g = double.parse(customMatch.group(2)!);
+        final b = double.parse(customMatch.group(3)!);
+        final a = double.parse(customMatch.group(4)!);
         return Color.fromRGBO(
           (r * 255).round(),
           (g * 255).round(),
           (b * 255).round(),
           a,
         );
-      } catch (_) {
-        return null;
-      }
+      } catch (_) {}
     }
 
-    try {
-      var hex = s;
-      if (hex.startsWith('#')) hex = hex.substring(1);
-      if (hex.startsWith('0x')) hex = hex.substring(2);
-      if (hex.length == 6) hex = 'FF$hex';
-      return Color(int.parse(hex, radix: 16));
-    } catch (_) {
-      return null;
+    // 4. Handle other hex formats (#, 0x, etc.)
+    String hex = s;
+    if (hex.startsWith('#')) hex = hex.substring(1);
+    if (hex.startsWith('0x')) hex = hex.substring(2);
+    if (hex.length == 6) hex = 'FF$hex';
+    if (hex.length == 8) {
+      try {
+        return Color(int.parse(hex, radix: 16));
+      } catch (_) {}
     }
+
+    return null;
   }
 }

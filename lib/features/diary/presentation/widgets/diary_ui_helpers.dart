@@ -7,69 +7,78 @@ import 'package:flutter/cupertino.dart';
 class DiaryUIHelpers {
   /// Date picker
   static void showDatePicker(
-    BuildContext context,
-    DateTime initialDate,
-    Function(DateTime) onChanged,
-  ) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+  BuildContext context,
+  DateTime initialDate,
+  Function(DateTime) onChanged, {
+  bool allowFutureDates = false, // Add this parameter to control future date access
+}) {
+  final theme = Theme.of(context);
+  final isDark = theme.brightness == Brightness.dark;
 
-    showCupertinoModalPopup(
-      context: context,
-      builder: (_) => Container(
-        height: 300,
-        // Use theme surface color
-        color: isDark ? theme.colorScheme.surface : Colors.white,  // Updated
-        child: SafeArea(
-          child: Column(
-            children: [
-              Expanded(
-                child: CupertinoDatePicker(
-                  backgroundColor: isDark
-                      ? theme.colorScheme.surface  // Updated
-                      : Colors.white,
-                  initialDateTime: initialDate,
-                  mode: CupertinoDatePickerMode.date,
-                  onDateTimeChanged: onChanged,
-                ),
+  // Set minimum and maximum dates
+  final DateTime today = DateTime.now();
+  final DateTime minDate = DateTime(2000); // Adjust as needed
+  final DateTime maxDate = allowFutureDates 
+      ? DateTime(2100) // Allow dates up to year 2100 if future dates are allowed
+      : today; // Only allow up to today if future dates are not allowed
+
+  showCupertinoModalPopup(
+    context: context,
+    builder: (_) => Container(
+      height: 300,
+      color: isDark ? theme.colorScheme.surface : Colors.white,
+      child: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: CupertinoDatePicker(
+                backgroundColor: isDark
+                    ? theme.colorScheme.surface
+                    : Colors.white,
+                initialDateTime: initialDate,
+                mode: CupertinoDatePickerMode.date,
+                minimumDate: minDate,
+                maximumDate: maxDate, // This controls future date access
+                onDateTimeChanged: onChanged,
               ),
-              Container(
-                decoration: BoxDecoration(
-                  border: Border(
-                    top: BorderSide(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.1)
-                          : Colors.black.withValues(alpha: 0.1),
-                      width: 0.5,
-                    ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : Colors.black.withValues(alpha: 0.1),
+                    width: 0.5,
                   ),
                 ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      alignment: Alignment.center,
-                      child: Text(
-                        'Done',
-                        style: TextStyle(
-                          color: isDark ? Colors.white : theme.colorScheme.primary,  // Updated
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    alignment: Alignment.center,
+                    child: Text(
+                      'Done',
+                      style: TextStyle(
+                        color: isDark ? Colors.white : theme.colorScheme.primary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   /// Emoji picker
   static void openEmojiPicker(

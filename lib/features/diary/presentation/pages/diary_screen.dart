@@ -62,7 +62,7 @@ class DiaryScreen extends StatelessWidget {
                     children: [
                       Text(
                         "Recent Entries",
-                        style: theme.textTheme.headlineSmall?.copyWith(
+                        style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w600,
                           color: theme.colorScheme.onSurface,
                         ),
@@ -199,7 +199,20 @@ class DiaryScreen extends StatelessWidget {
                   top: false,
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
-                      final DiaryEntryModel entry = state.entries[index];
+                      final sortedEntries =
+                          List<DiaryEntryModel>.from(state.entries)
+                            ..sort((a, b) {
+                              final dateA =
+                                  DateTime.tryParse(a.date) ??
+                                  DateTime.fromMillisecondsSinceEpoch(0);
+                              final dateB =
+                                  DateTime.tryParse(b.date) ??
+                                  DateTime.fromMillisecondsSinceEpoch(0);
+                              return dateB.compareTo(
+                                dateA,
+                              );
+                            });
+                      final entry = sortedEntries[index];
                       return DiaryEntryCard(entry: entry);
                     }, childCount: state.entries.length),
                   ),
