@@ -4,6 +4,7 @@ import 'package:routine/core/utils/converters.dart';
 import 'package:routine/features/diary/data/models/diary_entry_model.dart';
 import 'package:routine/features/diary/presentation/blocs/diary/diary_bloc.dart';
 import 'package:routine/features/diary/presentation/pages/preview/diary_preview.dart';
+import 'package:routine/features/diary/presentation/widgets/diary_ui_helpers.dart';
 
 class DiaryEntryCard extends StatelessWidget {
   final DiaryEntryModel entry;
@@ -15,7 +16,7 @@ class DiaryEntryCard extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final color = _generateColorFromText(entry.mood + entry.title);
-    final colorD = _generateDarkColorFromText(entry.mood + entry.title);
+    final colorD = DiaryUIHelpers.generateDarkColorFromText(entry.mood + entry.title);
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       decoration: BoxDecoration(
@@ -273,9 +274,5 @@ class DiaryEntryCard extends StatelessWidget {
     return HSLColor.fromAHSL(1.0, hue, 0.7, 0.8).toColor();
   }
 
-  Color _generateDarkColorFromText(String text) {
-    final hash = text.hashCode;
-    final hue = (hash.abs() % 360).toDouble();
-    return HSLColor.fromAHSL(1.0, hue, 0.6, 0.3).toColor();
-  }
+  
 }

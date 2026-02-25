@@ -483,4 +483,19 @@ class DiaryUIHelpers {
       TextPosition(offset: controller.text.length),
     );
   }
+ static Color generateDarkColorFromText(String text) {
+    final hash = text.hashCode;
+    final hue = (hash.abs() % 360).toDouble();
+    return HSLColor.fromAHSL(1.0, hue, 0.6, 0.3).toColor();
+  }
+ static Color darken(Color color, {double amount = 0.6}) {
+  assert(amount >= 0 && amount <= 1);
+
+  final hsl = HSLColor.fromColor(color);
+
+  final double newLightness =
+      (hsl.lightness * (1 - amount)).clamp(0.0, 1.0);
+
+  return hsl.withLightness(newLightness).toColor();
+}
 }
