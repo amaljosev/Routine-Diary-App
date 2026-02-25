@@ -169,6 +169,7 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
                     snap: false,
                     surfaceTintColor: Colors.transparent,
                     shadowColor: Colors.transparent,
+                    title: Text('Memory Timeline'),
                   ),
                 ],
               ),
