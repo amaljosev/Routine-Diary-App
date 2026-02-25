@@ -262,21 +262,21 @@ final List<FAQItem> faqs = [
   FAQItem(
     question: "Is my diary data private and secure?",
     answer:
-        "All your diary entries are stored locally on your device. We do not collect or upload any personal data. For additional security, you can enable app lock or biometric authentication in settings.",
+        "All your diary entries are stored locally on your device. We do not collect or upload any personal data.",
     icon: Icons.lock,
   ),
-  FAQItem(
-    question: "How do I back up my diary entries?",
-    answer:
-        "Currently, entries are stored locally. You can enable cloud backup in settings (if available) or manually export your entries as a file.",
-    icon: Icons.backup,
-  ),
-  FAQItem(
-    question: "Can I set reminders to write in my diary?",
-    answer:
-        "Yes, you can set daily reminders from the settings screen. Choose a time and you'll receive a notification to write your entry.",
-    icon: Icons.notifications,
-  ),
+  // FAQItem(
+  //   question: "How do I back up my diary entries?",
+  //   answer:
+  //       "Currently, entries are stored locally. You can enable cloud backup in settings (if available) or manually export your entries as a file.",
+  //   icon: Icons.backup,
+  // ),
+  // FAQItem(
+  //   question: "Can I set reminders to write in my diary?",
+  //   answer:
+  //       "Yes, you can set daily reminders from the settings screen. Choose a time and you'll receive a notification to write your entry.",
+  //   icon: Icons.notifications,
+  // ),
   FAQItem(
     question: "How do I change the date of an entry?",
     answer:

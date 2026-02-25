@@ -35,7 +35,7 @@ class AppColors {
 
   // ----- DARK THEME 1: Deep Purple/Amber (Rich) -----
   static const Color dark1Primary = Color(0xFFB39DDB); // Deep Purple 200
-  static const Color dark1Secondary = Color(0xFFFFD54F); // Amber 300
+  static const Color dark1Secondary =  Color(0xFF7B1FA2);// Amber 300
   static const Color dark1Surface = Color(0xFF1E1A2B); // Dark purple-grey
   static const Color dark1Background = Color(0xFF121212); // Near black
   static const Color dark1OnBackground = Color(0xFFF5F5F5); // Off-white
