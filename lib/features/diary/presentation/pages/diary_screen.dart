@@ -1,12 +1,17 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:routine/core/services/app_lock_service.dart';
 import 'package:routine/core/theme/theme_extenstions.dart';
+import 'package:routine/features/auth/app_lock_settings_screen.dart';
+import 'package:routine/features/auth/app_wrapper.dart';
+import 'package:routine/features/auth/lock_screen.dart';
 import 'package:routine/features/diary/presentation/blocs/diary/diary_bloc.dart';
 import 'package:routine/features/diary/presentation/pages/entry/diary_entry.dart';
 import 'package:routine/features/diary/presentation/pages/history/history_screen.dart';
 import 'package:routine/features/settings/presentation/pages/settings_screen.dart';
 import 'package:routine/features/diary/presentation/widgets/entry_card_widget.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DiaryScreen extends StatelessWidget {
   const DiaryScreen({super.key});
@@ -63,7 +68,7 @@ class DiaryScreen extends StatelessWidget {
                         "Recent Entries",
                         style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w600,
-                          color: theme.colorScheme.onSurface,
+                          color: Colors.white,
                         ),
                       ),
                       const Spacer(),
@@ -85,7 +90,7 @@ class DiaryScreen extends StatelessWidget {
                         child: Text(
                           "${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}",
                           style: theme.textTheme.labelMedium?.copyWith(
-                            color: theme.colorScheme.primary,
+                            color: theme.colorScheme.onSurface,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -363,6 +368,54 @@ class DiaryScreen extends StatelessWidget {
                 icon: const Icon(Icons.menu, size: 26),
                 color: theme.colorScheme.primary,
               ),
+              IconButton(
+  onPressed: () async {
+    final prefs = await SharedPreferences.getInstance();
+    final enabled = prefs.getBool('app_lock_enabled') ?? false;
+
+    if (enabled) {
+      final service = AppLockService();
+      final ok = await service.authenticate(reason: 'Authenticate to open Test Home');
+
+      if (!ok) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Authentication required to open Test Home')),
+        );
+        return;
+      }
+
+      // Auth passed → navigate and tell wrapper the user is initially unlocked
+      if (!context.mounted) return;
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => AppWrapper(child: const TestHomeScreen(), initiallyUnlocked: true),
+        ),
+      );
+      return;
+    }
+
+    // Lock not enabled → just navigate normally
+    if (!context.mounted) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => AppWrapper(child: const TestHomeScreen()),
+      ),
+    );
+  },
+  icon: const Icon(Icons.lock, size: 26),
+  color: theme.colorScheme.primary,
+),
+              IconButton(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        AppWrapper(child: const AppLockSettingsScreen()),
+                  ),
+                ),
+                icon: const Icon(Icons.handshake, size: 26),
+                color: theme.colorScheme.primary,
+              ),
             ],
           ),
         ),
@@ -370,3 +423,79 @@ class DiaryScreen extends StatelessWidget {
     );
   }
 }
+
+
+  class TestHomeScreen extends StatelessWidget {
+    const TestHomeScreen({super.key});
+
+    @override
+    Widget build(BuildContext context) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('App Lock Test'),
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.security,
+                size: 80,
+                color: Colors.blue,
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'App is Unlocked',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("App is working normally"),
+                    ),
+                  );
+                },
+                child: const Text("Test Button"),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const SecondTestScreen(),
+                    ),
+                  );
+                },
+                child: const Text("Go to Second Screen"),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+  }
+
+  class SecondTestScreen extends StatelessWidget {
+    const SecondTestScreen({super.key});
+
+    @override
+    Widget build(BuildContext context) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text("Second Screen"),
+        ),
+        body: const Center(
+          child: Text(
+            "Navigate back and resume app to test lock",
+            style: TextStyle(fontSize: 18),
+          ),
+        ),
+      );
+    }
+  }

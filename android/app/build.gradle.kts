@@ -13,7 +13,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.example.routine"
+    namespace = "com.amaljosev.routine"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "27.0.12077973"
 
