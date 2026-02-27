@@ -1,4 +1,9 @@
 import 'package:routine/core/theme/app_theme.dart';
+import 'package:routine/features/app_lock/data/datasources/biometric_local_auth_datasource.dart';
+import 'package:routine/features/app_lock/data/datasources/shared_preferences_datasource.dart';
+import 'package:routine/features/app_lock/data/repositories/app_lock_repository_impl.dart';
+import 'package:routine/features/app_lock/domain/repositories/app_lock_repository.dart';
+import 'package:routine/features/app_lock/presentation/bloc/lock_bloc.dart';
 import 'package:routine/features/diary/data/datasources/diary_local_data_source.dart';
 import 'package:routine/features/diary/data/repository/diary_repo_implementation.dart';
 import 'package:routine/features/diary/domain/repository/diary_repository.dart';
@@ -15,20 +20,28 @@ void main() async {
   final diaryLocalDataSource = DiaryLocalDataSource();
   final diaryRepository = DiaryRepositoryImpl(diaryLocalDataSource);
   final themeRepository = ThemeRepositoryImpl();
+  final biometricDataSource = BiometricLocalAuthDataSource();
+  final prefsDataSource = SharedPreferencesDataSource();
+  final appLockRepository = AppLockRepositoryImpl(
+    biometricDataSource: biometricDataSource,
+    prefsDataSource: prefsDataSource,
+  );
 
   runApp(
-    MyApp(diaryRepository: diaryRepository, themeRepository: themeRepository),
+    MyApp(diaryRepository: diaryRepository, themeRepository: themeRepository,appLockRepository: appLockRepository,),
   );
 }
 
 class MyApp extends StatelessWidget {
   final DiaryRepository diaryRepository;
   final ThemeRepository themeRepository;
+   final AppLockRepository appLockRepository;
 
   const MyApp({
     super.key,
     required this.diaryRepository,
     required this.themeRepository,
+    required this.appLockRepository,
   });
 
   @override
@@ -42,6 +55,9 @@ class MyApp extends StatelessWidget {
         BlocProvider(
           create: (_) =>
               ThemeBloc(repository: themeRepository)..add(LoadSavedTheme()),
+        ),
+        BlocProvider(
+          create: (_) => AppLockBloc(repository: appLockRepository)..add(LoadAppLockSettings()),
         ),
       ],
       child: MediaQuery(

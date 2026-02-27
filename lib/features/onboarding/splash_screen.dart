@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:routine/core/services/app_update_service.dart';
 import 'package:routine/core/version/app_version.dart';
-import 'package:routine/features/diary/presentation/pages/diary_screen.dart';
+import 'package:routine/features/app_lock/presentation/widgets/lock_gate.dart';
 import 'package:routine/features/onboarding/onboarding_screens.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -26,7 +26,7 @@ class _SplashScreenState extends State<SplashScreen>
     // Initialize animations
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(seconds: 1),
     );
 
     _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -49,30 +49,29 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _navigateToHome() async {
-    // Reduced delay for better UX (2 seconds instead of 10 minutes)
-    await Future.delayed(const Duration(seconds: 2));
+  await Future.delayed(const Duration(seconds: 2));
 
-    if (!_hasNavigated && mounted) {
-      final prefs = await SharedPreferences.getInstance();
-      final showOnboarding = prefs.getBool('showOnboarding') ?? true;
+  if (!_hasNavigated && mounted) {
+    final prefs = await SharedPreferences.getInstance();
+    final showOnboarding = prefs.getBool('showOnboarding') ?? true;
 
-      _hasNavigated = true;
+    _hasNavigated = true;
 
-      if (!showOnboarding) {
-        // User has completed onboarding, go to diary
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const DiaryScreen()),
-        );
-      } else {
-        // First time user, show onboarding
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const OnboardingScreen()),
-        );
-      }
+    if (!showOnboarding) {
+      // User has completed onboarding, go to lock gate
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LockGate()),
+      );
+    } else {
+      // First time user, show onboarding
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+      );
     }
   }
+}
 
   @override
   Widget build(BuildContext context) {

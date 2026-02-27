@@ -3,7 +3,7 @@ import 'dart:developer';
 import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
 
-class AppLockService {
+class BiometricLocalAuthDataSource {
   final LocalAuthentication _auth = LocalAuthentication();
 
   /// Returns true if device supports any authentication (biometric or device credential)
@@ -15,7 +15,6 @@ class AppLockService {
       final biometrics = await _auth.getAvailableBiometrics();
       return canCheck || biometrics.isNotEmpty;
     } catch (e) {
-      // Log if you want
       return false;
     }
   }
@@ -29,21 +28,13 @@ class AppLockService {
       final result = await _auth.authenticate(
         localizedReason: reason,
         biometricOnly: false,
-       
       );
-
       return result;
     } on PlatformException catch (e) {
       log(e.toString());
-      // handle platform-specific issues gracefully
-      // e.code may be 'NotAvailable', 'LockedOut', 'PermanentlyLockedOut', 'UserCancelled', 'PasscodeNotSet', 'NotEnrolled'
-      // You can map these codes to user-friendly messages in the UI.
-      // print('LocalAuth platform error: ${e.code} ${e.message}');
       return false;
     } catch (e) {
-       log(e.toString());
-      // generic failure
-      // print('LocalAuth unknown error: $e');
+      log(e.toString());
       return false;
     }
   }

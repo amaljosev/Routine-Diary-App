@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:routine/core/version/app_version.dart';
+import 'package:routine/features/app_lock/presentation/pages/app_lock_settings_page.dart';
 import 'package:routine/features/settings/presentation/pages/contact_us.dart';
 import 'package:routine/features/settings/presentation/pages/help_screen.dart';
 import 'package:routine/features/settings/presentation/pages/theme/theme_screen.dart';
@@ -64,7 +65,21 @@ class SettingsScreen extends StatelessWidget {
                       trailing: const CupertinoListTileChevron(),
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (context) => ThemeSwitcherScreen(),
+                          builder: (context) => const ThemeSwitcherScreen(),
+                        ),
+                      ),
+                    ),
+                    ListTile(
+                      leading: Icon(
+                        Icons.lock_outline_rounded,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                      title: const Text('Diary Lock'),
+                      titleTextStyle: Theme.of(context).textTheme.titleSmall,
+                      trailing: const CupertinoListTileChevron(),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const AppLockSettingsPage(),
                         ),
                       ),
                     ),
@@ -85,7 +100,9 @@ class SettingsScreen extends StatelessWidget {
                       titleTextStyle: Theme.of(context).textTheme.titleSmall,
                       trailing: const CupertinoListTileChevron(),
                       onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(builder: (context) => HelpScreen()),
+                        MaterialPageRoute(
+                          builder: (context) => const HelpScreen(),
+                        ),
                       ),
                     ),
                     ListTile(
