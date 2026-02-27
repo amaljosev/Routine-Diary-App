@@ -368,54 +368,73 @@ class DiaryScreen extends StatelessWidget {
                 icon: const Icon(Icons.menu, size: 26),
                 color: theme.colorScheme.primary,
               ),
-              IconButton(
-  onPressed: () async {
-    final prefs = await SharedPreferences.getInstance();
-    final enabled = prefs.getBool('app_lock_enabled') ?? false;
+              // IconButton(
+              //   onPressed: () async {
+              //     final prefs = await SharedPreferences.getInstance();
+              //     final enabled = prefs.getBool('app_lock_enabled') ?? false;
 
-    if (enabled) {
-      final service = AppLockService();
-      final ok = await service.authenticate(reason: 'Authenticate to open Test Home');
+              //     if (enabled) {
+              //       final service = AppLockService();
+              //       final ok = await service.authenticate(
+              //         reason: 'Authenticate to open Test Home',
+              //       );
 
-      if (!ok) {
-        if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Authentication required to open Test Home')),
-        );
-        return;
-      }
+              //       if (!ok) {
+              //         if (!context.mounted) return;
+              //         ScaffoldMessenger.of(context).showSnackBar(
+              //           const SnackBar(
+              //             content: Text(
+              //               'Authentication required to open Test Home',
+              //             ),
+              //           ),
+              //         );
+              //         return;
+              //       }
 
-      // Auth passed → navigate and tell wrapper the user is initially unlocked
-      if (!context.mounted) return;
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => AppWrapper(child: const TestHomeScreen(), initiallyUnlocked: true),
-        ),
-      );
-      return;
-    }
+              //       // Auth passed → navigate and tell wrapper the user is initially unlocked
+              //       if (!context.mounted) return;
+              //       Navigator.of(context).push(
+              //         MaterialPageRoute(
+              //           builder: (_) => AppWrapper(
+              //             initiallyUnlocked: true,
+              //             child: const TestHomeScreen(),
+              //           ),
+              //         ),
+              //       );
+              //       return;
+              //     }
 
-    // Lock not enabled → just navigate normally
-    if (!context.mounted) return;
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => AppWrapper(child: const TestHomeScreen()),
-      ),
-    );
-  },
-  icon: const Icon(Icons.lock, size: 26),
-  color: theme.colorScheme.primary,
-),
-              IconButton(
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        AppWrapper(child: const AppLockSettingsScreen()),
-                  ),
-                ),
-                icon: const Icon(Icons.handshake, size: 26),
-                color: theme.colorScheme.primary,
-              ),
+              //     // Lock not enabled → just navigate normally
+              //     if (!context.mounted) return;
+              //     Navigator.of(context).push(
+              //       MaterialPageRoute(
+              //         builder: (_) => AppWrapper(child: const TestHomeScreen()),
+              //       ),
+              //     );
+              //   },
+              //   icon: const Icon(Icons.lock, size: 26),
+              //   color: theme.colorScheme.primary,
+              // ),
+              // IconButton(
+              //   onPressed: () => Navigator.of(context).push(
+              //     MaterialPageRoute(
+              //       builder: (context) =>
+              //           AppWrapper(child: const AppLockSettingsScreen()),
+              //     ),
+              //   ),
+              //   icon: const Icon(Icons.handshake, size: 26),
+              //   color: theme.colorScheme.primary,
+              // ),
+              // IconButton(
+              //   onPressed: () => Navigator.of(context).push(
+              //     MaterialPageRoute(
+              //       builder: (context) =>
+              //           AppWrapper(child: const LockScreen()),
+              //     ),
+              //   ),
+              //   icon: const Icon(Icons.favorite, size: 26),
+              //   color: theme.colorScheme.primary,
+              // ),
             ],
           ),
         ),
@@ -424,78 +443,62 @@ class DiaryScreen extends StatelessWidget {
   }
 }
 
+class TestHomeScreen extends StatelessWidget {
+  const TestHomeScreen({super.key});
 
-  class TestHomeScreen extends StatelessWidget {
-    const TestHomeScreen({super.key});
-
-    @override
-    Widget build(BuildContext context) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('App Lock Test'),
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('App Lock Test')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.security, size: 80, color: Colors.blue),
+            const SizedBox(height: 24),
+            const Text(
+              'App is Unlocked',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("App is working normally")),
+                );
+              },
+              child: const Text("Test Button"),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SecondTestScreen()),
+                );
+              },
+              child: const Text("Go to Second Screen"),
+            ),
+          ],
         ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.security,
-                size: 80,
-                color: Colors.blue,
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'App is Unlocked',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("App is working normally"),
-                    ),
-                  );
-                },
-                child: const Text("Test Button"),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const SecondTestScreen(),
-                    ),
-                  );
-                },
-                child: const Text("Go to Second Screen"),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
+      ),
+    );
   }
+}
 
-  class SecondTestScreen extends StatelessWidget {
-    const SecondTestScreen({super.key});
+class SecondTestScreen extends StatelessWidget {
+  const SecondTestScreen({super.key});
 
-    @override
-    Widget build(BuildContext context) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text("Second Screen"),
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Second Screen")),
+      body: const Center(
+        child: Text(
+          "Navigate back and resume app to test lock",
+          style: TextStyle(fontSize: 18),
         ),
-        body: const Center(
-          child: Text(
-            "Navigate back and resume app to test lock",
-            style: TextStyle(fontSize: 18),
-          ),
-        ),
-      );
-    }
+      ),
+    );
   }
+}
