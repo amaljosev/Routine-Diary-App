@@ -1,17 +1,15 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:routine/core/services/app_lock_service.dart';
 import 'package:routine/core/theme/theme_extenstions.dart';
-import 'package:routine/features/auth/app_lock_settings_screen.dart';
 import 'package:routine/features/auth/app_wrapper.dart';
 import 'package:routine/features/auth/lock_screen.dart';
+import 'package:routine/features/auth/security_question_screen.dart';
 import 'package:routine/features/diary/presentation/blocs/diary/diary_bloc.dart';
 import 'package:routine/features/diary/presentation/pages/entry/diary_entry.dart';
 import 'package:routine/features/diary/presentation/pages/history/history_screen.dart';
 import 'package:routine/features/settings/presentation/pages/settings_screen.dart';
 import 'package:routine/features/diary/presentation/widgets/entry_card_widget.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class DiaryScreen extends StatelessWidget {
   const DiaryScreen({super.key});
@@ -425,16 +423,26 @@ class DiaryScreen extends StatelessWidget {
               //   icon: const Icon(Icons.handshake, size: 26),
               //   color: theme.colorScheme.primary,
               // ),
-              // IconButton(
-              //   onPressed: () => Navigator.of(context).push(
-              //     MaterialPageRoute(
-              //       builder: (context) =>
-              //           AppWrapper(child: const LockScreen()),
-              //     ),
-              //   ),
-              //   icon: const Icon(Icons.favorite, size: 26),
-              //   color: theme.colorScheme.primary,
-              // ),
+              IconButton(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        AppWrapper(child: const LockScreen()),
+                  ),
+                ),
+                icon: const Icon(Icons.favorite, size: 26),
+                color: theme.colorScheme.primary,
+              ),
+               IconButton(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        AppWrapper(child: const SecurityQuestionScreen()),
+                  ),
+                ),
+                icon: const Icon(Icons.security_outlined , size: 26),
+                color: theme.colorScheme.primary,
+              ),
             ],
           ),
         ),
