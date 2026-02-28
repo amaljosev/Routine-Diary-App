@@ -212,3 +212,36 @@ class SetError extends DiaryEntryEvent {
 class ClearError extends DiaryEntryEvent {
   const ClearError();
 }
+
+class LoadBackgrounds extends DiaryEntryEvent {}
+
+class BackgroundsLoaded extends DiaryEntryEvent {
+  final List<String> urls;
+  const BackgroundsLoaded(this.urls);
+}
+
+class BackgroundsLoadFailed extends DiaryEntryEvent {
+  final String error;
+  const BackgroundsLoadFailed(this.error);
+}
+
+class SelectSupabaseBackground extends DiaryEntryEvent {
+  final String imageUrl;
+  const SelectSupabaseBackground(this.imageUrl);
+}
+class DownloadBackground extends DiaryEntryEvent {
+  final String url;
+  const DownloadBackground(this.url);
+}
+
+class BackgroundDownloadCompleted extends DiaryEntryEvent {
+  final String url;
+  final String localPath;
+  const BackgroundDownloadCompleted(this.url, this.localPath);
+}
+
+class BackgroundDownloadFailed extends DiaryEntryEvent {
+  final String url;
+  final String error;
+  const BackgroundDownloadFailed(this.url, this.error);
+}

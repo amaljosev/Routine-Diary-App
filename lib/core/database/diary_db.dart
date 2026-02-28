@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+
 class DiaryDatabase {
   DiaryDatabase._privateConstructor();
   static final DiaryDatabase instance = DiaryDatabase._privateConstructor();
@@ -18,7 +19,7 @@ class DiaryDatabase {
 
     return await openDatabase(
       path,
-      version: 1, 
+      version: 3, // Current version
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -36,7 +37,8 @@ class DiaryDatabase {
       image_path TEXT,
       bg_color TEXT,
       bg_image_path TEXT,
-      bg_gallery_image_path TEXT, -- Add this line
+      bg_gallery_image_path TEXT,
+      bg_local_path TEXT,
       stickers TEXT,
       images TEXT,
       created_at TEXT,          
@@ -46,8 +48,28 @@ class DiaryDatabase {
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    // Helper to check if a column exists
+    Future<bool> columnExists(String columnName) async {
+      final result = await db.rawQuery(
+        "PRAGMA table_info(diary_entries);",
+      );
+      return result.any((col) => col['name'] == columnName);
+    }
+
+    // Upgrade to version 2: add bg_gallery_image_path
     if (oldVersion < 2) {
-      await db.execute('ALTER TABLE diary_entries ADD COLUMN bg_gallery_image_path TEXT;');
+      final exists = await columnExists('bg_gallery_image_path');
+      if (!exists) {
+        await db.execute('ALTER TABLE diary_entries ADD COLUMN bg_gallery_image_path TEXT;');
+      }
+    }
+
+    // Upgrade to version 3: add bg_local_path
+    if (oldVersion < 3) {
+      final exists = await columnExists('bg_local_path');
+      if (!exists) {
+        await db.execute('ALTER TABLE diary_entries ADD COLUMN bg_local_path TEXT;');
+      }
     }
   }
 

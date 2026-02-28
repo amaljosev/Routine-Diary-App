@@ -10,7 +10,8 @@ class DiaryEntry extends Equatable {
   final String? imagePath;
   final String? bgColor;
   final String? bgImagePath;
-  final String? bgGalleryImagePath; 
+  final String? bgGalleryImagePath;
+  final String? bgLocalPath;
   final String? stickersJson;
   final String? imagesJson;
   final String createdAt;
@@ -26,7 +27,8 @@ class DiaryEntry extends Equatable {
     this.imagePath,
     this.bgColor,
     this.bgImagePath,
-    this.bgGalleryImagePath, 
+    this.bgGalleryImagePath,
+    this.bgLocalPath,
     this.stickersJson,
     this.imagesJson,
     required this.createdAt,
@@ -35,19 +37,20 @@ class DiaryEntry extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        title,
-        date,
-        preview,
-        mood,
-        content,
-        imagePath,
-        bgColor,
-        bgImagePath,
-        bgGalleryImagePath, 
-        stickersJson,
-        imagesJson,
-        createdAt,
-        updatedAt,
-      ];
+    id,
+    title,
+    date,
+    preview,
+    mood,
+    content,
+    imagePath,
+    bgColor,
+    bgImagePath,
+    bgGalleryImagePath,
+    bgLocalPath,
+    stickersJson,
+    imagesJson,
+    createdAt,
+    updatedAt,
+  ];
 }

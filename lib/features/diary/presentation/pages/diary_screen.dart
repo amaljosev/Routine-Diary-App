@@ -7,6 +7,7 @@ import 'package:routine/features/diary/presentation/pages/entry/diary_entry.dart
 import 'package:routine/features/diary/presentation/pages/history/history_screen.dart';
 import 'package:routine/features/settings/presentation/pages/settings_screen.dart';
 import 'package:routine/features/diary/presentation/widgets/entry_card_widget.dart';
+import 'package:routine/features/test_screen.dart';
 
 class DiaryScreen extends StatelessWidget {
   const DiaryScreen({super.key});
@@ -361,6 +362,23 @@ class DiaryScreen extends StatelessWidget {
                   ),
                 ),
                 icon: const Icon(Icons.menu, size: 26),
+                color: theme.colorScheme.primary,
+              ),
+              IconButton(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const SettingsScreen(),
+                  ),
+                ),
+                icon: const Icon(Icons.menu, size: 26),
+                color: theme.colorScheme.primary,
+              ),IconButton(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const BgPresetScreen(),
+                  ),
+                ),
+                icon: const Icon(Icons.download, size: 26),
                 color: theme.colorScheme.primary,
               ),
              

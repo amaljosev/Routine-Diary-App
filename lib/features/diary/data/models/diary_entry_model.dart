@@ -1,6 +1,5 @@
 import 'package:routine/features/diary/domain/entities/diary_entry_model.dart';
 
-
 class DiaryEntryModel extends DiaryEntry {
   const DiaryEntryModel({
     required super.id,
@@ -13,6 +12,7 @@ class DiaryEntryModel extends DiaryEntry {
     super.bgColor,
     super.bgImagePath,
     super.bgGalleryImagePath,
+    super.bgLocalPath,                  
     super.stickersJson,
     super.imagesJson,
     required super.createdAt,
@@ -31,8 +31,9 @@ class DiaryEntryModel extends DiaryEntry {
       bgColor: map['bg_color'] as String?,
       bgImagePath: map['bg_image_path'] as String?,
       bgGalleryImagePath: map['bg_gallery_image_path'] as String?,
-      stickersJson: map['stickers'],
-      imagesJson: map['images'],
+      bgLocalPath: map['bg_local_path'] as String?,         
+      stickersJson: map['stickers'] as String?,
+      imagesJson: map['images'] as String?,
       createdAt: map['created_at'] as String? ?? '',
       updatedAt: map['updated_at'] as String? ?? '',
     );
@@ -50,6 +51,7 @@ class DiaryEntryModel extends DiaryEntry {
       'bg_color': bgColor,
       'bg_image_path': bgImagePath,
       'bg_gallery_image_path': bgGalleryImagePath,
+      'bg_local_path': bgLocalPath,                         
       'stickers': stickersJson,
       'images': imagesJson,
       'created_at': createdAt,
@@ -69,6 +71,7 @@ class DiaryEntryModel extends DiaryEntry {
       bgColor: entry.bgColor,
       bgImagePath: entry.bgImagePath,
       bgGalleryImagePath: entry.bgGalleryImagePath,
+      bgLocalPath: entry.bgLocalPath,                       
       stickersJson: entry.stickersJson,
       imagesJson: entry.imagesJson,
       createdAt: entry.createdAt,
@@ -88,6 +91,7 @@ class DiaryEntryModel extends DiaryEntry {
       bgColor: bgColor,
       bgImagePath: bgImagePath,
       bgGalleryImagePath: bgGalleryImagePath,
+      bgLocalPath: bgLocalPath,                             
       stickersJson: stickersJson,
       imagesJson: imagesJson,
       createdAt: createdAt,

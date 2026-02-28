@@ -1,84 +1,92 @@
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:routine/core/theme/app_colors.dart';
 import 'package:routine/core/constants/diary_items.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:routine/features/diary/presentation/blocs/diary_entry/diary_entry_bloc.dart';
 
 class DiaryUIHelpers {
   /// Date picker
   static void showDatePicker(
-  BuildContext context,
-  DateTime initialDate,
-  Function(DateTime) onChanged, {
-  bool allowFutureDates = false, // Add this parameter to control future date access
-}) {
-  final theme = Theme.of(context);
-  final isDark = theme.brightness == Brightness.dark;
+    BuildContext context,
+    DateTime initialDate,
+    Function(DateTime) onChanged, {
+    bool allowFutureDates =
+        false, // Add this parameter to control future date access
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-  // Set minimum and maximum dates
-  final DateTime today = DateTime.now();
-  final DateTime minDate = DateTime(2000); // Adjust as needed
-  final DateTime maxDate = allowFutureDates 
-      ? DateTime(2100) // Allow dates up to year 2100 if future dates are allowed
-      : today; // Only allow up to today if future dates are not allowed
+    // Set minimum and maximum dates
+    final DateTime today = DateTime.now();
+    final DateTime minDate = DateTime(2000); // Adjust as needed
+    final DateTime maxDate = allowFutureDates
+        ? DateTime(
+            2100,
+          ) // Allow dates up to year 2100 if future dates are allowed
+        : today; // Only allow up to today if future dates are not allowed
 
-  showCupertinoModalPopup(
-    context: context,
-    builder: (_) => Container(
-      height: 300,
-      color: isDark ? theme.colorScheme.surface : Colors.white,
-      child: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: CupertinoDatePicker(
-                backgroundColor: isDark
-                    ? theme.colorScheme.surface
-                    : Colors.white,
-                initialDateTime: initialDate,
-                mode: CupertinoDatePickerMode.date,
-                minimumDate: minDate,
-                maximumDate: maxDate, // This controls future date access
-                onDateTimeChanged: onChanged,
-              ),
-            ),
-            Container(
-              decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.1)
-                        : Colors.black.withValues(alpha: 0.1),
-                    width: 0.5,
-                  ),
+    showCupertinoModalPopup(
+      context: context,
+      builder: (_) => Container(
+        height: 300,
+        color: isDark ? theme.colorScheme.surface : Colors.white,
+        child: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: CupertinoDatePicker(
+                  backgroundColor: isDark
+                      ? theme.colorScheme.surface
+                      : Colors.white,
+                  initialDateTime: initialDate,
+                  mode: CupertinoDatePickerMode.date,
+                  minimumDate: minDate,
+                  maximumDate: maxDate, // This controls future date access
+                  onDateTimeChanged: onChanged,
                 ),
               ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () => Navigator.pop(context),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    alignment: Alignment.center,
-                    child: Text(
-                      'Done',
-                      style: TextStyle(
-                        color: isDark ? Colors.white : theme.colorScheme.primary,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+              Container(
+                decoration: BoxDecoration(
+                  border: Border(
+                    top: BorderSide(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.1)
+                          : Colors.black.withValues(alpha: 0.1),
+                      width: 0.5,
+                    ),
+                  ),
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      alignment: Alignment.center,
+                      child: Text(
+                        'Done',
+                        style: TextStyle(
+                          color: isDark
+                              ? Colors.white
+                              : theme.colorScheme.primary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   /// Emoji picker
   static void openEmojiPicker(
@@ -91,7 +99,7 @@ class DiaryUIHelpers {
     showModalBottomSheet(
       context: context,
       // Use theme surface color
-      backgroundColor: theme.colorScheme.surface,  // Updated
+      backgroundColor: theme.colorScheme.surface, // Updated
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -115,8 +123,12 @@ class DiaryUIHelpers {
                 decoration: BoxDecoration(
                   // Use theme surface color with opacity
                   color: isDark
-                      ? theme.colorScheme.surface.withValues(alpha: 0.5)  // Updated
-                      : theme.colorScheme.surface.withValues(alpha: 0.5),  // Updated
+                      ? theme.colorScheme.surface.withValues(
+                          alpha: 0.5,
+                        ) // Updated
+                      : theme.colorScheme.surface.withValues(
+                          alpha: 0.5,
+                        ), // Updated
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
@@ -142,7 +154,7 @@ class DiaryUIHelpers {
     showModalBottomSheet(
       context: context,
       // Use theme surface color
-      backgroundColor: theme.colorScheme.surface,  // Updated
+      backgroundColor: theme.colorScheme.surface, // Updated
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -176,26 +188,32 @@ class DiaryUIHelpers {
                     return GestureDetector(
                       onTap: () {
                         // Use theme surface color for clear
-                        onSelected(theme.colorScheme.surface);  // Updated
+                        onSelected(theme.colorScheme.surface); // Updated
                         Navigator.pop(context);
                       },
                       child: Container(
                         decoration: BoxDecoration(
                           color: isDark
-                              ? theme.colorScheme.surface  // Updated
+                              ? theme
+                                    .colorScheme
+                                    .surface // Updated
                               : Colors.white,
                           shape: BoxShape.circle,
                           border: Border.all(
                             width: 2,
                             color: isDark
-                                ? theme.colorScheme.onSurface.withValues(alpha: 0.2)  // Updated
+                                ? theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.2,
+                                  ) // Updated
                                 : Colors.black12,
                           ),
                         ),
                         child: Icon(
                           Icons.clear,
                           color: isDark
-                              ? theme.colorScheme.onSurface  // Updated
+                              ? theme
+                                    .colorScheme
+                                    .onSurface // Updated
                               : Colors.black54,
                         ),
                       ),
@@ -232,171 +250,193 @@ class DiaryUIHelpers {
     );
   }
 
-  /// Background image picker
   static void openBgImagePicker(
     BuildContext context, {
-    required Function(String assetPath) onPresetSelected,
+    required Function(String assetPath) onPresetSelected, // now receives URL
     required Function(String filePath) onGallerySelected,
     required VoidCallback onClear,
   }) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final bloc = context.read<DiaryEntryBloc>();
+
+    // Load backgrounds when bottom sheet is opened
+    bloc.add(LoadBackgrounds());
 
     showModalBottomSheet(
       context: context,
-      // Use theme surface color
-      backgroundColor: theme.colorScheme.surface,  // Updated
+      backgroundColor: theme.colorScheme.surface,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (sheetContext) {
-        return SafeArea(
-          child: SizedBox(
-            height: MediaQuery.of(sheetContext).size.height * 0.65,
-            child: Column(
-              children: [
-                const SizedBox(height: 12),
-
-                /// Handle bar
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(2),
+        return BlocProvider.value(
+          value: bloc,
+          child: SafeArea(
+            child: SizedBox(
+              height: MediaQuery.of(sheetContext).size.height * 0.65,
+              child: Column(
+                children: [
+                  const SizedBox(height: 12),
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.withValues(alpha: 0.4),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
-                ),
-
-                const SizedBox(height: 16),
-
-                Text(
-                  'Choose Background',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
+                  const SizedBox(height: 16),
+                  Text(
+                    'Choose Background',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 16),
 
-                const SizedBox(height: 16),
-
-                /// ----------------------
-                /// Gallery Option
-                /// ----------------------
-                ListTile(
-                  trailing: const Icon(Icons.photo_library),
-                  title: const Text('Choose from Gallery'),
-                  titleTextStyle: Theme.of(context).textTheme.titleSmall!.copyWith(
-                    fontWeight: FontWeight.bold
-                  ),
-                  onTap: () async {
-                    Navigator.pop(sheetContext);
-
-                    try {
-                      final ImagePicker picker = ImagePicker();
-                      final XFile? image = await picker.pickImage(
-                        source: ImageSource.gallery,
-                        imageQuality: 85,
-                      );
-
-                      if (image != null && context.mounted) {
-                        onGallerySelected(image.path);
-                      }
-                    } catch (e) {
-                      debugPrint('Gallery pick failed: $e');
-                    }
-                  },
-                ),
-
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 5),
-                  child: const Divider(
-                    thickness: 2,
-                    color: Colors.grey,
-                  ),
-                ),
-
-                /// ----------------------
-                /// Preset Grid
-                /// ----------------------
-                Expanded(
-                  child: GridView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          mainAxisSpacing: 12,
-                          crossAxisSpacing: 12,
-                          childAspectRatio: 0.6,
-                        ),
-                    itemCount: DiaryItems.bgImages.length + 1,
-                    itemBuilder: (gridContext, index) {
-                      /// Clear button
-                      if (index == 0) {
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.pop(sheetContext);
-                            onClear();
-                          },
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16),
-                              color: isDark
-                                  ? theme.colorScheme.surface  // Updated
-                                  : Colors.grey.shade200,
-                              border: Border.all(
-                                color: Colors.grey.withValues(alpha: 0.3),
-                              ),
-                            ),
-                            child: const Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.clear),
-                                  SizedBox(height: 6),
-                                  Text("Clear"),
-                                ],
-                              ),
-                            ),
-                          ),
+                  // Gallery option
+                  ListTile(
+                    leading: const Icon(Icons.photo_library),
+                    title: const Text('Choose from Gallery'),
+                    onTap: () async {
+                      Navigator.pop(sheetContext);
+                      try {
+                        final ImagePicker picker = ImagePicker();
+                        final XFile? image = await picker.pickImage(
+                          source: ImageSource.gallery,
+                          imageQuality: 85,
                         );
+                        if (image != null && context.mounted) {
+                          onGallerySelected(image.path);
+                        }
+                      } catch (e) {
+                        debugPrint('Gallery pick failed: $e');
                       }
-
-                      final imgPath = DiaryItems.bgImages[index - 1];
-
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.pop(sheetContext);
-                          onPresetSelected(imgPath);
-                        },
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              Image.asset(
-                                imgPath,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    color: Colors.grey.shade300,
-                                    child: const Icon(Icons.broken_image),
-                                  );
-                                },
-                              ),
-                              if (isDark)
-                                Container(
-                                  color: Colors.black.withValues(alpha: 0.25),
-                                ),
-                            ],
-                          ),
-                        ),
-                      );
                     },
                   ),
-                ),
 
-                const SizedBox(height: 16),
-              ],
+                  const Divider(thickness: 2, indent: 16, endIndent: 16),
+
+                  // Presets from Supabase
+                  Expanded(
+                    child: BlocBuilder<DiaryEntryBloc, DiaryEntryState>(
+                      buildWhen: (prev, current) =>
+                          prev.availableBackgrounds !=
+                              current.availableBackgrounds ||
+                          prev.isLoadingBackgrounds !=
+                              current.isLoadingBackgrounds ||
+                          prev.backgroundsError != current.backgroundsError,
+                      builder: (context, state) {
+                        if (state.isLoadingBackgrounds) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+                        if (state.backgroundsError != null) {
+                          return Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.error_outline, size: 48),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Failed to load: ${state.backgroundsError}',
+                                ),
+                                TextButton(
+                                  onPressed: () => bloc.add(LoadBackgrounds()),
+                                  child: const Text('Retry'),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                        if (state.availableBackgrounds.isEmpty) {
+                          return const Center(
+                            child: Text('No background images found'),
+                          );
+                        }
+
+                        return GridView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 3,
+                                mainAxisSpacing: 12,
+                                crossAxisSpacing: 12,
+                                childAspectRatio: 0.6,
+                              ),
+                          itemCount:
+                              state.availableBackgrounds.length +
+                              1, // +1 for clear button
+                          itemBuilder: (gridContext, index) {
+                            if (index == 0) {
+                              // Clear button
+                              return GestureDetector(
+                                onTap: () {
+                                  Navigator.pop(sheetContext);
+                                  onClear();
+                                },
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(16),
+                                    color: isDark
+                                        ? theme.colorScheme.surface
+                                        : Colors.grey.shade200,
+                                    border: Border.all(
+                                      color: Colors.grey.withValues(alpha: 0.3),
+                                    ),
+                                  ),
+                                  child: const Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.clear),
+                                        SizedBox(height: 6),
+                                        Text("Clear"),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
+
+                            final imageUrl =
+                                state.availableBackgrounds[index - 1];
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.pop(sheetContext);
+                                onPresetSelected(imageUrl); // Pass URL
+                              },
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(16),
+                                child: CachedNetworkImage(
+                                  imageUrl: imageUrl,
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) => Container(
+                                    color: Colors.grey.shade300,
+                                    child: const Center(
+                                      child: CircularProgressIndicator(),
+                                    ),
+                                  ),
+                                  errorWidget: (context, url, error) =>
+                                      Container(
+                                        color: Colors.grey.shade300,
+                                        child: const Icon(Icons.broken_image),
+                                      ),
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
             ),
           ),
         );
@@ -415,7 +455,7 @@ class DiaryUIHelpers {
     showModalBottomSheet(
       context: context,
       // Use theme surface color
-      backgroundColor: theme.colorScheme.surface,  // Updated
+      backgroundColor: theme.colorScheme.surface, // Updated
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -453,8 +493,12 @@ class DiaryUIHelpers {
                     child: Container(
                       decoration: BoxDecoration(
                         color: isDark
-                            ? theme.colorScheme.surface.withValues(alpha: 0.5)  // Updated
-                            : theme.colorScheme.surface.withValues(alpha: 0.5),  // Updated
+                            ? theme.colorScheme.surface.withValues(
+                                alpha: 0.5,
+                              ) // Updated
+                            : theme.colorScheme.surface.withValues(
+                                alpha: 0.5,
+                              ), // Updated
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Center(
@@ -483,19 +527,20 @@ class DiaryUIHelpers {
       TextPosition(offset: controller.text.length),
     );
   }
- static Color generateDarkColorFromText(String text) {
+
+  static Color generateDarkColorFromText(String text) {
     final hash = text.hashCode;
     final hue = (hash.abs() % 360).toDouble();
     return HSLColor.fromAHSL(1.0, hue, 0.6, 0.3).toColor();
   }
- static Color darken(Color color, {double amount = 0.6}) {
-  assert(amount >= 0 && amount <= 1);
 
-  final hsl = HSLColor.fromColor(color);
+  static Color darken(Color color, {double amount = 0.6}) {
+    assert(amount >= 0 && amount <= 1);
 
-  final double newLightness =
-      (hsl.lightness * (1 - amount)).clamp(0.0, 1.0);
+    final hsl = HSLColor.fromColor(color);
 
-  return hsl.withLightness(newLightness).toColor();
-}
+    final double newLightness = (hsl.lightness * (1 - amount)).clamp(0.0, 1.0);
+
+    return hsl.withLightness(newLightness).toColor();
+  }
 }

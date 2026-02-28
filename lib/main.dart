@@ -1,3 +1,4 @@
+import 'package:routine/core/config/secrets.dart';
 import 'package:routine/core/theme/app_theme.dart';
 import 'package:routine/features/app_lock/data/datasources/biometric_local_auth_datasource.dart';
 import 'package:routine/features/app_lock/data/datasources/shared_preferences_datasource.dart';
@@ -14,8 +15,9 @@ import 'package:routine/features/onboarding/splash_screen.dart';
 import 'package:routine/features/settings/data/theme_repository_impl.dart';
 import 'package:routine/features/settings/domain/theme_repository.dart';
 import 'package:routine/features/settings/presentation/bloc/apptheme_bloc.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final diaryLocalDataSource = DiaryLocalDataSource();
   final diaryRepository = DiaryRepositoryImpl(diaryLocalDataSource);
@@ -26,16 +28,24 @@ void main() async {
     biometricDataSource: biometricDataSource,
     prefsDataSource: prefsDataSource,
   );
+  await Supabase.initialize(
+    url: Secrets.supabaseUrl,
+    anonKey: Secrets.supabaseAnonKey,
+  );
 
   runApp(
-    MyApp(diaryRepository: diaryRepository, themeRepository: themeRepository,appLockRepository: appLockRepository,),
+    MyApp(
+      diaryRepository: diaryRepository,
+      themeRepository: themeRepository,
+      appLockRepository: appLockRepository,
+    ),
   );
 }
 
 class MyApp extends StatelessWidget {
   final DiaryRepository diaryRepository;
   final ThemeRepository themeRepository;
-   final AppLockRepository appLockRepository;
+  final AppLockRepository appLockRepository;
 
   const MyApp({
     super.key,
@@ -57,7 +67,9 @@ class MyApp extends StatelessWidget {
               ThemeBloc(repository: themeRepository)..add(LoadSavedTheme()),
         ),
         BlocProvider(
-          create: (_) => AppLockBloc(repository: appLockRepository)..add(LoadAppLockSettings()),
+          create: (_) =>
+              AppLockBloc(repository: appLockRepository)
+                ..add(LoadAppLockSettings()),
         ),
       ],
       child: MediaQuery(

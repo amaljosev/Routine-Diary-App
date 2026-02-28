@@ -1,16 +1,18 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:routine/features/diary/data/models/diary_entry_model.dart';
+import 'package:routine/features/diary/data/repository/supabase_background_repository.dart';
 import 'package:routine/features/diary/domain/entities/sticker_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
-
+import 'package:routine/features/diary/domain/repository/background_repository.dart';
 part 'diary_entry_event.dart';
 part 'diary_entry_state.dart';
 
 class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
+  final BackgroundRepository _backgroundRepo = SupabaseBackgroundRepository();
   DiaryEntryBloc() : super(DiaryEntryState(date: DateTime.now())) {
     on<InitializeDiaryEntry>(_onInitializeDiaryEntry);
     on<TitleChanged>((event, emit) => emit(state.copyWith(title: event.title)));
@@ -33,6 +35,13 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
     on<UpdateImageSize>(_onUpdateImageSize);
     on<UpdateImageTransform>(_onUpdateImageTransform);
     on<RemoveImage>(_onRemoveImage);
+
+    //supabase
+     on<LoadBackgrounds>(_onLoadBackgrounds);
+    on<BackgroundsLoaded>(_onBackgroundsLoaded);
+    on<BackgroundsLoadFailed>(_onBackgroundsLoadFailed);
+    on<SelectSupabaseBackground>(_onSelectSupabaseBackground);
+    on<DownloadBackground>(_onDownloadBackground);
     on<SelectSticker>((event, emit) {
       emit(state.copyWith(
         selectedStickerId: event.id,
@@ -67,20 +76,17 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
   final e = event.entry;
 
   if (e != null) {
-    // Determine which background to use - prioritize gallery image if exists and file is accessible
+    // ignore: unused_local_variable
     String bgImage = '';
     String? bgGalleryImage = e.bgGalleryImagePath;
     
-    // Check if gallery image exists and is accessible
     if (bgGalleryImage != null && bgGalleryImage.isNotEmpty) {
       final file = File(bgGalleryImage);
       if (!file.existsSync()) {
-        // If file doesn't exist, fall back to asset image
         bgGalleryImage = null;
         bgImage = e.bgImagePath ?? '';
       }
     } else {
-      // No gallery image, use asset image
       bgImage = e.bgImagePath ?? '';
     }
 
@@ -91,7 +97,6 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
         mood: e.mood,
         // FIX: Use the improved color parser instead of AppConverters
         bgColor: _parseColorFromString(e.bgColor),
-        bgImage: bgImage,
         bgGalleryImage: bgGalleryImage,
         stickers: e.stickersJson != null
             ? (jsonDecode(e.stickersJson!) as List)
@@ -104,6 +109,8 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
                   .toList()
             : [],
         date: DateTime.tryParse(e.date) ?? DateTime.now(),
+         bgImage: e.bgImagePath ?? '',
+        bgLocalPath: e.bgLocalPath,  
       ),
     );
   }
@@ -378,5 +385,71 @@ Color? _parseColorFromString(String? input) {
       images: updatedImages,
       selectedImageId: null,
     ));
+  }
+  Future<void> _onLoadBackgrounds(
+    LoadBackgrounds event,
+    Emitter<DiaryEntryState> emit,
+  ) async {
+    emit(state.copyWith(isLoadingBackgrounds: true, backgroundsError: null));
+    try {
+      final urls = await _backgroundRepo.getBackgroundUrls();
+      add(BackgroundsLoaded(urls));
+    } catch (e) {
+      add(BackgroundsLoadFailed(e.toString()));
+    }
+  }
+
+  void _onBackgroundsLoaded(
+    BackgroundsLoaded event,
+    Emitter<DiaryEntryState> emit,
+  ) {
+    emit(state.copyWith(
+      availableBackgrounds: event.urls,
+      isLoadingBackgrounds: false,
+    ));
+  }
+
+  void _onBackgroundsLoadFailed(
+    BackgroundsLoadFailed event,
+    Emitter<DiaryEntryState> emit,
+  ) {
+    emit(state.copyWith(
+      isLoadingBackgrounds: false,
+      backgroundsError: event.error,
+    ));
+  }
+
+  void _onSelectSupabaseBackground(
+    SelectSupabaseBackground event,
+    Emitter<DiaryEntryState> emit,
+  ) {
+    add(DownloadBackground(event.imageUrl));
+  }
+  Future<void> _onDownloadBackground(
+    DownloadBackground event,
+    Emitter<DiaryEntryState> emit,
+  ) async {
+    emit(state.copyWith(
+      isDownloadingBackground: true,
+      downloadError: null,
+    ));
+
+    try {
+      final localPath = await _backgroundRepo.downloadBackground(event.url);
+      emit(state.copyWith(
+        isDownloadingBackground: false,
+        bgImage: event.url,
+        bgLocalPath: localPath,
+        bgColor: null,
+        bgGalleryImage: null,
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+        isDownloadingBackground: false,
+        downloadError: e.toString(),
+        bgImage: event.url, 
+        bgLocalPath: null,
+      ));
+    }
   }
 }

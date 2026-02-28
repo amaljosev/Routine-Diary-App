@@ -1,6 +1,5 @@
 part of 'diary_entry_bloc.dart';
 
-// Sentinel value to represent "no change" in copyWith
 const unset = Object();
 
 class DiaryImage extends Equatable {
@@ -77,12 +76,18 @@ class DiaryEntryState extends Equatable {
   final Color? bgColor;
   final String bgImage;
   final String? bgGalleryImage;
+  final String? bgLocalPath;               
   final List<StickerModel> stickers;
   final List<DiaryImage> images;
   final DateTime date;
   final String? selectedStickerId;
   final String? selectedImageId;
   final String? errorMessage;
+  final List<String> availableBackgrounds;
+  final bool isLoadingBackgrounds;
+  final String? backgroundsError;
+  final bool isDownloadingBackground;        
+  final String? downloadError;                
 
   const DiaryEntryState({
     this.title = '',
@@ -91,12 +96,18 @@ class DiaryEntryState extends Equatable {
     this.bgColor,
     this.bgImage = '',
     this.bgGalleryImage,
+    this.bgLocalPath,                         
     this.stickers = const [],
     this.images = const [],
     required this.date,
     this.selectedStickerId,
     this.selectedImageId,
     this.errorMessage,
+    this.availableBackgrounds = const [],
+    this.isLoadingBackgrounds = false,
+    this.backgroundsError,
+    this.isDownloadingBackground = false,     
+    this.downloadError,                        
   });
 
   @override
@@ -107,12 +118,18 @@ class DiaryEntryState extends Equatable {
         bgColor,
         bgImage,
         bgGalleryImage,
+        bgLocalPath,                           
         stickers,
         images,
         date,
         selectedStickerId,
         selectedImageId,
         errorMessage,
+        availableBackgrounds,
+        isLoadingBackgrounds,
+        backgroundsError,
+        isDownloadingBackground,                
+        downloadError,                          
       ];
 
   DiaryEntryState copyWith({
@@ -122,12 +139,18 @@ class DiaryEntryState extends Equatable {
     Object? bgColor = unset,
     Object? bgImage = unset,
     Object? bgGalleryImage = unset,
+    Object? bgLocalPath = unset,               
     Object? stickers = unset,
     Object? images = unset,
     Object? date = unset,
     Object? selectedStickerId = unset,
     Object? selectedImageId = unset,
     Object? errorMessage = unset,
+    List<String>? availableBackgrounds,
+    bool? isLoadingBackgrounds,
+    String? backgroundsError,
+    bool? isDownloadingBackground,              
+    String? downloadError,                       
   }) {
     return DiaryEntryState(
       title: title == unset ? this.title : title as String,
@@ -136,12 +159,18 @@ class DiaryEntryState extends Equatable {
       bgColor: bgColor == unset ? this.bgColor : bgColor as Color?,
       bgImage: bgImage == unset ? this.bgImage : bgImage as String,
       bgGalleryImage: bgGalleryImage == unset ? this.bgGalleryImage : bgGalleryImage as String?,
+      bgLocalPath: bgLocalPath == unset ? this.bgLocalPath : bgLocalPath as String?, 
       stickers: stickers == unset ? this.stickers : stickers as List<StickerModel>,
       images: images == unset ? this.images : images as List<DiaryImage>,
       date: date == unset ? this.date : date as DateTime,
       selectedStickerId: selectedStickerId == unset ? this.selectedStickerId : selectedStickerId as String?,
       selectedImageId: selectedImageId == unset ? this.selectedImageId : selectedImageId as String?,
       errorMessage: errorMessage == unset ? this.errorMessage : errorMessage as String?,
+      availableBackgrounds: availableBackgrounds ?? this.availableBackgrounds,
+      isLoadingBackgrounds: isLoadingBackgrounds ?? this.isLoadingBackgrounds,
+      backgroundsError: backgroundsError ?? this.backgroundsError,
+      isDownloadingBackground: isDownloadingBackground ?? this.isDownloadingBackground, 
+      downloadError: downloadError ?? this.downloadError,                               
     );
   }
 }

@@ -104,6 +104,7 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
     );
   }
 
+  // ================== UPDATED BACKGROUND METHOD ==================
   Widget _buildBackground(BuildContext context, DiaryEntryModel entry) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -111,17 +112,40 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
     final Color? parsedColor = _parseColorFromString(entry.bgColor);
     ImageProvider? backgroundImage;
 
-    if (entry.bgGalleryImagePath != null &&
-        entry.bgGalleryImagePath!.isNotEmpty) {
+    // Priority 1: Gallery image (local file)
+    if (entry.bgGalleryImagePath != null && entry.bgGalleryImagePath!.isNotEmpty) {
       final file = File(entry.bgGalleryImagePath!);
       if (file.existsSync()) {
         backgroundImage = FileImage(file);
       }
-    } else if (entry.bgImagePath != null && entry.bgImagePath!.isNotEmpty) {
-      backgroundImage = AssetImage(entry.bgImagePath!);
+    }
+    // Priority 2: Local cached Supabase image
+    else if (entry.bgLocalPath != null && entry.bgLocalPath!.isNotEmpty) {
+      final file = File(entry.bgLocalPath!);
+      if (file.existsSync()) {
+        backgroundImage = FileImage(file);
+      } else {
+        // Local file missing – fallback to URL (if available)
+        if (entry.bgImagePath != null && entry.bgImagePath!.isNotEmpty) {
+          if (entry.bgImagePath!.startsWith('http')) {
+            backgroundImage = NetworkImage(entry.bgImagePath!);
+          } else {
+            backgroundImage = AssetImage(entry.bgImagePath!);
+          }
+        }
+      }
+    }
+    // Priority 3: Supabase URL or asset path
+    else if (entry.bgImagePath != null && entry.bgImagePath!.isNotEmpty) {
+      if (entry.bgImagePath!.startsWith('http')) {
+        backgroundImage = NetworkImage(entry.bgImagePath!);
+      } else {
+        backgroundImage = AssetImage(entry.bgImagePath!);
+      }
     }
 
     final Color fallbackColor = parsedColor ?? theme.scaffoldBackgroundColor;
+
     return Container(
       decoration: BoxDecoration(
         color: fallbackColor,
@@ -213,6 +237,8 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
       ],
     );
   }
+
+  
 
   // New method for mood and title display
   Widget _buildMoodAndTitle(BuildContext context, DiaryEntryModel entry) {
