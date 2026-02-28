@@ -1,8 +1,9 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:routine/features/app_lock/domain/entities/lock_type.dart';
 import 'package:routine/features/app_lock/presentation/bloc/lock_bloc.dart';
-import 'lock_page.dart';
+import 'pin_lock_screen.dart';
 import 'security_question_page.dart';
 
 class AppLockSettingsPage extends StatefulWidget {
@@ -28,9 +29,7 @@ class _AppLockSettingsPageState extends State<AppLockSettingsPage> {
     if (type == LockType.biometric) {
       final canAuth = await bloc.repository.canAuthenticate();
       if (!canAuth) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Biometric not supported on this device')),
-        );
+        _showSnackBar('Biometric not supported on this device');
         return;
       }
       final success = await bloc.repository.authenticate(
@@ -41,7 +40,9 @@ class _AppLockSettingsPageState extends State<AppLockSettingsPage> {
     } else if (type == LockType.pin) {
       final pin = await Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const LockPage(mode: LockMode.create)),
+        MaterialPageRoute(
+          builder: (_) => const PinLockScreen(mode: LockMode.create),
+        ),
       );
       if (pin == null) return;
       bloc.add(SetAppLockType(type: type, pin: pin));
@@ -53,26 +54,33 @@ class _AppLockSettingsPageState extends State<AppLockSettingsPage> {
         ),
       );
       if (result == null) return;
-      bloc.add(SetAppLockType(
-        type: type,
-        question: result['question'],
-        answer: result['answer'],
-      ));
+      bloc.add(
+        SetAppLockType(
+          type: type,
+          question: result['question'],
+          answer: result['answer'],
+        ),
+      );
     } else {
       bloc.add(SetAppLockType(type: type));
     }
   }
 
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('App Lock Settings')),
       body: BlocConsumer<AppLockBloc, AppLockState>(
         listener: (context, state) {
           if (state.error != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error: ${state.error}')),
-            );
+            _showSnackBar('Error: ${state.error}');
           }
         },
         builder: (context, state) {
@@ -80,37 +88,73 @@ class _AppLockSettingsPageState extends State<AppLockSettingsPage> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              RadioListTile<LockType>(
-                title: const Text('No Lock'),
-                value: LockType.none,
-                groupValue: state.lockType,
-                onChanged: (v) => _onSelectLockType(v!),
+          return CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                backgroundColor: Theme.of(context).primaryColor,
+                surfaceTintColor: Colors.transparent,
+                elevation: 0,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                title: const Text('Diary Lock'),
               ),
-              RadioListTile<LockType>(
-                title: const Text('Biometric Lock'),
-                value: LockType.biometric,
-                groupValue: state.lockType,
-                onChanged: (v) => _onSelectLockType(v!),
-              ),
-              RadioListTile<LockType>(
-                title: const Text('PIN Lock'),
-                value: LockType.pin,
-                groupValue: state.lockType,
-                onChanged: (v) => _onSelectLockType(v!),
-              ),
-              RadioListTile<LockType>(
-                title: const Text('Security Question Lock'),
-                value: LockType.securityQuestion,
-                groupValue: state.lockType,
-                onChanged: (v) => _onSelectLockType(v!),
+              SliverList(
+                delegate: SliverChildListDelegate([
+                  CupertinoListSection.insetGrouped(
+                    backgroundColor: theme.scaffoldBackgroundColor,
+                    children: [
+                      _buildLockOption(
+                        context,
+                        type: LockType.none,
+                        icon: Icons.lock_open_outlined,
+                        label: 'No Lock',
+                        selected: state.lockType == LockType.none,
+                      ),
+                      _buildLockOption(
+                        context,
+                        type: LockType.biometric,
+                        icon: Icons.fingerprint,
+                        label: 'Biometric Lock',
+                        selected: state.lockType == LockType.biometric,
+                      ),
+                      _buildLockOption(
+                        context,
+                        type: LockType.pin,
+                        icon: Icons.pin_outlined,
+                        label: 'PIN Lock',
+                        selected: state.lockType == LockType.pin,
+                      ),
+                      _buildLockOption(
+                        context,
+                        type: LockType.securityQuestion,
+                        icon: Icons.question_answer_outlined,
+                        label: 'Security Question Lock',
+                        selected: state.lockType == LockType.securityQuestion,
+                      ),
+                    ],
+                  ),
+                ]),
               ),
             ],
           );
         },
       ),
+    );
+  }
+
+  Widget _buildLockOption(
+    BuildContext context, {
+    required LockType type,
+    required IconData icon,
+    required String label,
+    required bool selected,
+  }) {
+    final theme = Theme.of(context);
+
+    return ListTile(
+      leading: Icon(icon, color: theme.primaryColor),
+      title: Text(label, style: theme.textTheme.titleSmall),
+      trailing: selected ? Icon(Icons.check, color: theme.primaryColor) : null,
+      onTap: () => _onSelectLockType(type),
     );
   }
 }

@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:routine/features/app_lock/presentation/bloc/lock_bloc.dart';
 import '../../../diary/presentation/pages/diary_screen.dart';
 import '../../domain/entities/lock_type.dart';
-import '../pages/lock_page.dart';
+import '../pages/pin_lock_screen.dart';
 import '../pages/security_question_page.dart';
 
 class LockGate extends StatelessWidget {
@@ -57,7 +57,7 @@ class LockGate extends StatelessWidget {
           case LockType.biometric:
             return const _BiometricLockGate();
           case LockType.pin:
-            return const LockPage(mode: LockMode.verify);
+            return const PinLockScreen(mode: LockMode.verify);
           case LockType.securityQuestion:
             return const SecurityQuestionPage(isVerification: true);
           case LockType.none:

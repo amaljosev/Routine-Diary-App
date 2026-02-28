@@ -121,30 +121,32 @@ class AppLockBloc extends Bloc<AppLockEvent, AppLockState> {
   }
 
   Future<void> _onVerifySecurityAnswer(
-    VerifyAppSecurityAnswer event,
-    Emitter<AppLockState> emit,
-  ) async {
-    try {
-      final data = await repository.getSecurityData();
-
-      if (data?['answer'] == event.answer) {
-        emit(state.copyWith(
-          verificationStatus: AppVerificationStatus.success,
-          isLocked: false,
-        ));
-      } else {
-        emit(state.copyWith(
-          verificationStatus: AppVerificationStatus.failure,
-        ));
-      }
-    } catch (e) {
-      log('VerifyAppSecurityAnswer error: $e');
+  VerifyAppSecurityAnswer event,
+  Emitter<AppLockState> emit,
+) async {
+  try {
+    final data = await repository.getSecurityData();
+    // Compare case‑insensitively
+    if (data != null &&
+        data['answer']?.toString().toLowerCase() ==
+            event.answer.trim().toLowerCase()) {
+      emit(state.copyWith(
+        verificationStatus: AppVerificationStatus.success,
+        isLocked: false,
+      ));
+    } else {
       emit(state.copyWith(
         verificationStatus: AppVerificationStatus.failure,
-        error: e.toString(),
       ));
     }
+  } catch (e) {
+    log('VerifyAppSecurityAnswer error: $e');
+    emit(state.copyWith(
+      verificationStatus: AppVerificationStatus.failure,
+      error: e.toString(),
+    ));
   }
+}
 
   Future<void> _onVerifyBiometric(
     VerifyAppBiometric event,
