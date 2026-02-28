@@ -17,11 +17,35 @@ class _SecurityQuestionPageState extends State<SecurityQuestionPage> {
   String? _question;
   String _error = '';
 
+  bool _canAuthenticate = false;
+  bool _checkingAuth = true;
+
   @override
   void initState() {
     super.initState();
     if (widget.isVerification) {
       _loadQuestion();
+    }
+    _initCanAuth();
+  }
+
+  Future<void> _initCanAuth() async {
+    final repo = context.read<AppLockBloc>().repository;
+    try {
+      final can = await repo.canAuthenticate();
+      if (mounted) {
+        setState(() {
+          _canAuthenticate = can;
+          _checkingAuth = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _canAuthenticate = false;
+          _checkingAuth = false;
+        });
+      }
     }
   }
 
@@ -51,6 +75,10 @@ class _SecurityQuestionPageState extends State<SecurityQuestionPage> {
     }
   }
 
+  void _onForgotPressed() {
+    context.read<AppLockBloc>().add(const SwitchToBiometricLock());
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -70,7 +98,12 @@ class _SecurityQuestionPageState extends State<SecurityQuestionPage> {
           }
         },
         builder: (context, state) {
-          return _buildContent(theme, colorScheme);
+          return Stack(
+            children: [
+              _buildContent(theme, colorScheme),
+              FloatingParticles(color: colorScheme.primary),
+            ],
+          );
         },
       );
     }
@@ -126,7 +159,24 @@ class _SecurityQuestionPageState extends State<SecurityQuestionPage> {
                   textAlign: TextAlign.center,
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 12),
+
+              if (_canAuthenticate && !_checkingAuth)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: _onForgotPressed,
+                    child: Text(
+                      'Forgot?',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+
+              const SizedBox(height: 20),
             ],
 
             if (!isVerification) ...[
@@ -238,7 +288,6 @@ class _SecurityQuestionPageState extends State<SecurityQuestionPage> {
         controller: controller,
         onChanged: onChanged,
         obscureText: obscureText,
-
         style: theme.textTheme.titleMedium?.copyWith(
           color: colorScheme.onSurface,
           fontWeight: FontWeight.bold,

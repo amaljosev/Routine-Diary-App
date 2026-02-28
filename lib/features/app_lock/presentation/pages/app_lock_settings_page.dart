@@ -29,7 +29,7 @@ class _AppLockSettingsPageState extends State<AppLockSettingsPage> {
     if (type == LockType.biometric) {
       final canAuth = await bloc.repository.canAuthenticate();
       if (!canAuth) {
-        _showSnackBar('Biometric not supported on this device');
+        _showSnackBar('Biometric not supported on this device or add a lock for the device first');
         return;
       }
       final success = await bloc.repository.authenticate(
@@ -113,7 +113,7 @@ class _AppLockSettingsPageState extends State<AppLockSettingsPage> {
                         context,
                         type: LockType.biometric,
                         icon: Icons.fingerprint,
-                        label: 'Biometric Lock',
+                        label: 'Mobile Lock',
                         selected: state.lockType == LockType.biometric,
                       ),
                       _buildLockOption(

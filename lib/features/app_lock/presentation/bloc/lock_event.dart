@@ -55,3 +55,6 @@ class VerifyAppBiometric extends AppLockEvent {
 }
 
 class ResetAppVerification extends AppLockEvent {}
+class SwitchToBiometricLock extends AppLockEvent {
+  const SwitchToBiometricLock();
+}

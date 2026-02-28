@@ -22,6 +22,9 @@ class _PinLockScreenState extends State<PinLockScreen>
   String _firstPin = '';
   String _error = '';
 
+  bool _canAuthenticate = false;
+  bool _checkingAuth = true;
+
   @override
   void initState() {
     super.initState();
@@ -32,6 +35,29 @@ class _PinLockScreenState extends State<PinLockScreen>
     _shakeAnimation = Tween<double>(begin: 0.0, end: 10.0)
         .chain(CurveTween(curve: Curves.elasticIn))
         .animate(_shakeController);
+
+    // check whether device supports biometric / device authentication
+    _initCanAuth();
+  }
+
+  Future<void> _initCanAuth() async {
+    final repo = context.read<AppLockBloc>().repository;
+    try {
+      final can = await repo.canAuthenticate();
+      if (mounted) {
+        setState(() {
+          _canAuthenticate = can;
+          _checkingAuth = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _canAuthenticate = false;
+          _checkingAuth = false;
+        });
+      }
+    }
   }
 
   @override
@@ -78,6 +104,10 @@ class _PinLockScreenState extends State<PinLockScreen>
     _shakeController.forward(from: 0.0);
   }
 
+  void _onForgotPressed() {
+  context.read<AppLockBloc>().add(const SwitchToBiometricLock());
+}
+
   @override
   Widget build(BuildContext context) {
     final isCreate = widget.mode == LockMode.create;
@@ -116,7 +146,7 @@ class _PinLockScreenState extends State<PinLockScreen>
           isCreate ? 'Set PIN' : 'Enter PIN',
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w600,
-            color: colorScheme.onPrimary
+            color: colorScheme.onPrimary,
           ),
         ),
         centerTitle: true,
@@ -191,6 +221,25 @@ class _PinLockScreenState extends State<PinLockScreen>
                   ),
                 ),
 
+              // Forgot button (only in verify mode & only when device supports authentication)
+              if (!isCreate && !_checkingAuth && _canAuthenticate)
+                Padding(
+                  padding: const EdgeInsets.only(top: 12.0),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: _onForgotPressed,
+                      child: Text(
+                        'Forgot?',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
               const Spacer(flex: 3),
 
               // Keypad
@@ -239,7 +288,7 @@ class _PinLockScreenState extends State<PinLockScreen>
       width: 70,
       height: 70,
       child: Material(
-        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5) ,
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(35),
         elevation: 2,
         shadowColor: colorScheme.shadow,

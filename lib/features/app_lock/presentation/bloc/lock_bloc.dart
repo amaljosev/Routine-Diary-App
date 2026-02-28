@@ -19,6 +19,7 @@ class AppLockBloc extends Bloc<AppLockEvent, AppLockState> {
     on<VerifyAppSecurityAnswer>(_onVerifySecurityAnswer);
     on<VerifyAppBiometric>(_onVerifyBiometric);
     on<ResetAppVerification>(_onResetVerification);
+    on<SwitchToBiometricLock>(_onSwitchToBiometricLock);
   }
 
   Future<void> _onLoadSettings(
@@ -183,4 +184,13 @@ class AppLockBloc extends Bloc<AppLockEvent, AppLockState> {
       error: null,
     ));
   }
+  void _onSwitchToBiometricLock(
+  SwitchToBiometricLock event,
+  Emitter<AppLockState> emit,
+) {
+  emit(state.copyWith(
+    lockType: LockType.biometric,
+    verificationStatus: AppVerificationStatus.idle,
+  ));
+}
 }
