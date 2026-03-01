@@ -294,7 +294,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                                 final prefs = await SharedPreferences.getInstance();
                                 await prefs.setBool('showOnboarding', false);
                                 
-                                if (!mounted) return;
+                                if (!context.mounted) return;
                                 
                                 // Animated navigation
                                 Navigator.pushReplacement(

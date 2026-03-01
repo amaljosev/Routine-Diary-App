@@ -496,7 +496,7 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
               builder: (_) => const DiaryEntryScreen(entry: null),
             ),
           );
-          if (result == true && mounted) {
+          if (result == true && context.mounted) {
             context.read<DiaryBloc>().add(LoadDiaryEntries());
           }
         },

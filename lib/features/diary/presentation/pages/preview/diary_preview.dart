@@ -105,33 +105,27 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
     );
   }
 
-  // ================== UPDATED BACKGROUND METHOD ==================
   Widget _buildBackground(BuildContext context, DiaryEntryModel entry) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
     final Color? parsedColor = _parseColorFromString(entry.bgColor);
-    final Color fallbackColor = parsedColor ?? theme.scaffoldBackgroundColor;
+    final Color backgroundColor = parsedColor ?? theme.scaffoldBackgroundColor;
 
-    // Determine the background image source
     ImageProvider? localImage;
     String? networkUrl;
 
-    // Priority 1: Gallery image (local file)
     if (entry.bgGalleryImagePath != null &&
         entry.bgGalleryImagePath!.isNotEmpty) {
       final file = File(entry.bgGalleryImagePath!);
       if (file.existsSync()) {
         localImage = FileImage(file);
       }
-    }
-    // Priority 2: Local cached Supabase image
-    else if (entry.bgLocalPath != null && entry.bgLocalPath!.isNotEmpty) {
+    } else if (entry.bgLocalPath != null && entry.bgLocalPath!.isNotEmpty) {
       final file = File(entry.bgLocalPath!);
       if (file.existsSync()) {
         localImage = FileImage(file);
       } else {
-        // Local file missing – fallback to URL (if available)
         if (entry.bgImagePath != null && entry.bgImagePath!.isNotEmpty) {
           if (entry.bgImagePath!.startsWith('http')) {
             networkUrl = entry.bgImagePath;
@@ -140,9 +134,7 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
           }
         }
       }
-    }
-    // Priority 3: Supabase URL or asset path
-    else if (entry.bgImagePath != null && entry.bgImagePath!.isNotEmpty) {
+    } else if (entry.bgImagePath != null && entry.bgImagePath!.isNotEmpty) {
       if (entry.bgImagePath!.startsWith('http')) {
         networkUrl = entry.bgImagePath;
       } else {
@@ -150,43 +142,43 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
       }
     }
 
-    // Build the background with Stack
-    return Stack(
-      children: [
-        // Background image (if any)
-        if (localImage != null)
-          Positioned.fill(
-            child: Image(
-              image: localImage,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) =>
-                  Container(color: fallbackColor),
+    return Container(
+      color: backgroundColor,
+      child: Stack(
+        children: [
+          if (localImage != null)
+            Positioned.fill(
+              child: Image(
+                image: localImage,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    Container(color: backgroundColor),
+              ),
+            )
+          else if (networkUrl != null)
+            Positioned.fill(
+              child: CachedNetworkImage(
+                imageUrl: networkUrl,
+                fit: BoxFit.cover,
+                placeholder: (context, url) =>
+                    Container(color: backgroundColor),
+                errorWidget: (context, url, error) =>
+                    Container(color: backgroundColor),
+              ),
             ),
-          )
-        else if (networkUrl != null)
-          Positioned.fill(
-            child: CachedNetworkImage(
-              imageUrl: networkUrl,
-              fit: BoxFit.cover,
-              placeholder: (context, url) => Container(color: fallbackColor),
-              errorWidget: (context, url, error) =>
-                  Container(color: fallbackColor),
-            ),
-          ),
 
-        // Semi‑transparent overlay for text readability (only if there is an image)
-        if (localImage != null || networkUrl != null)
-          Positioned.fill(
-            child: Container(
-              color: isDark
-                  ? Colors.black.withValues(alpha: 0.4)
-                  : Colors.white.withValues(alpha: 0.4),
+          if (localImage != null || networkUrl != null)
+            Positioned.fill(
+              child: Container(
+                color: isDark
+                    ? Colors.black.withValues(alpha: 0.4)
+                    : Colors.white.withValues(alpha: 0.4),
+              ),
             ),
-          ),
 
-        // Main content (SafeArea, AppBar, etc.)
-        SafeArea(child: _buildContent(context, entry)),
-      ],
+          SafeArea(child: _buildContent(context, entry)),
+        ],
+      ),
     );
   }
 
@@ -341,7 +333,6 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          // Use surface color from theme for the dialog background
           backgroundColor: theme.colorScheme.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
@@ -449,7 +440,6 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
               ),
             );
           }),
-          // Images - positions preserved exactly as saved
           ...images.map((image) {
             return Positioned(
               left: image.x,
@@ -521,12 +511,10 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
     if (input == null || input.isEmpty) return null;
     final String s = input.trim();
 
-    // 1. Handle hex string format (8 chars, no prefix)
     if (RegExp(r'^[0-9a-fA-F]{8}$').hasMatch(s)) {
       return Color(int.parse(s, radix: 16));
     }
 
-    // 2. Handle "Color(0xaarrggbb)" format (from old entries)
     final colorRegex = RegExp(r'^Color\(0x([0-9a-fA-F]{8})\)$');
     final match = colorRegex.firstMatch(s);
     if (match != null) {
@@ -536,7 +524,6 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
       }
     }
 
-    // 3. Handle custom "Color(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)" format
     final customRegex = RegExp(
       r'red:\s*([0-9.]+),\s*green:\s*([0-9.]+),\s*blue:\s*([0-9.]+),\s*alpha:\s*([0-9.]+)',
     );
@@ -556,7 +543,6 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
       } catch (_) {}
     }
 
-    // 4. Handle other hex formats (#, 0x, etc.)
     String hex = s;
     if (hex.startsWith('#')) hex = hex.substring(1);
     if (hex.startsWith('0x')) hex = hex.substring(2);
