@@ -7,6 +7,8 @@ class AppLockState extends Equatable {
   final bool isLoading;
   final bool isLocked;
   final AppVerificationStatus verificationStatus;
+  final bool verificationInProgress;      
+  final String? verificationError;        
   final String? error;
 
   const AppLockState({
@@ -14,6 +16,8 @@ class AppLockState extends Equatable {
     required this.isLoading,
     required this.isLocked,
     required this.verificationStatus,
+    this.verificationInProgress = false,
+    this.verificationError,
     this.error,
   });
 
@@ -23,6 +27,8 @@ class AppLockState extends Equatable {
       isLoading: false,
       isLocked: false,
       verificationStatus: AppVerificationStatus.idle,
+      verificationInProgress: false,
+      verificationError: null,
       error: null,
     );
   }
@@ -32,6 +38,8 @@ class AppLockState extends Equatable {
     bool? isLoading,
     bool? isLocked,
     AppVerificationStatus? verificationStatus,
+    bool? verificationInProgress,
+    String? verificationError,
     String? error,
   }) {
     return AppLockState(
@@ -39,10 +47,20 @@ class AppLockState extends Equatable {
       isLoading: isLoading ?? this.isLoading,
       isLocked: isLocked ?? this.isLocked,
       verificationStatus: verificationStatus ?? this.verificationStatus,
+      verificationInProgress: verificationInProgress ?? this.verificationInProgress,
+      verificationError: verificationError,
       error: error,
     );
   }
 
   @override
-  List<Object?> get props => [lockType, isLoading, isLocked, verificationStatus, error];
+  List<Object?> get props => [
+    lockType,
+    isLoading,
+    isLocked,
+    verificationStatus,
+    verificationInProgress,
+    verificationError,
+    error,
+  ];
 }

@@ -46,15 +46,15 @@ class VerifyAppSecurityAnswer extends AppLockEvent {
   List<Object> get props => [answer];
 }
 
-class VerifyAppBiometric extends AppLockEvent {
-  final String reason;
-  const VerifyAppBiometric({this.reason = 'Authenticate to continue'});
-
-  @override
-  List<Object?> get props => [reason];
-}
-
 class ResetAppVerification extends AppLockEvent {}
+
 class SwitchToBiometricLock extends AppLockEvent {
   const SwitchToBiometricLock();
+}
+
+class VerifyAppBiometric extends AppLockEvent {
+  final String reason;
+  const VerifyAppBiometric({this.reason = 'Authenticate to unlock the app'});
+  @override
+  List<Object?> get props => [reason];
 }

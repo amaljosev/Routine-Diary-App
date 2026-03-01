@@ -32,12 +32,14 @@ class AppLockBloc extends Bloc<AppLockEvent, AppLockState> {
       final type = await repository.getLockType();
       final shouldLock = type != LockType.none;
 
-      emit(state.copyWith(
-        lockType: type,
-        isLocked: shouldLock,
-        isLoading: false,
-        verificationStatus: AppVerificationStatus.idle,
-      ));
+      emit(
+        state.copyWith(
+          lockType: type,
+          isLocked: shouldLock,
+          isLoading: false,
+          verificationStatus: AppVerificationStatus.idle,
+        ),
+      );
 
       log("Loaded lock type: $type | shouldLock: $shouldLock");
     } catch (e) {
@@ -58,21 +60,20 @@ class AppLockBloc extends Bloc<AppLockEvent, AppLockState> {
       } else if (event.type == LockType.securityQuestion &&
           event.question != null &&
           event.answer != null) {
-        await repository.saveSecurityQuestion(
-          event.question!,
-          event.answer!,
-        );
+        await repository.saveSecurityQuestion(event.question!, event.answer!);
       }
 
       await repository.setLockType(event.type);
 
       final type = await repository.getLockType();
 
-      emit(state.copyWith(
-        lockType: type,
-        isLocked: type != LockType.none,
-        isLoading: false,
-      ));
+      emit(
+        state.copyWith(
+          lockType: type,
+          isLocked: type != LockType.none,
+          isLoading: false,
+        ),
+      );
     } catch (e) {
       log('SetAppLockType error: $e');
       emit(state.copyWith(isLoading: false, error: e.toString()));
@@ -81,18 +82,22 @@ class AppLockBloc extends Bloc<AppLockEvent, AppLockState> {
 
   void _onLockApp(LockApp event, Emitter<AppLockState> emit) {
     if (state.lockType != LockType.none) {
-      emit(state.copyWith(
-        isLocked: true,
-        verificationStatus: AppVerificationStatus.idle,
-      ));
+      emit(
+        state.copyWith(
+          isLocked: true,
+          verificationStatus: AppVerificationStatus.idle,
+        ),
+      );
     }
   }
 
   void _onUnlockApp(UnlockApp event, Emitter<AppLockState> emit) {
-    emit(state.copyWith(
-      isLocked: false,
-      verificationStatus: AppVerificationStatus.idle,
-    ));
+    emit(
+      state.copyWith(
+        isLocked: false,
+        verificationStatus: AppVerificationStatus.idle,
+      ),
+    );
   }
 
   Future<void> _onVerifyPin(
@@ -103,75 +108,99 @@ class AppLockBloc extends Bloc<AppLockEvent, AppLockState> {
       final savedPin = await repository.getPin();
 
       if (savedPin == event.pin) {
-        emit(state.copyWith(
-          verificationStatus: AppVerificationStatus.success,
-          isLocked: false,
-        ));
+        emit(
+          state.copyWith(
+            verificationStatus: AppVerificationStatus.success,
+            isLocked: false,
+          ),
+        );
       } else {
-        emit(state.copyWith(
-          verificationStatus: AppVerificationStatus.failure,
-        ));
+        emit(state.copyWith(verificationStatus: AppVerificationStatus.failure));
       }
     } catch (e) {
       log('VerifyAppPin error: $e');
-      emit(state.copyWith(
-        verificationStatus: AppVerificationStatus.failure,
-        error: e.toString(),
-      ));
+      emit(
+        state.copyWith(
+          verificationStatus: AppVerificationStatus.failure,
+          error: e.toString(),
+        ),
+      );
     }
   }
 
   Future<void> _onVerifySecurityAnswer(
-  VerifyAppSecurityAnswer event,
-  Emitter<AppLockState> emit,
-) async {
-  try {
-    final data = await repository.getSecurityData();
-    // Compare case‑insensitively
-    if (data != null &&
-        data['answer']?.toString().toLowerCase() ==
-            event.answer.trim().toLowerCase()) {
-      emit(state.copyWith(
-        verificationStatus: AppVerificationStatus.success,
-        isLocked: false,
-      ));
-    } else {
-      emit(state.copyWith(
-        verificationStatus: AppVerificationStatus.failure,
-      ));
+    VerifyAppSecurityAnswer event,
+    Emitter<AppLockState> emit,
+  ) async {
+    try {
+      final data = await repository.getSecurityData();
+      // Compare case‑insensitively
+      if (data != null &&
+          data['answer']?.toString().toLowerCase() ==
+              event.answer.trim().toLowerCase()) {
+        emit(
+          state.copyWith(
+            verificationStatus: AppVerificationStatus.success,
+            isLocked: false,
+          ),
+        );
+      } else {
+        emit(state.copyWith(verificationStatus: AppVerificationStatus.failure));
+      }
+    } catch (e) {
+      log('VerifyAppSecurityAnswer error: $e');
+      emit(
+        state.copyWith(
+          verificationStatus: AppVerificationStatus.failure,
+          error: e.toString(),
+        ),
+      );
     }
-  } catch (e) {
-    log('VerifyAppSecurityAnswer error: $e');
-    emit(state.copyWith(
-      verificationStatus: AppVerificationStatus.failure,
-      error: e.toString(),
-    ));
   }
-}
 
   Future<void> _onVerifyBiometric(
     VerifyAppBiometric event,
     Emitter<AppLockState> emit,
   ) async {
+    if (state.verificationInProgress) return;
+
+    emit(
+      state.copyWith(
+        verificationInProgress: true,
+        verificationStatus: AppVerificationStatus.idle,
+        verificationError: null,
+      ),
+    );
+
     try {
       final success = await repository.authenticate(reason: event.reason);
 
       if (success) {
-        emit(state.copyWith(
-          verificationStatus: AppVerificationStatus.success,
-          isLocked: false,
-        ));
+        emit(
+          state.copyWith(
+            verificationStatus: AppVerificationStatus.success,
+            verificationInProgress: false,
+            isLocked: false,
+          ),
+        );
       } else {
-        emit(state.copyWith(
-          verificationStatus: AppVerificationStatus.failure,
-        ));
+        emit(
+          state.copyWith(
+            verificationStatus: AppVerificationStatus.failure,
+            verificationInProgress: false,
+            verificationError: 'Authentication cancelled or failed',
+          ),
+        );
       }
     } catch (e) {
       log('VerifyAppBiometric error: $e');
-      emit(state.copyWith(
-        verificationStatus: AppVerificationStatus.failure,
-        error: e.toString(),
-      ));
+      emit(
+        state.copyWith(
+          verificationStatus: AppVerificationStatus.failure,
+          verificationInProgress: false,
+          verificationError: e.toString(),
+        ),
+      );
     }
   }
 
@@ -179,18 +208,25 @@ class AppLockBloc extends Bloc<AppLockEvent, AppLockState> {
     ResetAppVerification event,
     Emitter<AppLockState> emit,
   ) {
-    emit(state.copyWith(
-      verificationStatus: AppVerificationStatus.idle,
-      error: null,
-    ));
+    emit(
+      state.copyWith(
+        verificationStatus: AppVerificationStatus.idle,
+        verificationInProgress: false,
+        verificationError: null,
+        error: null,
+      ),
+    );
   }
+
   void _onSwitchToBiometricLock(
-  SwitchToBiometricLock event,
-  Emitter<AppLockState> emit,
-) {
-  emit(state.copyWith(
-    lockType: LockType.biometric,
-    verificationStatus: AppVerificationStatus.idle,
-  ));
-}
+    SwitchToBiometricLock event,
+    Emitter<AppLockState> emit,
+  ) {
+    emit(
+      state.copyWith(
+        lockType: LockType.biometric,
+        verificationStatus: AppVerificationStatus.idle,
+      ),
+    );
+  }
 }

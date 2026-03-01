@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:routine/features/app_lock/presentation/bloc/lock_bloc.dart';
 import '../../../diary/presentation/pages/diary_screen.dart';
@@ -20,23 +21,22 @@ class LockGate extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocConsumer<AppLockBloc, AppLockState>(
       listener: (context, state) {
-        // Handle successful verification
         if (state.verificationStatus == AppVerificationStatus.success) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (context.mounted) {
-              _goToDiary(context);
-            }
-          });
-        }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (context.mounted) {
+        context.read<AppLockBloc>().add( ResetAppVerification());
+        _goToDiary(context);
+      }
+    });
+  }
 
-        // Handle no lock type
-        if (!state.isLoading && state.lockType == LockType.none) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (context.mounted) {
-              _goToDiary(context);
-            }
-          });
-        }
+  if (!state.isLoading && state.lockType == LockType.none) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (context.mounted) {
+        _goToDiary(context);
+      }
+    });
+  }
       },
       builder: (context, state) {
         if (state.isLoading) {
@@ -76,28 +76,116 @@ class _BiometricLockGate extends StatefulWidget {
 }
 
 class __BiometricLockGateState extends State<_BiometricLockGate> {
-  @override
-  void initState() {
-    super.initState();
-    _authenticate();
-  }
+  bool _authTriggered = false;
 
-  Future<void> _authenticate() async {
-    context.read<AppLockBloc>().add(const VerifyAppBiometric());
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_authTriggered) {
+      _authTriggered = true;
+      context.read<AppLockBloc>().add(const VerifyAppBiometric());
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Colors.black,
+    return BlocConsumer<AppLockBloc, AppLockState>(
+      listenWhen: (previous, current) =>
+          previous.verificationStatus != current.verificationStatus,
+      listener: (context, state) {
+        // Optional: additional side effects
+      },
+      builder: (context, state) {
+        if (state.verificationInProgress) {
+          return _buildLoadingScreen(context);
+        }
+
+        if (state.verificationStatus == AppVerificationStatus.failure) {
+          return _buildErrorScreen(context, state.verificationError);
+        }
+
+        // Fallback (should not happen) – show loading
+        return _buildLoadingScreen(context);
+      },
+    );
+  }
+
+  Widget _buildLoadingScreen(BuildContext context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(color: Colors.white),
-            SizedBox(height: 20),
-            Text('Authenticating...', style: TextStyle(color: Colors.white)),
+            CircularProgressIndicator(color: theme.colorScheme.primary),
+            const SizedBox(height: 20),
+            Text(
+              'Authenticating...',
+              style: theme.textTheme.bodyLarge,
+            ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorScreen(BuildContext context, String? error) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.close_outlined,
+                size: 80,
+                color: theme.colorScheme.error,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Authentication Failed',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                error ?? 'Unable to authenticate. Please try again.',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 32),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        SystemNavigator.pop();
+                      },
+                      child: const Text('Exit'),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // Trigger authentication again
+                        context.read<AppLockBloc>().add(
+                          const VerifyAppBiometric(reason: 'Unlock app'),
+                        );
+                      },
+                      child: const Text('Try Again'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
