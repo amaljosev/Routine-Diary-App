@@ -11,7 +11,9 @@ import 'package:routine/features/diary/domain/repository/diary_repository.dart';
 import 'package:routine/features/diary/presentation/blocs/diary/diary_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:routine/features/onboarding/splash_screen.dart';
+import 'package:routine/features/onboarding/data/repositories/onboarding_repository_impl.dart';
+import 'package:routine/features/onboarding/domain/repositories/onboarding_repository.dart';
+import 'package:routine/features/onboarding/pages/splash_screen.dart';
 import 'package:routine/features/settings/data/theme_repository_impl.dart';
 import 'package:routine/features/settings/domain/theme_repository.dart';
 import 'package:routine/features/settings/presentation/bloc/apptheme_bloc.dart';
@@ -19,6 +21,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final onboardingRepository = OnboardingRepositoryImpl();
   final diaryLocalDataSource = DiaryLocalDataSource();
   final diaryRepository = DiaryRepositoryImpl(diaryLocalDataSource);
   final themeRepository = ThemeRepositoryImpl();
@@ -35,6 +38,7 @@ Future<void> main() async {
 
   runApp(
     MyApp(
+      onboardingRepository: onboardingRepository,
       diaryRepository: diaryRepository,
       themeRepository: themeRepository,
       appLockRepository: appLockRepository,
@@ -43,12 +47,14 @@ Future<void> main() async {
 }
 
 class MyApp extends StatelessWidget {
+  final OnboardingRepository onboardingRepository;
   final DiaryRepository diaryRepository;
   final ThemeRepository themeRepository;
   final AppLockRepository appLockRepository;
 
   const MyApp({
     super.key,
+    required this.onboardingRepository,
     required this.diaryRepository,
     required this.themeRepository,
     required this.appLockRepository,
@@ -58,6 +64,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
+        RepositoryProvider<OnboardingRepository>(
+          create: (_) => onboardingRepository,
+        ),
         BlocProvider(
           create: (_) =>
               DiaryBloc(repository: diaryRepository)..add(LoadDiaryEntries()),
