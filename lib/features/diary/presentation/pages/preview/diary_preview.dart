@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:routine/features/diary/data/models/diary_entry_model.dart';
 import 'package:routine/features/diary/domain/entities/sticker_model.dart';
 import 'package:routine/features/diary/presentation/blocs/diary/diary_bloc.dart';
@@ -110,27 +111,32 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
     final isDark = theme.brightness == Brightness.dark;
 
     final Color? parsedColor = _parseColorFromString(entry.bgColor);
-    ImageProvider? backgroundImage;
+    final Color fallbackColor = parsedColor ?? theme.scaffoldBackgroundColor;
+
+    // Determine the background image source
+    ImageProvider? localImage;
+    String? networkUrl;
 
     // Priority 1: Gallery image (local file)
-    if (entry.bgGalleryImagePath != null && entry.bgGalleryImagePath!.isNotEmpty) {
+    if (entry.bgGalleryImagePath != null &&
+        entry.bgGalleryImagePath!.isNotEmpty) {
       final file = File(entry.bgGalleryImagePath!);
       if (file.existsSync()) {
-        backgroundImage = FileImage(file);
+        localImage = FileImage(file);
       }
     }
     // Priority 2: Local cached Supabase image
     else if (entry.bgLocalPath != null && entry.bgLocalPath!.isNotEmpty) {
       final file = File(entry.bgLocalPath!);
       if (file.existsSync()) {
-        backgroundImage = FileImage(file);
+        localImage = FileImage(file);
       } else {
         // Local file missing – fallback to URL (if available)
         if (entry.bgImagePath != null && entry.bgImagePath!.isNotEmpty) {
           if (entry.bgImagePath!.startsWith('http')) {
-            backgroundImage = NetworkImage(entry.bgImagePath!);
+            networkUrl = entry.bgImagePath;
           } else {
-            backgroundImage = AssetImage(entry.bgImagePath!);
+            localImage = AssetImage(entry.bgImagePath!);
           }
         }
       }
@@ -138,34 +144,49 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
     // Priority 3: Supabase URL or asset path
     else if (entry.bgImagePath != null && entry.bgImagePath!.isNotEmpty) {
       if (entry.bgImagePath!.startsWith('http')) {
-        backgroundImage = NetworkImage(entry.bgImagePath!);
+        networkUrl = entry.bgImagePath;
       } else {
-        backgroundImage = AssetImage(entry.bgImagePath!);
+        localImage = AssetImage(entry.bgImagePath!);
       }
     }
 
-    final Color fallbackColor = parsedColor ?? theme.scaffoldBackgroundColor;
+    // Build the background with Stack
+    return Stack(
+      children: [
+        // Background image (if any)
+        if (localImage != null)
+          Positioned.fill(
+            child: Image(
+              image: localImage,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) =>
+                  Container(color: fallbackColor),
+            ),
+          )
+        else if (networkUrl != null)
+          Positioned.fill(
+            child: CachedNetworkImage(
+              imageUrl: networkUrl,
+              fit: BoxFit.cover,
+              placeholder: (context, url) => Container(color: fallbackColor),
+              errorWidget: (context, url, error) =>
+                  Container(color: fallbackColor),
+            ),
+          ),
 
-    return Container(
-      decoration: BoxDecoration(
-        color: fallbackColor,
-        image: backgroundImage != null
-            ? DecorationImage(image: backgroundImage, fit: BoxFit.cover)
-            : null,
-      ),
-      child: SafeArea(
-        child: Stack(
-          children: [
-            if (backgroundImage != null)
-              Container(
-                color: isDark
-                    ? Colors.black.withValues(alpha: 0.4)
-                    : Colors.white.withValues(alpha: 0.4),
-              ),
-            _buildContent(context, entry),
-          ],
-        ),
-      ),
+        // Semi‑transparent overlay for text readability (only if there is an image)
+        if (localImage != null || networkUrl != null)
+          Positioned.fill(
+            child: Container(
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.4)
+                  : Colors.white.withValues(alpha: 0.4),
+            ),
+          ),
+
+        // Main content (SafeArea, AppBar, etc.)
+        SafeArea(child: _buildContent(context, entry)),
+      ],
     );
   }
 
@@ -237,8 +258,6 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
       ],
     );
   }
-
-  
 
   // New method for mood and title display
   Widget _buildMoodAndTitle(BuildContext context, DiaryEntryModel entry) {

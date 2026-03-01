@@ -98,45 +98,61 @@ class DiaryUIHelpers {
 
     showModalBottomSheet(
       context: context,
-      // Use theme surface color
-      backgroundColor: theme.colorScheme.surface, // Updated
+      backgroundColor: theme.colorScheme.surface, 
+      showDragHandle: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        
       ),
       builder: (_) => SafeArea(
-        child: GridView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: DiaryItems.moods.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 6,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-          ),
-          itemBuilder: (_, index) {
-            final emoji = DiaryItems.moods[index];
-            return GestureDetector(
-              onTap: () {
-                onSelected(emoji);
-                Navigator.pop(context);
-              },
-              child: Container(
-                decoration: BoxDecoration(
-                  // Use theme surface color with opacity
-                  color: isDark
-                      ? theme.colorScheme.surface.withValues(
-                          alpha: 0.5,
-                        ) // Updated
-                      : theme.colorScheme.surface.withValues(
-                          alpha: 0.5,
-                        ), // Updated
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Center(
-                  child: Text(emoji, style: const TextStyle(fontSize: 28)),
-                ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                'What is your mood',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
               ),
-            );
-          },
+            ),
+            Expanded(
+              child: GridView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: DiaryItems.moods.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 6,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                ),
+                itemBuilder: (_, index) {
+                  final emoji = DiaryItems.moods[index];
+                  return GestureDetector(
+                    onTap: () {
+                      onSelected(emoji);
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        // Use theme surface color with opacity
+                        color: isDark
+                            ? theme.colorScheme.surface.withValues(
+                                alpha: 0.5,
+                              ) // Updated
+                            : theme.colorScheme.surface.withValues(
+                                alpha: 0.5,
+                              ), // Updated
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Center(
+                        child: Text(emoji, style: const TextStyle(fontSize: 28)),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -342,7 +358,7 @@ class DiaryUIHelpers {
                                 const Icon(Icons.error_outline, size: 48),
                                 const SizedBox(height: 8),
                                 Text(
-                                  'Failed to load: ${state.backgroundsError}',
+                                  'Failed to load: Please check your internet connection',
                                 ),
                                 TextButton(
                                   onPressed: () => bloc.add(LoadBackgrounds()),
@@ -408,7 +424,7 @@ class DiaryUIHelpers {
                             return GestureDetector(
                               onTap: () {
                                 Navigator.pop(sheetContext);
-                                onPresetSelected(imageUrl); // Pass URL
+                                onPresetSelected(imageUrl);
                               },
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(16),
