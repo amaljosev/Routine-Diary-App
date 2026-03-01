@@ -37,28 +37,19 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
     on<RemoveImage>(_onRemoveImage);
 
     //supabase
-     on<LoadBackgrounds>(_onLoadBackgrounds);
+    on<LoadBackgrounds>(_onLoadBackgrounds);
     on<BackgroundsLoaded>(_onBackgroundsLoaded);
     on<BackgroundsLoadFailed>(_onBackgroundsLoadFailed);
     on<SelectSupabaseBackground>(_onSelectSupabaseBackground);
     on<DownloadBackground>(_onDownloadBackground);
     on<SelectSticker>((event, emit) {
-      emit(state.copyWith(
-        selectedStickerId: event.id,
-        selectedImageId: null,
-      ));
+      emit(state.copyWith(selectedStickerId: event.id, selectedImageId: null));
     });
     on<SelectImage>((event, emit) {
-      emit(state.copyWith(
-        selectedImageId: event.id,
-        selectedStickerId: null,
-      ));
+      emit(state.copyWith(selectedImageId: event.id, selectedStickerId: null));
     });
     on<DeselectAll>((event, emit) {
-      emit(state.copyWith(
-        selectedStickerId: null,
-        selectedImageId: null,
-      ));
+      emit(state.copyWith(selectedStickerId: null, selectedImageId: null));
     });
     on<ClearBackground>(_onClearBackground);
     on<SetError>((event, emit) {
@@ -70,103 +61,103 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
   }
 
   void _onInitializeDiaryEntry(
-  InitializeDiaryEntry event,
-  Emitter<DiaryEntryState> emit,
-) {
-  final e = event.entry;
+    InitializeDiaryEntry event,
+    Emitter<DiaryEntryState> emit,
+  ) {
+    final e = event.entry;
 
-  if (e != null) {
-    // ignore: unused_local_variable
-    String bgImage = '';
-    String? bgGalleryImage = e.bgGalleryImagePath;
-    
-    if (bgGalleryImage != null && bgGalleryImage.isNotEmpty) {
-      final file = File(bgGalleryImage);
-      if (!file.existsSync()) {
-        bgGalleryImage = null;
+    if (e != null) {
+      // ignore: unused_local_variable
+      String bgImage = '';
+      String? bgGalleryImage = e.bgGalleryImagePath;
+
+      if (bgGalleryImage != null && bgGalleryImage.isNotEmpty) {
+        final file = File(bgGalleryImage);
+        if (!file.existsSync()) {
+          bgGalleryImage = null;
+          bgImage = e.bgImagePath ?? '';
+        }
+      } else {
         bgImage = e.bgImagePath ?? '';
       }
-    } else {
-      bgImage = e.bgImagePath ?? '';
-    }
 
-    emit(
-      state.copyWith(
-        title: e.title,
-        description: e.content,
-        mood: e.mood,
-        // FIX: Use the improved color parser instead of AppConverters
-        bgColor: _parseColorFromString(e.bgColor),
-        bgGalleryImage: bgGalleryImage,
-        stickers: e.stickersJson != null
-            ? (jsonDecode(e.stickersJson!) as List)
-                  .map((s) => StickerModel.fromJson(s))
-                  .toList()
-            : [],
-        images: e.imagesJson != null
-            ? (jsonDecode(e.imagesJson!) as List)
-                  .map((i) => DiaryImage.fromJson(i))
-                  .toList()
-            : [],
-        date: DateTime.tryParse(e.date) ?? DateTime.now(),
-         bgImage: e.bgImagePath ?? '',
-        bgLocalPath: e.bgLocalPath,  
-      ),
-    );
-  }
-}
-
-Color? _parseColorFromString(String? input) {
-  if (input == null || input.isEmpty) return null;
-  final String s = input.trim();
-
-  final colorRegex = RegExp(r'^Color\(0x([0-9a-fA-F]{8})\)$');
-  final match = colorRegex.firstMatch(s);
-  if (match != null) {
-    final hex = match.group(1);
-    if (hex != null) {
-      return Color(int.parse(hex, radix: 16));
-    }
-  }
-
-  // 2. Handle hex string format (8 chars, no prefix)
-  if (RegExp(r'^[0-9a-fA-F]{8}$').hasMatch(s)) {
-    return Color(int.parse(s, radix: 16));
-  }
-
-  // 3. Handle custom "Color(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)" format
-  final customRegex = RegExp(
-    r'red:\s*([0-9.]+),\s*green:\s*([0-9.]+),\s*blue:\s*([0-9.]+),\s*alpha:\s*([0-9.]+)',
-  );
-  final customMatch = customRegex.firstMatch(s);
-  if (customMatch != null) {
-    try {
-      final r = double.parse(customMatch.group(1)!);
-      final g = double.parse(customMatch.group(2)!);
-      final b = double.parse(customMatch.group(3)!);
-      final a = double.parse(customMatch.group(4)!);
-      return Color.fromRGBO(
-        (r * 255).round(),
-        (g * 255).round(),
-        (b * 255).round(),
-        a,
+      emit(
+        state.copyWith(
+          title: e.title,
+          description: e.content,
+          mood: e.mood,
+          // FIX: Use the improved color parser instead of AppConverters
+          bgColor: _parseColorFromString(e.bgColor),
+          bgGalleryImage: bgGalleryImage,
+          stickers: e.stickersJson != null
+              ? (jsonDecode(e.stickersJson!) as List)
+                    .map((s) => StickerModel.fromJson(s))
+                    .toList()
+              : [],
+          images: e.imagesJson != null
+              ? (jsonDecode(e.imagesJson!) as List)
+                    .map((i) => DiaryImage.fromJson(i))
+                    .toList()
+              : [],
+          date: DateTime.tryParse(e.date) ?? DateTime.now(),
+          bgImage: e.bgImagePath ?? '',
+          bgLocalPath: e.bgLocalPath,
+        ),
       );
-    } catch (_) {}
+    }
   }
 
-  // 4. Handle other hex formats (#, 0x, etc.)
-  String hex = s;
-  if (hex.startsWith('#')) hex = hex.substring(1);
-  if (hex.startsWith('0x')) hex = hex.substring(2);
-  if (hex.length == 6) hex = 'FF$hex';
-  if (hex.length == 8) {
-    try {
-      return Color(int.parse(hex, radix: 16));
-    } catch (_) {}
-  }
+  Color? _parseColorFromString(String? input) {
+    if (input == null || input.isEmpty) return null;
+    final String s = input.trim();
 
-  return null;
-}
+    final colorRegex = RegExp(r'^Color\(0x([0-9a-fA-F]{8})\)$');
+    final match = colorRegex.firstMatch(s);
+    if (match != null) {
+      final hex = match.group(1);
+      if (hex != null) {
+        return Color(int.parse(hex, radix: 16));
+      }
+    }
+
+    // 2. Handle hex string format (8 chars, no prefix)
+    if (RegExp(r'^[0-9a-fA-F]{8}$').hasMatch(s)) {
+      return Color(int.parse(s, radix: 16));
+    }
+
+    // 3. Handle custom "Color(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)" format
+    final customRegex = RegExp(
+      r'red:\s*([0-9.]+),\s*green:\s*([0-9.]+),\s*blue:\s*([0-9.]+),\s*alpha:\s*([0-9.]+)',
+    );
+    final customMatch = customRegex.firstMatch(s);
+    if (customMatch != null) {
+      try {
+        final r = double.parse(customMatch.group(1)!);
+        final g = double.parse(customMatch.group(2)!);
+        final b = double.parse(customMatch.group(3)!);
+        final a = double.parse(customMatch.group(4)!);
+        return Color.fromRGBO(
+          (r * 255).round(),
+          (g * 255).round(),
+          (b * 255).round(),
+          a,
+        );
+      } catch (_) {}
+    }
+
+    // 4. Handle other hex formats (#, 0x, etc.)
+    String hex = s;
+    if (hex.startsWith('#')) hex = hex.substring(1);
+    if (hex.startsWith('0x')) hex = hex.substring(2);
+    if (hex.length == 6) hex = 'FF$hex';
+    if (hex.length == 8) {
+      try {
+        return Color(int.parse(hex, radix: 16));
+      } catch (_) {}
+    }
+
+    return null;
+  }
 
   void _onBgColorChanged(BgColorChanged event, Emitter<DiaryEntryState> emit) {
     emit(
@@ -174,6 +165,7 @@ Color? _parseColorFromString(String? input) {
         bgColor: event.color,
         bgImage: '',
         bgGalleryImage: null,
+        bgLocalPath: null,
       ),
     );
   }
@@ -184,6 +176,7 @@ Color? _parseColorFromString(String? input) {
         bgImage: event.image,
         bgColor: null,
         bgGalleryImage: null,
+        bgLocalPath: null,
       ),
     );
   }
@@ -197,6 +190,7 @@ Color? _parseColorFromString(String? input) {
         bgGalleryImage: event.imagePath,
         bgImage: '',
         bgColor: null,
+        bgLocalPath: null,
       ),
     );
   }
@@ -219,33 +213,39 @@ Color? _parseColorFromString(String? input) {
             lockAspectRatio: true,
             hideBottomControls: true,
           ),
-          IOSUiSettings(
-            title: 'Crop Background',
-            aspectRatioLockEnabled: true,
-          ),
+          IOSUiSettings(title: 'Crop Background', aspectRatioLockEnabled: true),
         ],
       );
 
       if (croppedFile != null) {
-        emit(state.copyWith(
-          bgGalleryImage: croppedFile.path,
-          bgImage: '',
-          bgColor: null,
-        ));
+        emit(
+          state.copyWith(
+            bgGalleryImage: croppedFile.path,
+            bgImage: '',
+            bgColor: null,
+            bgLocalPath: null,
+          ),
+        );
       } else {
-        emit(state.copyWith(
+        emit(
+          state.copyWith(
+            bgGalleryImage: event.imagePath,
+            bgImage: '',
+            bgColor: null,
+            bgLocalPath: null,
+          ),
+        );
+      }
+    } catch (e) {
+      emit(
+        state.copyWith(
+          errorMessage: 'Failed to crop image: $e',
           bgGalleryImage: event.imagePath,
           bgImage: '',
           bgColor: null,
-        ));
-      }
-    } catch (e) {
-      emit(state.copyWith(
-        errorMessage: 'Failed to crop image: $e',
-        bgGalleryImage: event.imagePath,
-        bgImage: '',
-        bgColor: null,
-      ));
+          bgLocalPath: null,
+        ),
+      );
     }
   }
 
@@ -258,6 +258,7 @@ Color? _parseColorFromString(String? input) {
         bgImage: '',
         bgGalleryImage: null,
         bgColor: null,
+        bgLocalPath: null,
       ),
     );
   }
@@ -269,11 +270,13 @@ Color? _parseColorFromString(String? input) {
       x: event.x,
       y: event.y,
     );
-    emit(state.copyWith(
-      stickers: [...state.stickers, newSticker],
-      selectedStickerId: null,
-      selectedImageId: null,
-    ));
+    emit(
+      state.copyWith(
+        stickers: [...state.stickers, newSticker],
+        selectedStickerId: null,
+        selectedImageId: null,
+      ),
+    );
   }
 
   void _onUpdateStickerPosition(
@@ -315,10 +318,7 @@ Color? _parseColorFromString(String? input) {
     final updatedStickers = state.stickers
         .where((s) => s.id != event.id)
         .toList();
-    emit(state.copyWith(
-      stickers: updatedStickers,
-      selectedStickerId: null,
-    ));
+    emit(state.copyWith(stickers: updatedStickers, selectedStickerId: null));
   }
 
   void _onImageAdded(ImageAdded event, Emitter<DiaryEntryState> emit) {
@@ -331,11 +331,13 @@ Color? _parseColorFromString(String? input) {
       height: 100,
       scale: 1.0,
     );
-    emit(state.copyWith(
-      images: [...state.images, newImage],
-      selectedStickerId: null,
-      selectedImageId: null,
-    ));
+    emit(
+      state.copyWith(
+        images: [...state.images, newImage],
+        selectedStickerId: null,
+        selectedImageId: null,
+      ),
+    );
   }
 
   void _onUpdateImagePosition(
@@ -381,11 +383,9 @@ Color? _parseColorFromString(String? input) {
     final updatedImages = state.images
         .where((image) => image.id != event.imageId)
         .toList();
-    emit(state.copyWith(
-      images: updatedImages,
-      selectedImageId: null,
-    ));
+    emit(state.copyWith(images: updatedImages, selectedImageId: null));
   }
+
   Future<void> _onLoadBackgrounds(
     LoadBackgrounds event,
     Emitter<DiaryEntryState> emit,
@@ -403,20 +403,24 @@ Color? _parseColorFromString(String? input) {
     BackgroundsLoaded event,
     Emitter<DiaryEntryState> emit,
   ) {
-    emit(state.copyWith(
-      availableBackgrounds: event.urls,
-      isLoadingBackgrounds: false,
-    ));
+    emit(
+      state.copyWith(
+        availableBackgrounds: event.urls,
+        isLoadingBackgrounds: false,
+      ),
+    );
   }
 
   void _onBackgroundsLoadFailed(
     BackgroundsLoadFailed event,
     Emitter<DiaryEntryState> emit,
   ) {
-    emit(state.copyWith(
-      isLoadingBackgrounds: false,
-      backgroundsError: event.error,
-    ));
+    emit(
+      state.copyWith(
+        isLoadingBackgrounds: false,
+        backgroundsError: event.error,
+      ),
+    );
   }
 
   void _onSelectSupabaseBackground(
@@ -425,31 +429,33 @@ Color? _parseColorFromString(String? input) {
   ) {
     add(DownloadBackground(event.imageUrl));
   }
+
   Future<void> _onDownloadBackground(
     DownloadBackground event,
     Emitter<DiaryEntryState> emit,
   ) async {
-    emit(state.copyWith(
-      isDownloadingBackground: true,
-      downloadError: null,
-    ));
+    emit(state.copyWith(isDownloadingBackground: true, downloadError: null));
 
     try {
       final localPath = await _backgroundRepo.downloadBackground(event.url);
-      emit(state.copyWith(
-        isDownloadingBackground: false,
-        bgImage: event.url,
-        bgLocalPath: localPath,
-        bgColor: null,
-        bgGalleryImage: null,
-      ));
+      emit(
+        state.copyWith(
+          isDownloadingBackground: false,
+          bgImage: event.url,
+          bgLocalPath: localPath,
+          bgColor: null,
+          bgGalleryImage: null,
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(
-        isDownloadingBackground: false,
-        downloadError: e.toString(),
-        bgImage: event.url, 
-        bgLocalPath: null,
-      ));
+      emit(
+        state.copyWith(
+          isDownloadingBackground: false,
+          downloadError: e.toString(),
+          bgImage: event.url,
+          bgLocalPath: null,
+        ),
+      );
     }
   }
 }

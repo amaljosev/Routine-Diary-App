@@ -123,53 +123,53 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   // ================== UPDATED BACKGROUND METHOD ===============
   // ============================================================
   Widget _buildBackground(DiaryEntryState state, BuildContext context) {
-  final theme = Theme.of(context);
-  ImageProvider? backgroundImage;
+    final theme = Theme.of(context);
+    ImageProvider? backgroundImage;
 
-  if (state.bgGalleryImage != null && state.bgGalleryImage!.isNotEmpty) {
-    final file = File(state.bgGalleryImage!);
-    if (file.existsSync()) {
-      backgroundImage = FileImage(file);
-    } else {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _bloc.add(const ClearBackground());
-      });
-    }
-  } else if (state.bgLocalPath != null && state.bgLocalPath!.isNotEmpty) {
-    final file = File(state.bgLocalPath!);
-    if (file.existsSync()) {
-      backgroundImage = FileImage(file);
-    } else {
-      // Local file missing, fallback to URL
-      if (state.bgImage.isNotEmpty) {
-        backgroundImage = state.bgImage.startsWith('http')
-            ? NetworkImage(state.bgImage)
-            : AssetImage(state.bgImage);
+    if (state.bgGalleryImage != null && state.bgGalleryImage!.isNotEmpty) {
+      final file = File(state.bgGalleryImage!);
+      if (file.existsSync()) {
+        backgroundImage = FileImage(file);
+      } else {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _bloc.add(const ClearBackground());
+        });
       }
+    } else if (state.bgLocalPath != null && state.bgLocalPath!.isNotEmpty) {
+      final file = File(state.bgLocalPath!);
+      if (file.existsSync()) {
+        backgroundImage = FileImage(file);
+      } else {
+        // Local file missing, fallback to URL
+        if (state.bgImage.isNotEmpty) {
+          backgroundImage = state.bgImage.startsWith('http')
+              ? NetworkImage(state.bgImage)
+              : AssetImage(state.bgImage);
+        }
+      }
+    } else if (state.bgImage.isNotEmpty) {
+      backgroundImage = state.bgImage.startsWith('http')
+          ? NetworkImage(state.bgImage)
+          : AssetImage(state.bgImage);
     }
-  } else if (state.bgImage.isNotEmpty) {
-    backgroundImage = state.bgImage.startsWith('http')
-        ? NetworkImage(state.bgImage)
-        : AssetImage(state.bgImage);
-  }
 
-  return Container(
-    decoration: BoxDecoration(
-      color: state.bgColor ?? theme.colorScheme.surface,
-      image: backgroundImage != null
-          ? DecorationImage(image: backgroundImage, fit: BoxFit.cover)
-          : null,
-    ),
-    child: SafeArea(
-      child: Stack(
-        children: [
-          Container(color: theme.colorScheme.surface.withValues(alpha: 0.4)),
-          _buildContent(state, context),
-        ],
+    return Container(
+      decoration: BoxDecoration(
+        color: state.bgColor ?? theme.colorScheme.surface,
+        image: backgroundImage != null
+            ? DecorationImage(image: backgroundImage, fit: BoxFit.cover)
+            : null,
       ),
-    ),
-  );
-}
+      child: SafeArea(
+        child: Stack(
+          children: [
+            Container(color: theme.colorScheme.surface.withValues(alpha: 0.4)),
+            _buildContent(state, context),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _buildContent(DiaryEntryState state, BuildContext context) {
     return Column(
@@ -237,25 +237,25 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
 
   void _saveEntry(BuildContext context, DiaryEntryState state) {
     final entry = DiaryEntryModel(
-    id: widget.entry == null
-        ? DateTime.now().toIso8601String()
-        : widget.entry!.id,
-    title: state.title,
-    date: state.date.toIso8601String(),
-    preview: state.description,
-    mood: state.mood,
-    content: state.description,
-    createdAt: widget.entry == null
-        ? DateTime.now().toIso8601String()
-        : widget.entry!.createdAt,
-    updatedAt: DateTime.now().toIso8601String(),
-    bgColor: state.bgColor?.toARGB32().toRadixString(16).padLeft(8, '0'),
-    stickersJson: jsonEncode(state.stickers.map((s) => s.toJson()).toList()),
-    imagesJson: jsonEncode(state.images.map((i) => i.toJson()).toList()),
-    bgImagePath: state.bgImage.isNotEmpty ? state.bgImage : null,
-    bgLocalPath: state.bgLocalPath, 
-    bgGalleryImagePath: state.bgGalleryImage,
-  );
+      id: widget.entry == null
+          ? DateTime.now().toIso8601String()
+          : widget.entry!.id,
+      title: state.title,
+      date: state.date.toIso8601String(),
+      preview: state.description,
+      mood: state.mood,
+      content: state.description,
+      createdAt: widget.entry == null
+          ? DateTime.now().toIso8601String()
+          : widget.entry!.createdAt,
+      updatedAt: DateTime.now().toIso8601String(),
+      bgColor: state.bgColor?.toARGB32().toRadixString(16).padLeft(8, '0'),
+      stickersJson: jsonEncode(state.stickers.map((s) => s.toJson()).toList()),
+      imagesJson: jsonEncode(state.images.map((i) => i.toJson()).toList()),
+      bgImagePath: state.bgImage.isNotEmpty ? state.bgImage : null,
+      bgLocalPath: state.bgLocalPath,
+      bgGalleryImagePath: state.bgGalleryImage,
+    );
 
     if (widget.entry != null) {
       context.read<DiaryBloc>().add(UpdateDiaryEntry(entry));
@@ -798,7 +798,8 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   }
 
   Future<void> _showStickerSizeAdjuster(StickerModel sticker) async {
-    final RenderBox? renderBox = _descriptionKey.currentContext?.findRenderObject() as RenderBox?;
+    final RenderBox? renderBox =
+        _descriptionKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox == null) return;
 
     await showModalBottomSheet(
@@ -816,7 +817,8 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   }
 
   Future<void> _showImageSizeAdjuster(DiaryImage image) async {
-    final RenderBox? renderBox = _descriptionKey.currentContext?.findRenderObject() as RenderBox?;
+    final RenderBox? renderBox =
+        _descriptionKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox == null) return;
 
     await showModalBottomSheet(
@@ -859,28 +861,42 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   // ============== UPDATED BACKGROUND PICKER CALL =============
   // ============================================================
   void _onBgImagePressed() {
-  DiaryUIHelpers.openBgImagePicker(
-    context,
-    onPresetSelected: (imageUrl) => _bloc.add(SelectSupabaseBackground(imageUrl)),
-    onGallerySelected: (filePath) =>
-        _bloc.add(CropAndSetBackgroundImage(filePath)),
-    onClear: () => _bloc.add(const ClearBackground()),
-  );
-}
+    DiaryUIHelpers.openBgImagePicker(
+      context,
+      onPresetSelected: (imageUrl) =>
+          _bloc.add(SelectSupabaseBackground(imageUrl)),
+      onGallerySelected: (filePath) =>
+          _bloc.add(CropAndSetBackgroundImage(filePath)),
+      onClear: () => _bloc.add(const ClearBackground()),
+    );
+  }
 
   void _onBulletPressed() {
+    final FocusScopeNode focusScope = FocusScope.of(context);
+    if (!focusScope.hasFocus) {
+      focusScope.requestFocus(FocusNode());
+    }
+
     final text = _descriptionController.text;
     final selection = _descriptionController.selection;
-    final buffer = StringBuffer();
-    buffer.write(text.substring(0, selection.start));
-    buffer.write('\n• ');
-    buffer.write(text.substring(selection.end));
-    final newText = buffer.toString();
-    final newPosition = selection.start + 3;
+
+    int insertPos;
+    if (selection.isValid &&
+        selection.baseOffset >= 0 &&
+        selection.baseOffset <= text.length) {
+      insertPos = selection.baseOffset;
+    } else {
+      insertPos = text.length;
+    }
+    final newText =
+        '${text.substring(0, insertPos)}\n• ${text.substring(insertPos)}';
+    final newCursorPos = insertPos + 3;
     _descriptionController.value = TextEditingValue(
       text: newText,
-      selection: TextSelection.collapsed(offset: newPosition),
+      selection: TextSelection.collapsed(offset: newCursorPos),
     );
+
+    FocusScope.of(context).requestFocus(FocusNode());
   }
 
   void _onStickerPressed() {
@@ -961,7 +977,7 @@ class __StickerSizeAdjusterState extends State<_StickerSizeAdjuster> {
               ),
             ),
             const SizedBox(height: 20),
-            
+
             // Preview of sticker
             Container(
               padding: const EdgeInsets.all(16),
@@ -975,7 +991,7 @@ class __StickerSizeAdjusterState extends State<_StickerSizeAdjuster> {
               ),
             ),
             const SizedBox(height: 20),
-            
+
             // Size label
             Text(
               'Size: ${_currentSize.round()}px',
@@ -984,7 +1000,7 @@ class __StickerSizeAdjusterState extends State<_StickerSizeAdjuster> {
               ),
             ),
             const SizedBox(height: 8),
-            
+
             // Slider
             Slider(
               value: _currentSize,
@@ -998,7 +1014,7 @@ class __StickerSizeAdjusterState extends State<_StickerSizeAdjuster> {
               },
             ),
             const SizedBox(height: 8),
-            
+
             // + and - buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -1022,10 +1038,13 @@ class __StickerSizeAdjusterState extends State<_StickerSizeAdjuster> {
               ],
             ),
             const SizedBox(height: 16),
-            
+
             // Remove button
             ListTile(
-              leading: Icon(Icons.delete, color: isDark ? Colors.white : theme.colorScheme.error),
+              leading: Icon(
+                Icons.delete,
+                color: isDark ? Colors.white : theme.colorScheme.error,
+              ),
               title: Text(
                 'Remove Sticker',
                 style: TextStyle(
@@ -1045,7 +1064,10 @@ class __StickerSizeAdjusterState extends State<_StickerSizeAdjuster> {
     );
   }
 
-  Widget _buildSizeButton({required IconData icon, required VoidCallback onPressed}) {
+  Widget _buildSizeButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
@@ -1115,7 +1137,7 @@ class __ImageSizeAdjusterState extends State<_ImageSizeAdjuster> {
               ),
             ),
             const SizedBox(height: 20),
-            
+
             // Preview of image (small thumbnail)
             Container(
               padding: const EdgeInsets.all(8),
@@ -1142,7 +1164,7 @@ class __ImageSizeAdjusterState extends State<_ImageSizeAdjuster> {
               ),
             ),
             const SizedBox(height: 20),
-            
+
             // Scale label
             Text(
               'Scale: ${(_currentScale * 100).round()}%',
@@ -1151,7 +1173,7 @@ class __ImageSizeAdjusterState extends State<_ImageSizeAdjuster> {
               ),
             ),
             const SizedBox(height: 8),
-            
+
             // Slider
             Slider(
               value: _currentScale,
@@ -1165,7 +1187,7 @@ class __ImageSizeAdjusterState extends State<_ImageSizeAdjuster> {
               },
             ),
             const SizedBox(height: 8),
-            
+
             // + and - buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -1173,7 +1195,10 @@ class __ImageSizeAdjusterState extends State<_ImageSizeAdjuster> {
                 _buildSizeButton(
                   icon: Icons.remove,
                   onPressed: () {
-                    final newScale = (_currentScale - 0.2).clamp(minScale, maxScale);
+                    final newScale = (_currentScale - 0.2).clamp(
+                      minScale,
+                      maxScale,
+                    );
                     setState(() => _currentScale = newScale);
                     bloc.add(UpdateImageSize(widget.image.id, newScale));
                   },
@@ -1181,7 +1206,10 @@ class __ImageSizeAdjusterState extends State<_ImageSizeAdjuster> {
                 _buildSizeButton(
                   icon: Icons.add,
                   onPressed: () {
-                    final newScale = (_currentScale + 0.2).clamp(minScale, maxScale);
+                    final newScale = (_currentScale + 0.2).clamp(
+                      minScale,
+                      maxScale,
+                    );
                     setState(() => _currentScale = newScale);
                     bloc.add(UpdateImageSize(widget.image.id, newScale));
                   },
@@ -1189,10 +1217,13 @@ class __ImageSizeAdjusterState extends State<_ImageSizeAdjuster> {
               ],
             ),
             const SizedBox(height: 16),
-            
+
             // Remove button
             ListTile(
-              leading: Icon(Icons.delete, color: isDark ? Colors.white : theme.colorScheme.error),
+              leading: Icon(
+                Icons.delete,
+                color: isDark ? Colors.white : theme.colorScheme.error,
+              ),
               title: Text(
                 'Remove Image',
                 style: TextStyle(
@@ -1212,7 +1243,10 @@ class __ImageSizeAdjusterState extends State<_ImageSizeAdjuster> {
     );
   }
 
-  Widget _buildSizeButton({required IconData icon, required VoidCallback onPressed}) {
+  Widget _buildSizeButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
