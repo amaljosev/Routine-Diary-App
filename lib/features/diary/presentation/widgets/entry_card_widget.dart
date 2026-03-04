@@ -18,7 +18,7 @@ class DiaryEntryCard extends StatelessWidget {
     final color = _generateColorFromText(entry.mood + entry.title);
     final colorD = DiaryUIHelpers.generateDarkColorFromText(entry.mood + entry.title);
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 12),
       decoration: BoxDecoration(
         color: isDark
             ? theme.colorScheme.surface.withValues(alpha: 0.6)

@@ -14,7 +14,6 @@ class DiaryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
     return Scaffold(
       body: Stack(
         children: [
@@ -52,11 +51,10 @@ class DiaryScreen extends StatelessWidget {
 
           CustomScrollView(
             slivers: [
-              const SliverToBoxAdapter(child: SizedBox(height: 200)),
-
+              const SliverToBoxAdapter(child: SizedBox(height: 170)),
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
                   child: Row(
                     children: [
                       Text(
@@ -269,7 +267,7 @@ class DiaryScreen extends StatelessWidget {
 
                   return SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.all(16.0),
+                      padding: const EdgeInsets.all(12.0),
                       child: ElevatedButton(
                         onPressed: () {
                           Navigator.of(context).push(
@@ -301,7 +299,7 @@ class DiaryScreen extends StatelessWidget {
 
       bottomNavigationBar: SafeArea(
         child: Container(
-          margin: const EdgeInsets.all(16),
+          margin: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(40),
@@ -325,6 +323,7 @@ class DiaryScreen extends StatelessWidget {
                 ),
                 icon: Icon(CupertinoIcons.calendar, size: 26),
                 color: theme.colorScheme.primary,
+                tooltip: 'Timeline',
               ),
               Container(
                 width: 1,
@@ -348,6 +347,7 @@ class DiaryScreen extends StatelessWidget {
                   foregroundColor: theme.colorScheme.onPrimary,
                   padding: const EdgeInsets.all(14),
                 ),
+                tooltip: 'Add New Entry',
               ),
               Container(
                 width: 1,
@@ -362,6 +362,7 @@ class DiaryScreen extends StatelessWidget {
                 ),
                 icon: const Icon(Icons.menu, size: 26),
                 color: theme.colorScheme.primary,
+                tooltip: 'App Menu',
               ),
             ],
           ),

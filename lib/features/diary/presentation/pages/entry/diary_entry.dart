@@ -11,6 +11,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart' as intl;
 
+
 class DiaryEntryScreen extends StatelessWidget {
   const DiaryEntryScreen({super.key, required this.entry});
   final DiaryEntryModel? entry;
@@ -140,7 +141,6 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       if (file.existsSync()) {
         backgroundImage = FileImage(file);
       } else {
-        // Local file missing, fallback to URL
         if (state.bgImage.isNotEmpty) {
           backgroundImage = state.bgImage.startsWith('http')
               ? NetworkImage(state.bgImage)
@@ -152,7 +152,6 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
           ? NetworkImage(state.bgImage)
           : AssetImage(state.bgImage);
     }
-
     return Container(
       decoration: BoxDecoration(
         color: state.bgColor ?? theme.colorScheme.surface,
