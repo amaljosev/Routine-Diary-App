@@ -247,26 +247,62 @@ class DiaryEntryCard extends StatelessWidget {
     }
   }
 
-  String _getTime(String date) {
-    final DateTime newDate =
-        AppConverters.stringToDateTime(date) ?? DateTime.now();
-    final now = DateTime.now();
-    final difference = now.difference(newDate);
+  String _getTime(String dateString) {
+  try {
+    final DateTime entryDate = DateTime.parse(dateString).toLocal();
+    final DateTime now = DateTime.now();
 
-    if (difference.inDays == 0) {
-      return 'Today';
-    } else if (difference.inDays == 1) {
-      return 'Yesterday';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays}d ago';
-    } else if (difference.inDays < 30) {
-      return '${(difference.inDays / 7).floor()}w ago';
-    } else if (difference.inDays < 365) {
-      return '${(difference.inDays / 30).floor()}mo ago';
-    } else {
-      return '${newDate.day}/${newDate.month}/${newDate.year}';
+    final DateTime entryDateOnly =
+        DateTime(entryDate.year, entryDate.month, entryDate.day);
+    final DateTime nowDateOnly =
+        DateTime(now.year, now.month, now.day);
+
+    final int difference =
+        nowDateOnly.difference(entryDateOnly).inDays;
+
+    // Future dates handling (optional)
+    if (difference < 0) {
+      return _formatDate(entryDateOnly);
     }
+
+    if (difference == 0) {
+      return "Today";
+    }
+
+    if (difference == 1) {
+      return "Yesterday";
+    }
+
+    // Up to 7 days
+    if (difference <= 7) {
+      return "$difference days ago";
+    }
+
+    // Weeks (up to 4 weeks)
+    if (difference < 30) {
+      final weeks = (difference / 7).floor();
+      return weeks == 1 ? "1 week ago" : "$weeks weeks ago";
+    }
+
+    // Months (up to 12 months)
+    if (difference < 365) {
+      final months = (difference / 30).floor();
+      return months == 1 ? "1 month ago" : "$months months ago";
+    }
+
+    // Older than 1 year → return formatted date
+    return _formatDate(entryDateOnly);
+  } catch (e) {
+    return "";
   }
+}
+
+String _formatDate(DateTime date) {
+  final day = date.day.toString().padLeft(2, '0');
+  final month = date.month.toString().padLeft(2, '0');
+  final year = date.year.toString();
+  return "$day/$month/$year";
+}
 
   Color _generateColorFromText(String text) {
     final hash = text.hashCode;
