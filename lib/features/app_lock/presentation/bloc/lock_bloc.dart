@@ -23,30 +23,48 @@ class AppLockBloc extends Bloc<AppLockEvent, AppLockState> {
   }
 
   Future<void> _onLoadSettings(
-    LoadAppLockSettings event,
-    Emitter<AppLockState> emit,
-  ) async {
-    emit(state.copyWith(isLoading: true));
+  LoadAppLockSettings event,
+  Emitter<AppLockState> emit,
+) async {
+  emit(state.copyWith(isLoading: true));
 
-    try {
-      final type = await repository.getLockType();
-      final shouldLock = type != LockType.none;
+  try {
+    final type = await repository.getLockType();
 
-      emit(
-        state.copyWith(
-          lockType: type,
-          isLocked: shouldLock,
-          isLoading: false,
-          verificationStatus: AppVerificationStatus.idle,
-        ),
-      );
+    // 🔥 Critical Fix
+    if (type == LockType.biometric) {
+      final available = await repository.isBiometricAvailable();
 
-      log("Loaded lock type: $type | shouldLock: $shouldLock");
-    } catch (e) {
-      log('LoadAppLockSettings error: $e');
-      emit(state.copyWith(isLoading: false, error: e.toString()));
+      if (!available) {
+        // Device biometrics disabled from system settings
+
+        await repository.setLockType(LockType.none);
+
+        emit(
+          state.copyWith(
+            lockType: LockType.none,
+            isLocked: false,
+            isLoading: false,
+            verificationStatus: AppVerificationStatus.idle,
+          ),
+        );
+
+        return;
+      }
     }
+
+    emit(
+      state.copyWith(
+        lockType: type,
+        isLocked: type != LockType.none,
+        isLoading: false,
+        verificationStatus: AppVerificationStatus.idle,
+      ),
+    );
+  } catch (e) {
+    emit(state.copyWith(isLoading: false, error: e.toString()));
   }
+}
 
   Future<void> _onSetLockType(
     SetAppLockType event,

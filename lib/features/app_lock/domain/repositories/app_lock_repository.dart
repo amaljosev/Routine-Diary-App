@@ -3,7 +3,7 @@ import '../entities/lock_type.dart';
 abstract class AppLockRepository {
   /// Checks if biometric authentication is supported on the device.
   Future<bool> canAuthenticate();
-
+Future<bool> isBiometricAvailable();
   /// Performs biometric authentication.
   /// Returns true if successful.
   Future<bool> authenticate({String reason = 'Authenticate to continue'});

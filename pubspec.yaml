@@ -111,6 +111,18 @@ flutter:
           weight: 400
         - asset: assets/fonts/Quicksand/Quicksand-Light.ttf
           weight: 300
+    - family: Caveat
+      fonts:
+        - asset: assets/fonts/Caveat-Medium.ttf
+    - family: CormorantGaramond
+      fonts:
+        - asset: assets/fonts/CormorantGaramond-Medium.ttf
+    - family: DancingScript
+      fonts:
+        - asset: assets/fonts/DancingScript-Medium.ttf
+    - family: PlayfairDisplay
+      fonts:
+        - asset: assets/fonts/PlayfairDisplay-Medium.ttf
 
     - family: MyFlutterApp
       fonts:

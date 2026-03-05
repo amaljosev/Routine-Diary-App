@@ -14,7 +14,15 @@ class AppLockRepositoryImpl implements AppLockRepository {
 
   @override
   Future<bool> canAuthenticate() => biometricDataSource.canAuthenticate();
-
+@override
+Future<bool> isBiometricAvailable() async {
+  try {
+    final canAuth = await biometricDataSource.canAuthenticate();
+    return canAuth;
+  } catch (_) {
+    return false;
+  }
+}
   @override
   Future<bool> authenticate({String reason = 'Authenticate to continue'}) =>
       biometricDataSource.authenticate(reason: reason);
