@@ -8,12 +8,53 @@ import 'package:routine/features/diary/presentation/pages/history/history_screen
 import 'package:routine/features/settings/presentation/pages/settings_screen.dart';
 import 'package:routine/features/diary/presentation/widgets/entry_card_widget.dart';
 
-class DiaryScreen extends StatelessWidget {
+class DiaryScreen extends StatefulWidget {
   const DiaryScreen({super.key});
+
+  @override
+  State<DiaryScreen> createState() => _DiaryScreenState();
+}
+
+class _DiaryScreenState extends State<DiaryScreen> {
+  int selectedIndex = 0;
+
+  void _onItemTapped(int index) {
+    if (selectedIndex == index) return;
+
+
+    if (index == 1) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const DiaryCalendarScreen()),
+      );
+    } else if (index == 2) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const SettingsScreen()),
+      );
+    }
+  }
+
+  Widget _buildNavItem({required IconData icon, required int index}) {
+    final theme = Theme.of(context);
+    final isActive = selectedIndex == index;
+
+    return GestureDetector(
+      onTap: () => _onItemTapped(index),
+      child: Icon(
+        icon,
+        size: 25,
+        color: isActive
+            ? theme.colorScheme.primary
+            : theme.colorScheme.onSurface.withValues(alpha: 0.5),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
     return Scaffold(
       body: Stack(
         children: [
@@ -42,9 +83,6 @@ class DiaryScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                floating: false,
-                pinned: false,
-                snap: false,
               ),
             ],
           ),
@@ -52,6 +90,7 @@ class DiaryScreen extends StatelessWidget {
           CustomScrollView(
             slivers: [
               const SliverToBoxAdapter(child: SizedBox(height: 170)),
+
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
@@ -77,7 +116,6 @@ class DiaryScreen extends StatelessWidget {
                             color: theme.colorScheme.primary.withValues(
                               alpha: 0.2,
                             ),
-                            width: 1,
                           ),
                         ),
                         child: Text(
@@ -99,51 +137,23 @@ class DiaryScreen extends StatelessWidget {
                     return const SliverFillRemaining(
                       child: Center(child: CircularProgressIndicator()),
                     );
-                  } else if (state.errorMessage != null) {
+                  }
+
+                  if (state.errorMessage != null) {
                     return SliverFillRemaining(
                       child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.error_outline,
-                              size: 48,
-                              color: theme.colorScheme.error,
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              "Error: ${state.errorMessage}",
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.error,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            ElevatedButton(
-                              onPressed: () {
-                                context.read<DiaryBloc>().add(
-                                  LoadDiaryEntries(),
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                foregroundColor: theme.colorScheme.onPrimary,
-                                backgroundColor: theme.colorScheme.primary,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 24,
-                                  vertical: 12,
-                                ),
-                              ),
-                              child: const Text("Try Again"),
-                            ),
-                          ],
+                        child: Text(
+                          "Error: ${state.errorMessage}",
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.error,
+                          ),
                         ),
                       ),
                     );
                   }
 
                   final now = DateTime.now();
+
                   final currentMonthEntries = state.entries.where((entry) {
                     final date = DateTime.tryParse(entry.date);
                     return date != null &&
@@ -162,80 +172,12 @@ class DiaryScreen extends StatelessWidget {
                   });
 
                   if (currentMonthEntries.isEmpty) {
-                    final showHistoryButton = state.entries.length >= 10;
-
                     return SliverFillRemaining(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Container(
-                                    width: 120,
-                                    height: 120,
-                                    decoration: BoxDecoration(
-                                      color: theme.colorScheme.surface,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: theme.colorScheme.primary
-                                            .withValues(alpha: 0.4),
-                                        width: 2,
-                                      ),
-                                    ),
-                                    child: Icon(
-                                      Icons.edit_note,
-                                      size: 60,
-                                      color: theme.colorScheme.primary
-                                          .withValues(alpha: 0.5),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 24),
-                                  Text(
-                                    "No entries this month",
-                                    style: theme.textTheme.titleLarge?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                      color: theme.colorScheme.onSurface,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    "Start writing your thoughts...",
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      color: theme.colorScheme.onSurface
-                                          .withValues(alpha: 0.6),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          if (showHistoryButton)
-                            Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const DiaryCalendarScreen(),
-                                    ),
-                                  );
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  foregroundColor: theme.colorScheme.onPrimary,
-                                  backgroundColor: theme.colorScheme.primary,
-                                  minimumSize: const Size(double.infinity, 48),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                child: const Text("View All History"),
-                              ),
-                            ),
-                        ],
+                      child: Center(
+                        child: Text(
+                          "No entries this month",
+                          style: theme.textTheme.titleLarge,
+                        ),
                       ),
                     );
                   }
@@ -249,49 +191,7 @@ class DiaryScreen extends StatelessWidget {
                 },
               ),
 
-              BlocBuilder<DiaryBloc, DiaryState>(
-                builder: (context, state) {
-                  if (state.isLoading || state.errorMessage != null) {
-                    return const SliverToBoxAdapter(child: SizedBox.shrink());
-                  }
-                  final now = DateTime.now();
-                  final hasCurrentMonthEntries = state.entries.any((entry) {
-                    final date = DateTime.tryParse(entry.date);
-                    return date != null &&
-                        date.year == now.year &&
-                        date.month == now.month;
-                  });
-                  if (!hasCurrentMonthEntries || state.entries.length < 10) {
-                    return const SliverToBoxAdapter(child: SizedBox.shrink());
-                  }
-
-                  return SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => const DiaryCalendarScreen(),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          foregroundColor: theme.colorScheme.onPrimary,
-                          backgroundColor: theme.colorScheme.primary,
-                          minimumSize: const Size(double.infinity, 48),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text("View All History"),
-                      ),
-                    ),
-                  );
-                },
-              ),
-
-              const SliverToBoxAdapter(child: SizedBox(height: 20)),
+              const SliverToBoxAdapter(child: SizedBox(height: 100)),
             ],
           ),
         ],
@@ -299,70 +199,47 @@ class DiaryScreen extends StatelessWidget {
 
       bottomNavigationBar: SafeArea(
         child: Container(
-          margin: const EdgeInsets.all(12),
+          margin: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+          padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(40),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
               ),
             ],
           ),
-          height: 70,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              IconButton(
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const DiaryCalendarScreen(),
-                  ),
-                ),
-                icon: Icon(CupertinoIcons.calendar, size: 26),
-                color: theme.colorScheme.primary,
-                tooltip: 'Timeline',
-              ),
-              Container(
-                width: 1,
-                height: 30,
-                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-              ),
-              IconButton(
-                onPressed: () async {
+              _buildNavItem(icon: Icons.book_outlined, index: 0),
+              _buildNavItem(icon: CupertinoIcons.calendar, index: 1),
+              _buildNavItem(icon: Icons.settings_rounded, index: 2),
+              GestureDetector(
+                onTap: () async {
                   final result = await Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => const DiaryEntryScreen(entry: null),
                     ),
                   );
+
                   if (result == true && context.mounted) {
                     context.read<DiaryBloc>().add(LoadDiaryEntries());
                   }
                 },
-                icon: const Icon(Icons.add, size: 28),
-                style: IconButton.styleFrom(
-                  backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: theme.colorScheme.onPrimary,
-                  padding: const EdgeInsets.all(14),
-                ),
-                tooltip: 'Add New Entry',
-              ),
-              Container(
-                width: 1,
-                height: 30,
-                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-              ),
-              IconButton(
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const SettingsScreen(),
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: theme.colorScheme.primary,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Icon(Icons.add, color: theme.colorScheme.onPrimary),
                   ),
                 ),
-                icon: const Icon(Icons.menu, size: 26),
-                color: theme.colorScheme.primary,
-                tooltip: 'App Menu',
               ),
             ],
           ),
