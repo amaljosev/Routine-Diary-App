@@ -57,6 +57,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
 
     return Scaffold(
       body: Stack(
+        alignment: AlignmentGeometry.bottomCenter,
         children: [
           CustomScrollView(
             physics: const NeverScrollableScrollPhysics(),
@@ -73,7 +74,9 @@ class _DiaryScreenState extends State<DiaryScreen> {
                       Hero(
                         tag: 'headerTag',
                         child: Image.asset(
-                          Theme.of(context).extension<BackgroundImageTheme>()?.imagePath ??
+                          Theme.of(
+                                context,
+                              ).extension<BackgroundImageTheme>()?.imagePath ??
                               'assets/img/themes/theme_1.png',
                           fit: BoxFit.cover,
                         ),
@@ -111,7 +114,9 @@ class _DiaryScreenState extends State<DiaryScreen> {
                           color: theme.colorScheme.surface,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.2,
+                            ),
                           ),
                         ),
                         child: Text(
@@ -151,8 +156,12 @@ class _DiaryScreenState extends State<DiaryScreen> {
                   // Sort all entries by date descending
                   final allEntries = List<DiaryEntryModel>.from(state.entries);
                   allEntries.sort((a, b) {
-                    final dateA = DateTime.tryParse(a.date) ?? DateTime.fromMillisecondsSinceEpoch(0);
-                    final dateB = DateTime.tryParse(b.date) ?? DateTime.fromMillisecondsSinceEpoch(0);
+                    final dateA =
+                        DateTime.tryParse(a.date) ??
+                        DateTime.fromMillisecondsSinceEpoch(0);
+                    final dateB =
+                        DateTime.tryParse(b.date) ??
+                        DateTime.fromMillisecondsSinceEpoch(0);
                     return dateB.compareTo(dateA);
                   });
 
@@ -173,7 +182,8 @@ class _DiaryScreenState extends State<DiaryScreen> {
                   // Build the list of entries
                   return SliverList(
                     delegate: SliverChildBuilderDelegate(
-                      (context, index) => DiaryEntryCard(entry: latestEntries[index]),
+                      (context, index) =>
+                          DiaryEntryCard(entry: latestEntries[index]),
                       childCount: latestEntries.length,
                     ),
                   );
@@ -185,7 +195,10 @@ class _DiaryScreenState extends State<DiaryScreen> {
                   if (state.entries.length >= 10) {
                     return SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 20,
+                          horizontal: 16,
+                        ),
                         child: Center(
                           child: ElevatedButton.icon(
                             onPressed: () {
@@ -222,12 +235,9 @@ class _DiaryScreenState extends State<DiaryScreen> {
               const SliverToBoxAdapter(child: SizedBox(height: 100)),
             ],
           ),
-        ],
-      ),
-
-      bottomNavigationBar: SafeArea(
+          SafeArea(
         child: Container(
-          margin: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+          margin: const EdgeInsets.fromLTRB(10, 0, 10, 16),
           padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
@@ -272,7 +282,10 @@ class _DiaryScreenState extends State<DiaryScreen> {
             ],
           ),
         ),
+      )
+        ],
       ),
+
     );
   }
 }

@@ -262,7 +262,7 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: theme.colorScheme.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
+              shape: BoxShape.circle,
             ),
             child: Hero(
               tag: 'moodTag${entry.id}',

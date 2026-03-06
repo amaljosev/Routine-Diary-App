@@ -158,7 +158,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     }
     return Container(
       decoration: BoxDecoration(
-        color: state.bgColor ?? theme.colorScheme.surface,
+        color: state.bgColor ?? theme.scaffoldBackgroundColor,
         image: backgroundImage != null
             ? DecorationImage(image: backgroundImage, fit: BoxFit.cover)
             : null,
@@ -196,7 +196,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
             ),
           ),
         ),
-        _buildBottomSection(context, state),
+        _buildActionButtons(context, state),
       ],
     );
   }
@@ -287,70 +287,71 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
 
   Widget _buildHeaderSection(DiaryEntryState state, BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Expanded(child: _buildDateSelector(state, context)),
-        const SizedBox(width: 10),
+        Expanded(child: _buildDateContent(state, context)),
         _buildMoodSelector(state, context),
       ],
     );
   }
 
-  Widget _buildDateSelector(DiaryEntryState state, BuildContext context) {
+  Widget _buildDateContent(DiaryEntryState state, BuildContext context) {
     return GestureDetector(
       onTap: () => _selectDate(context, state),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        decoration: _buildSoftDecoration(context, 24),
-        child: Row(
-          children: [
-            _buildDateContent(state, context),
-            const Spacer(),
-            Icon(
-              Icons.keyboard_arrow_down_rounded,
-              color: Theme.of(context).colorScheme.primary,
-              size: 28,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            intl.DateFormat('dd').format(state.date),
+            style: Theme.of(context).textTheme.headlineLarge!.copyWith(
+              fontWeight: FontWeight.w900,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
-          ],
-        ),
+          ),
+          
+          Row(
+            spacing: 5,
+            children: [
+              Text(
+            intl.DateFormat('EE').format(state.date),
+            style: Theme.of(context).textTheme.titleMedium!.copyWith(
+              fontWeight: FontWeight.w700,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ),
+              Text(
+                intl.DateFormat('MMMM yyyy').format(state.date),
+                style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.5),
+                ),
+              ),
+              Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ],
+          ),
+          Container(
+            height: 10,
+            width: 150,
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildDateContent(DiaryEntryState state, BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          intl.DateFormat('dd').format(state.date),
-          style: Theme.of(context).textTheme.headlineLarge!.copyWith(
-            fontWeight: FontWeight.w900,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
-        Text(
-          intl.DateFormat('EEEE').format(state.date),
-          style: Theme.of(context).textTheme.headlineLarge!.copyWith(
-            fontWeight: FontWeight.w700,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-        ),
-        Text(
-          intl.DateFormat('MMMM yyyy').format(state.date),
-          style: Theme.of(context).textTheme.titleMedium!.copyWith(
-            fontWeight: FontWeight.w900,
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildMoodSelector(DiaryEntryState state, BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: _buildSoftDecoration(context, 16),
-      child: GestureDetector(
-        onTap: () => _selectMood(context),
+    return GestureDetector(
+      onTap: () => _selectMood(context),
+      child: CircleAvatar(
+        backgroundColor: Theme.of(context).colorScheme.primary.withValues(
+          alpha: 0.1
+        ),
+        radius: 25,
         child: Text(state.mood, style: const TextStyle(fontSize: 24)),
       ),
     );
@@ -363,8 +364,8 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       maxLines: null,
       maxLength: 50,
       autofocus: widget.entry == null,
-       focusNode: _titleFocusNode,
-        textInputAction: TextInputAction.next,
+      focusNode: _titleFocusNode,
+      textInputAction: TextInputAction.next,
       decoration: InputDecoration(
         hintText: 'Title',
 
@@ -629,135 +630,85 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     );
   }
 
-  Widget _buildBottomSection(BuildContext context, DiaryEntryState state) {
-    final theme = Theme.of(context);
-
-    return SafeArea(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: theme.colorScheme.primary.withValues(alpha: 0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: _buildActionButtons(context, state),
-      ),
-    );
-  }
-
   Widget _buildActionButtons(BuildContext context, DiaryEntryState state) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        color: isDark
-            ? theme.colorScheme.surface
-            : theme.colorScheme.surface.withValues(alpha: 0.9),
-        border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.2),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.primary.withValues(alpha: 0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.only(top: 15, bottom: 15, left: 15),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            _buildActionButton(
-              icon: Icons.photo,
-              label: 'Photo',
-              onPressed: _onPhotoPressed,
-              context: context,
-            ),
-            _buildActionButton(
-              icon: Icons.palette,
-              label: 'BG Color',
-              onPressed: _onBgColorPressed,
-              context: context,
-            ),
-            _buildActionButton(
-              icon: Icons.image,
-              label: 'BG Image',
-              onPressed: _onBgImagePressed,
-              context: context,
-            ),
-            if (state.bgGalleryImage != null ||
-                state.bgImage.isNotEmpty ||
-                state.bgColor != null)
-              _buildActionButton(
-                icon: Icons.clear,
-                label: 'Clear BG',
-                onPressed: () => _bloc.add(const ClearBackground()),
-                context: context,
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.only(top: 15, bottom: 15),
+        child: SizedBox(
+          width: double.infinity,
+          child: Center(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(40),
+                  color: isDark
+                      ? theme.colorScheme.surface
+                      : theme.colorScheme.surface.withValues(alpha: 0.9),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 15,
+                    vertical: 5,
+                  ),
+                  child: Row(
+                    children: [
+                      _buildActionButton(
+                        icon: Icons.layers_outlined,
+                        label: 'Change Background',
+                        onPressed: _onBgImagePressed,
+                        context: context,
+                      ),
+                      _buildActionButton(
+                        icon: Icons.text_fields_rounded,
+                        label: 'Change Font',
+                        onPressed: _onFontPressed,
+                        context: context,
+                      ),
+                      _buildActionButton(
+                        icon: Icons.palette_outlined,
+                        label: 'Background Color',
+                        onPressed: _onBgColorPressed,
+                        context: context,
+                      ),
+                      _buildActionButton(
+                        icon: Icons.photo_outlined,
+                        label: 'Add Sticker photo',
+                        onPressed: _onPhotoPressed,
+                        context: context,
+                      ),
+                      if (state.bgGalleryImage != null ||
+                          state.bgImage.isNotEmpty ||
+                          state.bgColor != null)
+                        _buildActionButton(
+                          icon: Icons.close,
+                          label: 'Clear Background',
+                          onPressed: () => _bloc.add(const ClearBackground()),
+                          context: context,
+                        ),
+                      _buildActionButton(
+                        icon: Icons.format_list_bulleted,
+                        label: 'Add Bullet',
+                        onPressed: _onBulletPressed,
+                        context: context,
+                      ),
+                      _buildActionButton(
+                        icon: Icons.emoji_emotions_outlined,
+                        label: 'Add Sticker',
+                        onPressed: _onStickerPressed,
+                        context: context,
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            _buildActionButton(
-              icon: Icons.format_list_bulleted,
-              label: 'Bullet',
-              onPressed: _onBulletPressed,
-              context: context,
             ),
-            _buildActionButton(
-              icon: Icons.emoji_emotions,
-              label: 'Sticker',
-              onPressed: _onStickerPressed,
-              context: context,
-            ),
-            _buildActionButton(
-              icon: Icons.font_download,
-              label: 'Font',
-              onPressed: _onFontPressed,
-              context: context,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  BoxDecoration _buildSoftDecoration(BuildContext context, double radius) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    if (isDark) {
-      return BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(radius),
-        border: Border.all(color: theme.colorScheme.outline, width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.6),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
           ),
-        ],
-      );
-    }
-    return BoxDecoration(
-      color: theme.colorScheme.surface,
-      borderRadius: BorderRadius.circular(radius),
-      border: Border.all(
-        color: theme.colorScheme.primary.withValues(alpha: 0.2),
-        width: 1,
-      ),
-      boxShadow: [
-        BoxShadow(
-          color: theme.colorScheme.primary.withValues(alpha: 0.08),
-          blurRadius: 8,
-          offset: const Offset(0, 2),
         ),
-      ],
+      ),
     );
   }
 
@@ -768,33 +719,20 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     required BuildContext context,
   }) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 6),
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          foregroundColor: theme.colorScheme.onPrimary,
-          backgroundColor: theme.colorScheme.primary,
-          elevation: isDark ? 4 : 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+    return GestureDetector(
+      onTap: onPressed,
+      child: Tooltip(
+        message: label,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.primary,
+          borderRadius: const BorderRadius.all(Radius.circular(12)),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 18),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: theme.textTheme.labelMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onPrimary,
-              ),
-            ),
-          ],
+        child: Container(
+          decoration: BoxDecoration(shape: BoxShape.circle),
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Icon(icon, color: theme.colorScheme.primary, size: 25),
+          ),
         ),
       ),
     );
