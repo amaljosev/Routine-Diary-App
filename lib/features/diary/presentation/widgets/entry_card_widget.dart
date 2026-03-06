@@ -122,9 +122,12 @@ class DiaryEntryCard extends StatelessWidget {
                                 width: 1,
                               ),
                             ),
-                            child: Text(
-                              entry.mood,
-                              style: const TextStyle(fontSize: 16),
+                            child: Hero(
+                              tag: 'moodTag${entry.id}',
+                              child: Text(
+                                entry.mood,
+                                style: const TextStyle(fontSize: 16),
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -185,7 +188,7 @@ class DiaryEntryCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            _getTime(entry.date),
+                            getRelativeDateLabel(entry.date),
                             style: theme.textTheme.labelSmall?.copyWith(
                               color: theme.colorScheme.onSurface.withValues(
                                 alpha: 0.5,
@@ -251,7 +254,7 @@ class DiaryEntryCard extends StatelessWidget {
     }
   }
 
-  String _getTime(String dateString) {
+  String getRelativeDateLabel(String dateString) {
     try {
       final DateTime entryDate = DateTime.parse(dateString).toLocal();
       final DateTime now = DateTime.now();

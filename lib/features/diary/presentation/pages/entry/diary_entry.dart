@@ -11,8 +11,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart' as intl;
 
-
-
 class DiaryEntryScreen extends StatelessWidget {
   const DiaryEntryScreen({super.key, required this.entry});
   final DiaryEntryModel? entry;
@@ -40,6 +38,9 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _descriptionKey = GlobalKey();
   late DiaryEntryBloc _bloc;
+
+  final FocusNode _titleFocusNode = FocusNode();
+  final FocusNode _descriptionFocusNode = FocusNode();
 
   /// ---- Gesture tracking ----
   final Map<String, double> _initialScales = {};
@@ -77,6 +78,8 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     _titleController.dispose();
     _descriptionController.dispose();
     _scrollController.dispose();
+    _titleFocusNode.dispose();
+    _descriptionFocusNode.dispose();
     super.dispose();
   }
 
@@ -359,13 +362,17 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       controller: _titleController,
       maxLines: null,
       maxLength: 50,
+      autofocus: widget.entry == null,
+       focusNode: _titleFocusNode,
+        textInputAction: TextInputAction.next,
       decoration: InputDecoration(
         hintText: 'Title',
+
         hintStyle: theme.textTheme.bodyLarge?.copyWith(
           fontWeight: FontWeight.w900,
           fontSize: 24,
           color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-          fontFamily: state.fontFamily, // <-- apply font
+          fontFamily: state.fontFamily,
         ),
         border: InputBorder.none,
         counterStyle: TextStyle(
@@ -376,7 +383,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
         fontWeight: FontWeight.w900,
         fontSize: 24,
         color: theme.colorScheme.onSurface,
-        fontFamily: state.fontFamily, // <-- apply font
+        fontFamily: state.fontFamily,
       ),
     );
   }
@@ -388,17 +395,15 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // --- UPDATED: Description field with font family ---
           TextFormField(
             controller: _descriptionController,
+            focusNode: _descriptionFocusNode,
             maxLines: null,
             decoration: const InputDecoration(
               hintText: "What's on your mind?",
               border: InputBorder.none,
             ),
-            style: TextStyle(
-              fontFamily: state.fontFamily, // <-- apply font
-            ),
+            style: TextStyle(fontFamily: state.fontFamily),
           ),
           ...state.stickers.map((s) => _buildSticker(s, state)),
           ...state.images.map((i) => _buildImage(i, state)),
@@ -1288,6 +1293,7 @@ class __ImageSizeAdjusterState extends State<_ImageSizeAdjuster> {
     );
   }
 }
+
 const List<Map<String, String>> availableFonts = [
   {'display': 'Quicksand', 'family': 'Quicksand'},
   {'display': 'Caveat', 'family': 'Caveat'},
@@ -1295,6 +1301,7 @@ const List<Map<String, String>> availableFonts = [
   {'display': 'Dancing Script', 'family': 'DancingScript'},
   {'display': 'Playfair Display', 'family': 'PlayfairDisplay'},
 ];
+
 class _FontPickerSheet extends StatelessWidget {
   final String currentFont;
   final ValueChanged<String> onFontSelected;

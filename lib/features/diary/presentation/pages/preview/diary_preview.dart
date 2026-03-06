@@ -251,14 +251,12 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
     );
   }
 
-  // New method for mood and title display
   Widget _buildMoodAndTitle(BuildContext context, DiaryEntryModel entry) {
     final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12.0),
       child: Row(
         children: [
-          // Mood emoji with background
           Container(
             margin: const EdgeInsets.only(right: 12),
             padding: const EdgeInsets.all(10),
@@ -266,9 +264,12 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
               color: theme.colorScheme.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Text(
-              entry.mood.isEmpty ? '😊' : entry.mood,
-              style: const TextStyle(fontSize: 24),
+            child: Hero(
+              tag: 'moodTag${entry.id}',
+              child: Text(
+                entry.mood.isEmpty ? '😊' : entry.mood,
+                style: const TextStyle(fontSize: 24),
+              ),
             ),
           ),
           // Title

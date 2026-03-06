@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:routine/core/theme/theme_extenstions.dart';
+import 'package:routine/features/diary/data/models/diary_entry_model.dart';
 import 'package:routine/features/diary/presentation/blocs/diary/diary_bloc.dart';
 import 'package:routine/features/diary/presentation/pages/entry/diary_entry.dart';
 import 'package:routine/features/diary/presentation/pages/history/history_screen.dart';
@@ -20,7 +21,6 @@ class _DiaryScreenState extends State<DiaryScreen> {
 
   void _onItemTapped(int index) {
     if (selectedIndex == index) return;
-
 
     if (index == 1) {
       Navigator.push(
@@ -73,9 +73,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
                       Hero(
                         tag: 'headerTag',
                         child: Image.asset(
-                          Theme.of(
-                                context,
-                              ).extension<BackgroundImageTheme>()?.imagePath ??
+                          Theme.of(context).extension<BackgroundImageTheme>()?.imagePath ??
                               'assets/img/themes/theme_1.png',
                           fit: BoxFit.cover,
                         ),
@@ -113,9 +111,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
                           color: theme.colorScheme.surface,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: theme.colorScheme.primary.withValues(
-                              alpha: 0.2,
-                            ),
+                            color: theme.colorScheme.primary.withValues(alpha: 0.2),
                           ),
                         ),
                         child: Text(
@@ -152,42 +148,74 @@ class _DiaryScreenState extends State<DiaryScreen> {
                     );
                   }
 
-                  final now = DateTime.now();
-
-                  final currentMonthEntries = state.entries.where((entry) {
-                    final date = DateTime.tryParse(entry.date);
-                    return date != null &&
-                        date.year == now.year &&
-                        date.month == now.month;
-                  }).toList();
-
-                  currentMonthEntries.sort((a, b) {
-                    final dateA =
-                        DateTime.tryParse(a.date) ??
-                        DateTime.fromMillisecondsSinceEpoch(0);
-                    final dateB =
-                        DateTime.tryParse(b.date) ??
-                        DateTime.fromMillisecondsSinceEpoch(0);
+                  // Sort all entries by date descending
+                  final allEntries = List<DiaryEntryModel>.from(state.entries);
+                  allEntries.sort((a, b) {
+                    final dateA = DateTime.tryParse(a.date) ?? DateTime.fromMillisecondsSinceEpoch(0);
+                    final dateB = DateTime.tryParse(b.date) ?? DateTime.fromMillisecondsSinceEpoch(0);
                     return dateB.compareTo(dateA);
                   });
 
-                  if (currentMonthEntries.isEmpty) {
+                  // Take latest 30 for display
+                  final latestEntries = allEntries.take(30).toList();
+
+                  if (latestEntries.isEmpty) {
                     return SliverFillRemaining(
                       child: Center(
                         child: Text(
-                          "No entries this month",
+                          "No entries yet",
                           style: theme.textTheme.titleLarge,
                         ),
                       ),
                     );
                   }
 
+                  // Build the list of entries
                   return SliverList(
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      final entry = currentMonthEntries[index];
-                      return DiaryEntryCard(entry: entry);
-                    }, childCount: currentMonthEntries.length),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => DiaryEntryCard(entry: latestEntries[index]),
+                      childCount: latestEntries.length,
+                    ),
                   );
+                },
+              ),
+
+              BlocBuilder<DiaryBloc, DiaryState>(
+                builder: (context, state) {
+                  if (state.entries.length >= 10) {
+                    return SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                        child: Center(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const DiaryCalendarScreen(),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.calendar_today),
+                            label: const Text('View All Entries'),
+                            style: ElevatedButton.styleFrom(
+                              foregroundColor: theme.colorScheme.onPrimary,
+                              backgroundColor: theme.colorScheme.primary,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  } else {
+                    return const SliverToBoxAdapter(child: SizedBox.shrink());
+                  }
                 },
               ),
 
