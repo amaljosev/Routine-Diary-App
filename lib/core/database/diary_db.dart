@@ -41,7 +41,8 @@ class DiaryDatabase {
       stickers TEXT,
       images TEXT,
       created_at TEXT,          
-      updated_at TEXT
+      updated_at TEXT,
+      font_family TEXT
     );
   ''');
   }

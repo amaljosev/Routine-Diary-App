@@ -38,6 +38,13 @@ class MoodChanged extends DiaryEntryEvent {
   @override
   List<Object?> get props => [mood];
 }
+class FontChanged extends DiaryEntryEvent {
+  final String fontFamily;
+  const FontChanged(this.fontFamily);
+
+  @override
+  List<Object?> get props => [fontFamily];
+}
 
 class BgColorChanged extends DiaryEntryEvent {
   final Color color;

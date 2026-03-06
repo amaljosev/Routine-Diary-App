@@ -21,6 +21,9 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
     );
     on<MoodChanged>((event, emit) => emit(state.copyWith(mood: event.mood)));
     on<DateChanged>((event, emit) => emit(state.copyWith(date: event.date)));
+    on<FontChanged>(
+      (event, emit) => emit(state.copyWith(fontFamily: event.fontFamily)),
+    );
     on<BgColorChanged>(_onBgColorChanged);
     on<BgImageChanged>(_onBgImageChanged);
     on<BgGalleryImageChanged>(_onBgGalleryImageChanged);
@@ -86,7 +89,7 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
           title: e.title,
           description: e.content,
           mood: e.mood,
-          // FIX: Use the improved color parser instead of AppConverters
+          fontFamily: e.fontFamily,
           bgColor: _parseColorFromString(e.bgColor),
           bgGalleryImage: bgGalleryImage,
           stickers: e.stickersJson != null

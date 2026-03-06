@@ -15,6 +15,7 @@ class DiaryEntryModel extends DiaryEntry {
     super.bgLocalPath,                  
     super.stickersJson,
     super.imagesJson,
+    super.fontFamily, 
     required super.createdAt,
     required super.updatedAt,
   });
@@ -34,6 +35,7 @@ class DiaryEntryModel extends DiaryEntry {
       bgLocalPath: map['bg_local_path'] as String?,         
       stickersJson: map['stickers'] as String?,
       imagesJson: map['images'] as String?,
+      fontFamily: map['font_family'] as String?, 
       createdAt: map['created_at'] as String? ?? '',
       updatedAt: map['updated_at'] as String? ?? '',
     );
@@ -54,6 +56,7 @@ class DiaryEntryModel extends DiaryEntry {
       'bg_local_path': bgLocalPath,                         
       'stickers': stickersJson,
       'images': imagesJson,
+      'font_family': fontFamily, 
       'created_at': createdAt,
       'updated_at': updatedAt,
     };
@@ -74,6 +77,7 @@ class DiaryEntryModel extends DiaryEntry {
       bgLocalPath: entry.bgLocalPath,                       
       stickersJson: entry.stickersJson,
       imagesJson: entry.imagesJson,
+      fontFamily: entry.fontFamily, 
       createdAt: entry.createdAt,
       updatedAt: entry.updatedAt,
     );
@@ -94,6 +98,7 @@ class DiaryEntryModel extends DiaryEntry {
       bgLocalPath: bgLocalPath,                             
       stickersJson: stickersJson,
       imagesJson: imagesJson,
+      fontFamily: fontFamily, 
       createdAt: createdAt,
       updatedAt: updatedAt,
     );

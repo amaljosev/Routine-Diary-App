@@ -14,6 +14,7 @@ class DiaryEntry extends Equatable {
   final String? bgLocalPath;
   final String? stickersJson;
   final String? imagesJson;
+  final String? fontFamily; 
   final String createdAt;
   final String updatedAt;
 
@@ -31,6 +32,7 @@ class DiaryEntry extends Equatable {
     this.bgLocalPath,
     this.stickersJson,
     this.imagesJson,
+    this.fontFamily, 
     required this.createdAt,
     required this.updatedAt,
   });
@@ -50,6 +52,7 @@ class DiaryEntry extends Equatable {
     bgLocalPath,
     stickersJson,
     imagesJson,
+    fontFamily, 
     createdAt,
     updatedAt,
   ];

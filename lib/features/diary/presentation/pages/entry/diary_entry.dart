@@ -12,6 +12,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart' as intl;
 
 
+
 class DiaryEntryScreen extends StatelessWidget {
   const DiaryEntryScreen({super.key, required this.entry});
   final DiaryEntryModel? entry;
@@ -254,6 +255,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       bgImagePath: state.bgImage.isNotEmpty ? state.bgImage : null,
       bgLocalPath: state.bgLocalPath,
       bgGalleryImagePath: state.bgGalleryImage,
+      fontFamily: state.fontFamily,
     );
 
     if (widget.entry != null) {
@@ -273,7 +275,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       slivers: [
         SliverToBoxAdapter(child: _buildHeaderSection(state, context)),
         const SliverToBoxAdapter(child: SizedBox(height: 20)),
-        SliverToBoxAdapter(child: _buildTitleField(context)),
+        SliverToBoxAdapter(child: _buildTitleField(context, state)),
         SliverToBoxAdapter(child: _buildDescriptionSection(state, context)),
         const SliverToBoxAdapter(child: SizedBox(height: 20)),
       ],
@@ -351,7 +353,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     );
   }
 
-  Widget _buildTitleField(BuildContext context) {
+  Widget _buildTitleField(BuildContext context, DiaryEntryState state) {
     final theme = Theme.of(context);
     return TextFormField(
       controller: _titleController,
@@ -363,6 +365,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
           fontWeight: FontWeight.w900,
           fontSize: 24,
           color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+          fontFamily: state.fontFamily, // <-- apply font
         ),
         border: InputBorder.none,
         counterStyle: TextStyle(
@@ -373,6 +376,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
         fontWeight: FontWeight.w900,
         fontSize: 24,
         color: theme.colorScheme.onSurface,
+        fontFamily: state.fontFamily, // <-- apply font
       ),
     );
   }
@@ -384,12 +388,16 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
+          // --- UPDATED: Description field with font family ---
           TextFormField(
             controller: _descriptionController,
             maxLines: null,
             decoration: const InputDecoration(
               hintText: "What's on your mind?",
               border: InputBorder.none,
+            ),
+            style: TextStyle(
+              fontFamily: state.fontFamily, // <-- apply font
             ),
           ),
           ...state.stickers.map((s) => _buildSticker(s, state)),
@@ -702,6 +710,12 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
               onPressed: _onStickerPressed,
               context: context,
             ),
+            _buildActionButton(
+              icon: Icons.font_download,
+              label: 'Font',
+              onPressed: _onFontPressed,
+              context: context,
+            ),
           ],
         ),
       ),
@@ -867,6 +881,21 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       onGallerySelected: (filePath) =>
           _bloc.add(CropAndSetBackgroundImage(filePath)),
       onClear: () => _bloc.add(const ClearBackground()),
+    );
+  }
+
+  void _onFontPressed() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _FontPickerSheet(
+        currentFont: _bloc.state.fontFamily ?? 'Quicksand',
+        onFontSelected: (fontFamily) {
+          _bloc.add(FontChanged(fontFamily));
+          Navigator.pop(context);
+        },
+      ),
     );
   }
 
@@ -1255,6 +1284,103 @@ class __ImageSizeAdjusterState extends State<_ImageSizeAdjuster> {
         icon: Icon(icon),
         onPressed: onPressed,
         color: Theme.of(context).colorScheme.primary,
+      ),
+    );
+  }
+}
+const List<Map<String, String>> availableFonts = [
+  {'display': 'Quicksand', 'family': 'Quicksand'},
+  {'display': 'Caveat', 'family': 'Caveat'},
+  {'display': 'Cormorant Garamond', 'family': 'CormorantGaramond'},
+  {'display': 'Dancing Script', 'family': 'DancingScript'},
+  {'display': 'Playfair Display', 'family': 'PlayfairDisplay'},
+];
+class _FontPickerSheet extends StatelessWidget {
+  final String currentFont;
+  final ValueChanged<String> onFontSelected;
+
+  const _FontPickerSheet({
+    required this.currentFont,
+    required this.onFontSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Title
+            Text(
+              'Choose Font',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            // Font list
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                itemCount: availableFonts.length,
+                separatorBuilder: (_, __) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final font = availableFonts[index];
+                  final isSelected = font['family'] == currentFont;
+                  return ListTile(
+                    leading: isSelected
+                        ? Icon(
+                            Icons.check_circle,
+                            color: theme.colorScheme.primary,
+                          )
+                        : const Icon(Icons.circle_outlined),
+                    title: Text(
+                      font['display']!,
+                      style: TextStyle(
+                        fontFamily: font['family'],
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    subtitle: Text(
+                      'The quick brown fox jumps over the lazy dog',
+                      style: TextStyle(
+                        fontFamily: font['family'],
+                        fontSize: 14,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    onTap: () => onFontSelected(font['family']!),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     );
   }

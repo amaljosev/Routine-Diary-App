@@ -414,6 +414,7 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: theme.colorScheme.onSurface,
                 height: 1.5,
+                fontFamily: entry.fontFamily, // <-- APPLY FONT
               ),
             ),
           ),
