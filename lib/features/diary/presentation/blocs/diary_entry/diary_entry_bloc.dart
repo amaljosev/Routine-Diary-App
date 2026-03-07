@@ -2,17 +2,21 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:routine/features/diary/data/models/diary_entry_model.dart';
 import 'package:routine/features/diary/data/repository/supabase_background_repository.dart';
+import 'package:routine/features/diary/data/repository/supabase_sticker_repository.dart';
 import 'package:routine/features/diary/domain/entities/sticker_model.dart';
+import 'package:routine/features/diary/domain/repository/background_repository.dart';
+import 'package:routine/features/diary/domain/repository/sticker_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
-import 'package:routine/features/diary/domain/repository/background_repository.dart';
+
 part 'diary_entry_event.dart';
 part 'diary_entry_state.dart';
 
 class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
   final BackgroundRepository _backgroundRepo = SupabaseBackgroundRepository();
+  final StickerRepository _stickerRepo = SupabaseStickerRepository();
 
   // Base font size used for stickers (applied in the UI)
   static const double kBaseStickerFontSize = 40.0;
@@ -43,12 +47,22 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
     on<UpdateImageTransform>(_onUpdateImageTransform);
     on<RemoveImage>(_onRemoveImage);
 
-    //supabase
+    // Background events
     on<LoadBackgrounds>(_onLoadBackgrounds);
     on<BackgroundsLoaded>(_onBackgroundsLoaded);
     on<BackgroundsLoadFailed>(_onBackgroundsLoadFailed);
     on<SelectSupabaseBackground>(_onSelectSupabaseBackground);
     on<DownloadBackground>(_onDownloadBackground);
+
+    // Sticker events
+    on<LoadStickers>(_onLoadStickers);
+    on<StickersLoaded>(_onStickersLoaded);
+    on<StickersLoadFailed>(_onStickersLoadFailed);
+    on<SelectSupabaseSticker>(_onSelectSupabaseSticker);
+    on<DownloadSticker>(_onDownloadSticker);
+    on<StickerDownloadCompleted>(_onStickerDownloadCompleted);
+    on<StickerDownloadFailed>(_onStickerDownloadFailed);
+
     on<SelectSticker>((event, emit) {
       emit(state.copyWith(selectedStickerId: event.id, selectedImageId: null));
     });
@@ -81,20 +95,16 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
         if (!file.existsSync()) {
           bgGalleryImage = null;
         }
-      } else {}
+      }
 
-      // Parse stickers and convert legacy font sizes to scale factors
+      // Parse stickers (new format: url, localPath)
       List<StickerModel> stickers = [];
       if (e.stickersJson != null && e.stickersJson!.isNotEmpty) {
         try {
           final List<dynamic> stickerList = jsonDecode(e.stickersJson!);
           stickers = stickerList.map((s) {
             final sticker = StickerModel.fromJson(s);
-            // Heuristic: if size > 20, it's likely a raw font size (legacy)
-            if (sticker.size > 20) {
-              final double scale = sticker.size / kBaseStickerFontSize;
-              return sticker.copyWith(size: scale);
-            }
+            // Optional: convert legacy sizes if needed
             return sticker;
           }).toList();
         } catch (_) {
@@ -102,7 +112,7 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
         }
       }
 
-      // Parse images – no conversion needed because they already use a scale factor
+      // Parse images
       List<DiaryImage> images = [];
       if (e.imagesJson != null && e.imagesJson!.isNotEmpty) {
         try {
@@ -144,12 +154,10 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
       }
     }
 
-    // 2. Handle hex string format (8 chars, no prefix)
     if (RegExp(r'^[0-9a-fA-F]{8}$').hasMatch(s)) {
       return Color(int.parse(s, radix: 16));
     }
 
-    // 3. Handle custom "Color(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)" format
     final customRegex = RegExp(
       r'red:\s*([0-9.]+),\s*green:\s*([0-9.]+),\s*blue:\s*([0-9.]+),\s*alpha:\s*([0-9.]+)',
     );
@@ -169,7 +177,6 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
       } catch (_) {}
     }
 
-    // 4. Handle other hex formats (#, 0x, etc.)
     String hex = s;
     if (hex.startsWith('#')) hex = hex.substring(1);
     if (hex.startsWith('0x')) hex = hex.substring(2);
@@ -273,10 +280,7 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
     }
   }
 
-  void _onClearBackground(
-    ClearBackground event,
-    Emitter<DiaryEntryState> emit,
-  ) {
+  void _onClearBackground(ClearBackground event, Emitter<DiaryEntryState> emit) {
     emit(
       state.copyWith(
         bgImage: '',
@@ -287,13 +291,15 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
     );
   }
 
+  // Sticker handlers
   void _onStickerAdded(StickerAdded event, Emitter<DiaryEntryState> emit) {
     final newSticker = StickerModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      sticker: event.sticker,
+      url: event.url,
+      localPath: event.localPath,
       x: event.x,
       y: event.y,
-      size: 1.0, // initial scale factor (not font size)
+      size: 1.0,
     );
     emit(
       state.copyWith(
@@ -345,12 +351,11 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
   }
 
   void _onRemoveSticker(RemoveSticker event, Emitter<DiaryEntryState> emit) {
-    final updatedStickers = state.stickers
-        .where((s) => s.id != event.id)
-        .toList();
+    final updatedStickers = state.stickers.where((s) => s.id != event.id).toList();
     emit(state.copyWith(stickers: updatedStickers, selectedStickerId: null));
   }
 
+  // Image handlers
   void _onImageAdded(ImageAdded event, Emitter<DiaryEntryState> emit) {
     final newImage = DiaryImage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -415,12 +420,11 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
   }
 
   void _onRemoveImage(RemoveImage event, Emitter<DiaryEntryState> emit) {
-    final updatedImages = state.images
-        .where((image) => image.id != event.imageId)
-        .toList();
+    final updatedImages = state.images.where((image) => image.id != event.imageId).toList();
     emit(state.copyWith(images: updatedImages, selectedImageId: null));
   }
 
+  // Background methods
   Future<void> _onLoadBackgrounds(
     LoadBackgrounds event,
     Emitter<DiaryEntryState> emit,
@@ -434,10 +438,7 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
     }
   }
 
-  void _onBackgroundsLoaded(
-    BackgroundsLoaded event,
-    Emitter<DiaryEntryState> emit,
-  ) {
+  void _onBackgroundsLoaded(BackgroundsLoaded event, Emitter<DiaryEntryState> emit) {
     emit(
       state.copyWith(
         availableBackgrounds: event.urls,
@@ -470,7 +471,6 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
     Emitter<DiaryEntryState> emit,
   ) async {
     emit(state.copyWith(isDownloadingBackground: true, downloadError: null));
-
     try {
       final localPath = await _backgroundRepo.downloadBackground(event.url);
       emit(
@@ -492,5 +492,81 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
         ),
       );
     }
+  }
+
+  // Sticker Supabase methods
+  Future<void> _onLoadStickers(
+    LoadStickers event,
+    Emitter<DiaryEntryState> emit,
+  ) async {
+    emit(state.copyWith(isLoadingStickers: true, stickersError: null));
+    try {
+      final urls = await _stickerRepo.getStickerUrls();
+      add(StickersLoaded(urls));
+    } catch (e) {
+      add(StickersLoadFailed(e.toString()));
+    }
+  }
+
+  void _onStickersLoaded(StickersLoaded event, Emitter<DiaryEntryState> emit) {
+    emit(
+      state.copyWith(
+        availableStickers: event.urls,
+        isLoadingStickers: false,
+      ),
+    );
+  }
+
+  void _onStickersLoadFailed(
+    StickersLoadFailed event,
+    Emitter<DiaryEntryState> emit,
+  ) {
+    emit(
+      state.copyWith(
+        isLoadingStickers: false,
+        stickersError: event.error,
+      ),
+    );
+  }
+
+  void _onSelectSupabaseSticker(
+    SelectSupabaseSticker event,
+    Emitter<DiaryEntryState> emit,
+  ) {
+    add(DownloadSticker(event.stickerUrl));
+  }
+
+  Future<void> _onDownloadSticker(
+    DownloadSticker event,
+    Emitter<DiaryEntryState> emit,
+  ) async {
+    emit(state.copyWith(isDownloadingSticker: true, stickerDownloadError: null));
+    try {
+      final localPath = await _stickerRepo.downloadSticker(event.url);
+      add(StickerDownloadCompleted(event.url, localPath));
+    } catch (e) {
+      add(StickerDownloadFailed(event.url, e.toString()));
+    }
+  }
+
+  void _onStickerDownloadCompleted(
+    StickerDownloadCompleted event,
+    Emitter<DiaryEntryState> emit,
+  ) {
+    emit(state.copyWith(isDownloadingSticker: false));
+    // Optionally add the sticker automatically after download
+    // You can emit an event here or let the UI handle it via onSelected.
+  }
+
+  void _onStickerDownloadFailed(
+    StickerDownloadFailed event,
+    Emitter<DiaryEntryState> emit,
+  ) {
+    emit(
+      state.copyWith(
+        isDownloadingSticker: false,
+        stickerDownloadError: event.error,
+      ),
+    );
   }
 }

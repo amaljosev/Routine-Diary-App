@@ -2,8 +2,6 @@ part of 'diary_entry_bloc.dart';
 
 const unset = Object();
 
-// Inside diary_entry_state.dart, replace the DiaryImage class with this:
-
 class DiaryImage extends Equatable {
   final String id;
   final String imagePath;
@@ -12,7 +10,7 @@ class DiaryImage extends Equatable {
   final double width;
   final double height;
   final double scale;
-  final double rotation; // new field
+  final double rotation;
 
   const DiaryImage({
     required this.id,
@@ -98,6 +96,13 @@ class DiaryEntryState extends Equatable {
   final String? downloadError;
   final String? fontFamily;
 
+  // New sticker-related fields
+  final List<String> availableStickers;
+  final bool isLoadingStickers;
+  final String? stickersError;
+  final bool isDownloadingSticker;
+  final String? stickerDownloadError;
+
   const DiaryEntryState({
     this.title = '',
     this.description = '',
@@ -118,30 +123,41 @@ class DiaryEntryState extends Equatable {
     this.isDownloadingBackground = false,
     this.downloadError,
     this.fontFamily,
+    // Initialize new fields with defaults
+    this.availableStickers = const [],
+    this.isLoadingStickers = false,
+    this.stickersError,
+    this.isDownloadingSticker = false,
+    this.stickerDownloadError,
   });
 
   @override
   List<Object?> get props => [
-    title,
-    description,
-    mood,
-    bgColor,
-    bgImage,
-    bgGalleryImage,
-    bgLocalPath,
-    stickers,
-    images,
-    date,
-    selectedStickerId,
-    selectedImageId,
-    errorMessage,
-    availableBackgrounds,
-    isLoadingBackgrounds,
-    backgroundsError,
-    isDownloadingBackground,
-    downloadError,
-    fontFamily,
-  ];
+        title,
+        description,
+        mood,
+        bgColor,
+        bgImage,
+        bgGalleryImage,
+        bgLocalPath,
+        stickers,
+        images,
+        date,
+        selectedStickerId,
+        selectedImageId,
+        errorMessage,
+        availableBackgrounds,
+        isLoadingBackgrounds,
+        backgroundsError,
+        isDownloadingBackground,
+        downloadError,
+        fontFamily,
+        availableStickers,
+        isLoadingStickers,
+        stickersError,
+        isDownloadingSticker,
+        stickerDownloadError,
+      ];
 
   DiaryEntryState copyWith({
     Object? title = unset,
@@ -163,42 +179,37 @@ class DiaryEntryState extends Equatable {
     bool? isDownloadingBackground,
     String? downloadError,
     Object? fontFamily = unset,
+    List<String>? availableStickers,
+    bool? isLoadingStickers,
+    String? stickersError,
+    bool? isDownloadingSticker,
+    String? stickerDownloadError,
   }) {
     return DiaryEntryState(
       title: title == unset ? this.title : title as String,
-      description: description == unset
-          ? this.description
-          : description as String,
+      description: description == unset ? this.description : description as String,
       mood: mood == unset ? this.mood : mood as String,
       bgColor: bgColor == unset ? this.bgColor : bgColor as Color?,
       bgImage: bgImage == unset ? this.bgImage : bgImage as String,
-      bgGalleryImage: bgGalleryImage == unset
-          ? this.bgGalleryImage
-          : bgGalleryImage as String?,
-      bgLocalPath: bgLocalPath == unset
-          ? this.bgLocalPath
-          : bgLocalPath as String?,
-      stickers: stickers == unset
-          ? this.stickers
-          : stickers as List<StickerModel>,
+      bgGalleryImage: bgGalleryImage == unset ? this.bgGalleryImage : bgGalleryImage as String?,
+      bgLocalPath: bgLocalPath == unset ? this.bgLocalPath : bgLocalPath as String?,
+      stickers: stickers == unset ? this.stickers : stickers as List<StickerModel>,
       images: images == unset ? this.images : images as List<DiaryImage>,
       date: date == unset ? this.date : date as DateTime,
-      selectedStickerId: selectedStickerId == unset
-          ? this.selectedStickerId
-          : selectedStickerId as String?,
-      selectedImageId: selectedImageId == unset
-          ? this.selectedImageId
-          : selectedImageId as String?,
-      errorMessage: errorMessage == unset
-          ? this.errorMessage
-          : errorMessage as String?,
+      selectedStickerId: selectedStickerId == unset ? this.selectedStickerId : selectedStickerId as String?,
+      selectedImageId: selectedImageId == unset ? this.selectedImageId : selectedImageId as String?,
+      errorMessage: errorMessage == unset ? this.errorMessage : errorMessage as String?,
       availableBackgrounds: availableBackgrounds ?? this.availableBackgrounds,
       isLoadingBackgrounds: isLoadingBackgrounds ?? this.isLoadingBackgrounds,
       backgroundsError: backgroundsError ?? this.backgroundsError,
-      isDownloadingBackground:
-          isDownloadingBackground ?? this.isDownloadingBackground,
+      isDownloadingBackground: isDownloadingBackground ?? this.isDownloadingBackground,
       downloadError: downloadError ?? this.downloadError,
       fontFamily: fontFamily == unset ? this.fontFamily : fontFamily as String?,
+      availableStickers: availableStickers ?? this.availableStickers,
+      isLoadingStickers: isLoadingStickers ?? this.isLoadingStickers,
+      stickersError: stickersError ?? this.stickersError,
+      isDownloadingSticker: isDownloadingSticker ?? this.isDownloadingSticker,
+      stickerDownloadError: stickerDownloadError ?? this.stickerDownloadError,
     );
   }
 }

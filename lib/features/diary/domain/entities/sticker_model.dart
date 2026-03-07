@@ -2,7 +2,8 @@ import 'package:equatable/equatable.dart';
 
 class StickerModel extends Equatable {
   final String id;
-  final String sticker;
+  final String url;               
+  final String? localPath;         
   final double x;
   final double y;
   final double size;
@@ -10,16 +11,18 @@ class StickerModel extends Equatable {
 
   const StickerModel({
     required this.id,
-    required this.sticker,
+    required this.url,
+    this.localPath,
     required this.x,
     required this.y,
-    this.size = 28,
+    this.size = 1.0,
     this.rotation = 0.0,
   });
 
   StickerModel copyWith({
     String? id,
-    String? sticker,
+    String? url,
+    String? localPath,
     double? x,
     double? y,
     double? size,
@@ -27,7 +30,8 @@ class StickerModel extends Equatable {
   }) {
     return StickerModel(
       id: id ?? this.id,
-      sticker: sticker ?? this.sticker,
+      url: url ?? this.url,
+      localPath: localPath ?? this.localPath,
       x: x ?? this.x,
       y: y ?? this.y,
       size: size ?? this.size,
@@ -37,7 +41,8 @@ class StickerModel extends Equatable {
 
   Map<String, dynamic> toJson() => {
     'id': id,
-    'sticker': sticker,
+    'url': url,
+    'localPath': localPath,
     'x': x,
     'y': y,
     'size': size,
@@ -47,7 +52,8 @@ class StickerModel extends Equatable {
   factory StickerModel.fromJson(Map<String, dynamic> json) {
     return StickerModel(
       id: json['id'],
-      sticker: json['sticker'],
+      url: json['url'],
+      localPath: json['localPath'],
       x: (json['x'] as num).toDouble(),
       y: (json['y'] as num).toDouble(),
       size: (json['size'] as num).toDouble(),
@@ -56,5 +62,5 @@ class StickerModel extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, sticker, x, y, size, rotation];
+  List<Object?> get props => [id, url, localPath, x, y, size, rotation];
 }

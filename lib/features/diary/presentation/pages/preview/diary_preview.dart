@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_svg/flutter_svg.dart'; 
 import 'package:routine/features/diary/data/models/diary_entry_model.dart';
 import 'package:routine/features/diary/domain/entities/sticker_model.dart';
 import 'package:routine/features/diary/presentation/blocs/diary/diary_bloc.dart';
@@ -38,6 +39,9 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _descriptionKey = GlobalKey();
   double scrollOffset = 0.0;
+
+  // Base size for stickers (same as in _TransformableItem)
+  static const double _stickerBaseSize = 100.0;
 
   @override
   void initState() {
@@ -272,7 +276,6 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
               ),
             ),
           ),
-          // Title
           Expanded(
             child: Text(
               entry.title.isEmpty ? "Untitled Entry" : entry.title,
@@ -289,7 +292,6 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
     );
   }
 
-  // Updated date header - removed container decoration
   Widget _buildDateOnlyHeader(BuildContext context, DiaryEntryModel entry) {
     final date = entry.date.isNotEmpty
         ? DateTime.tryParse(entry.date) ?? DateTime.now()
@@ -381,101 +383,116 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
   }
 
   Widget _buildDescriptionSection(BuildContext context, DiaryEntryModel entry) {
-  final theme = Theme.of(context);
+    final theme = Theme.of(context);
 
-  List<StickerModel> stickers = [];
-  List<DiaryImage> images = [];
+    List<StickerModel> stickers = [];
+    List<DiaryImage> images = [];
 
-  try {
-    stickers = (entry.stickersJson != null)
-        ? (List<Map<String, dynamic>>.from(
-            jsonDecode(entry.stickersJson ?? '[]'),
-          )).map((m) => StickerModel.fromJson(m)).toList()
-        : [];
-  } catch (_) {}
+    try {
+      stickers = (entry.stickersJson != null)
+          ? (List<Map<String, dynamic>>.from(
+              jsonDecode(entry.stickersJson ?? '[]'),
+            )).map((m) => StickerModel.fromJson(m)).toList()
+          : [];
+    } catch (_) {}
 
-  try {
-    images = (entry.imagesJson != null)
-        ? (List<Map<String, dynamic>>.from(
-            jsonDecode(entry.imagesJson ?? '[]'),
-          )).map((m) => DiaryImage.fromJson(m)).toList()
-        : [];
-  } catch (_) {}
+    try {
+      images = (entry.imagesJson != null)
+          ? (List<Map<String, dynamic>>.from(
+              jsonDecode(entry.imagesJson ?? '[]'),
+            )).map((m) => DiaryImage.fromJson(m)).toList()
+          : [];
+    } catch (_) {}
 
-  return Container(
-    key: _descriptionKey,
-    constraints: const BoxConstraints(minHeight: 400),
-    child: Stack(
-      clipBehavior: Clip.none,
-      children: [
-        // Text content
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: SelectableText(
-            entry.content.isEmpty ? "What's on your mind?" : entry.content,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: theme.colorScheme.onSurface,
-              height: 1.5,
-              fontFamily: entry.fontFamily,
-            ),
-          ),
-        ),
-
-        // Stickers – apply rotation, scale, and correct positioning
-        ...stickers.map((sticker) {
-          return Positioned(
-            left: sticker.x,
-            top: sticker.y,
-            child: Transform.rotate(
-              angle: sticker.rotation,
-              child: Transform.scale(
-                scale: sticker.size,  // size acts as scale factor
-                child: Text(
-                  sticker.sticker,
-                  // Use a fixed base font size (40) – adjust as needed
-                  style: const TextStyle(fontSize: 40),
-                ),
+    return Container(
+      key: _descriptionKey,
+      constraints: const BoxConstraints(minHeight: 400),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Text content
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: SelectableText(
+              entry.content.isEmpty ? "What's on your mind?" : entry.content,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.onSurface,
+                height: 1.5,
+                fontFamily: entry.fontFamily,
               ),
             ),
-          );
-        }),
+          ),
 
-        // Images – apply rotation, scale, and correct positioning
-        ...images.map((image) {
-          return Positioned(
-            left: image.x,
-            top: image.y,
-            child: Transform.rotate(
-              angle: image.rotation,
-              child: Transform.scale(
-                scale: image.scale,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.file(
-                    File(image.imagePath),
-                    width: image.width,
-                    height: image.height,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        width: image.width,
-                        height: image.height,
-                        color: Colors.grey,
-                        child: const Icon(Icons.broken_image, color: Colors.white),
-                      );
-                    },
+          // Stickers – with proper size, scale, rotation
+          ...stickers.map((sticker) {
+            Widget stickerWidget;
+            if (sticker.localPath != null && File(sticker.localPath!).existsSync()) {
+              stickerWidget = SvgPicture.file(
+                File(sticker.localPath!),
+                fit: BoxFit.contain,
+              );
+            } else {
+              stickerWidget = SvgPicture.network(
+                sticker.url,
+                fit: BoxFit.contain,
+                placeholderBuilder: (context) => Container(
+                  color: Colors.grey.shade300,
+                  child: const Center(child: CircularProgressIndicator()),
+                ),
+              );
+            }
+
+            // Wrap in sized container with base size * scale
+            final sizedSticker = SizedBox(
+              width: _stickerBaseSize * sticker.size,
+              height: _stickerBaseSize * sticker.size,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: stickerWidget,
+              ),
+            );
+
+            return Positioned(
+              left: sticker.x,
+              top: sticker.y,
+              child: Transform.rotate(
+                angle: sticker.rotation,
+                child: sizedSticker,
+              ),
+            );
+          }),
+
+          // Images – with width/height * scale, rotation
+          ...images.map((image) {
+            return Positioned(
+              left: image.x,
+              top: image.y,
+              child: Transform.rotate(
+                angle: image.rotation,
+                child: SizedBox(
+                  width: image.width * image.scale,
+                  height: image.height * image.scale,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.file(
+                      File(image.imagePath),
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: Colors.grey,
+                          child: const Icon(Icons.broken_image, color: Colors.white),
+                        );
+                      },
+                    ),
                   ),
                 ),
               ),
-            ),
-          );
-        }),
-      ],
-    ),
-  );
-}
-
-  
+            );
+          }),
+        ],
+      ),
+    );
+  }
 
   Color? _parseColorFromString(String? input) {
     if (input == null || input.isEmpty) return null;

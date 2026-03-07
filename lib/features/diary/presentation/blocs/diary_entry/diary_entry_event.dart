@@ -84,13 +84,14 @@ class ClearBackground extends DiaryEntryEvent {
 }
 
 class StickerAdded extends DiaryEntryEvent {
-  final String sticker;
+  final String url;
+  final String? localPath;
   final double x;
   final double y;
-  const StickerAdded(this.sticker, this.x, this.y);
+  const StickerAdded(this.url, this.localPath, this.x, this.y);
 
   @override
-  List<Object?> get props => [sticker, x, y];
+  List<Object?> get props => [url, localPath, x, y];
 }
 
 class SaveEntry extends DiaryEntryEvent {}
@@ -127,7 +128,7 @@ class UpdateStickerTransform extends DiaryEntryEvent {
   final double x;
   final double y;
   final double size;
-  final double rotation; 
+  final double rotation;
   const UpdateStickerTransform(this.id, this.x, this.y, this.size, this.rotation);
 
   @override
@@ -176,7 +177,7 @@ class UpdateImageTransform extends DiaryEntryEvent {
   final double x;
   final double y;
   final double scale;
-  final double rotation; 
+  final double rotation;
   const UpdateImageTransform(this.imageId, this.x, this.y, this.scale, this.rotation);
 
   @override
@@ -223,6 +224,7 @@ class ClearError extends DiaryEntryEvent {
   const ClearError();
 }
 
+// Background events
 class LoadBackgrounds extends DiaryEntryEvent {}
 
 class BackgroundsLoaded extends DiaryEntryEvent {
@@ -255,4 +257,39 @@ class BackgroundDownloadFailed extends DiaryEntryEvent {
   final String url;
   final String error;
   const BackgroundDownloadFailed(this.url, this.error);
+}
+
+// Sticker events
+class LoadStickers extends DiaryEntryEvent {}
+
+class StickersLoaded extends DiaryEntryEvent {
+  final List<String> urls;
+  const StickersLoaded(this.urls);
+}
+
+class StickersLoadFailed extends DiaryEntryEvent {
+  final String error;
+  const StickersLoadFailed(this.error);
+}
+
+class SelectSupabaseSticker extends DiaryEntryEvent {
+  final String stickerUrl;
+  const SelectSupabaseSticker(this.stickerUrl);
+}
+
+class DownloadSticker extends DiaryEntryEvent {
+  final String url;
+  const DownloadSticker(this.url);
+}
+
+class StickerDownloadCompleted extends DiaryEntryEvent {
+  final String url;
+  final String localPath;
+  const StickerDownloadCompleted(this.url, this.localPath);
+}
+
+class StickerDownloadFailed extends DiaryEntryEvent {
+  final String url;
+  final String error;
+  const StickerDownloadFailed(this.url, this.error);
 }
