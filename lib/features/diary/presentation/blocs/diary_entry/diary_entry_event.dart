@@ -274,7 +274,12 @@ class StickersLoadFailed extends DiaryEntryEvent {
 
 class SelectSupabaseSticker extends DiaryEntryEvent {
   final String stickerUrl;
-  const SelectSupabaseSticker(this.stickerUrl);
+  final double x;
+  final double y;
+  const SelectSupabaseSticker(this.stickerUrl, this.x, this.y);
+
+  @override
+  List<Object?> get props => [stickerUrl, x, y];
 }
 
 class DownloadSticker extends DiaryEntryEvent {

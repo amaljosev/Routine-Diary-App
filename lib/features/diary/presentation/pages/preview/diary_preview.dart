@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter_svg/flutter_svg.dart'; 
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:routine/features/diary/data/models/diary_entry_model.dart';
 import 'package:routine/features/diary/domain/entities/sticker_model.dart';
 import 'package:routine/features/diary/presentation/blocs/diary/diary_bloc.dart';
@@ -282,6 +282,7 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: theme.colorScheme.onSurface,
+                fontFamily: entry.fontFamily,
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -432,12 +433,12 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
                 fit: BoxFit.contain,
               );
             } else {
+              // Use network with a simple grey placeholder (no spinner)
               stickerWidget = SvgPicture.network(
                 sticker.url,
                 fit: BoxFit.contain,
                 placeholderBuilder: (context) => Container(
                   color: Colors.grey.shade300,
-                  child: const Center(child: CircularProgressIndicator()),
                 ),
               );
             }

@@ -418,10 +418,9 @@ class DiaryUIHelpers {
     );
   }
 
-  /// Sticker picker – UPDATED to load from Supabase and display SVGs
   static void openStickerPicker(
     BuildContext context,
-    Function(String url, String? localPath) onSelected,
+    Function(String url) onSelected, // Now only returns the URL
   ) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -504,13 +503,9 @@ class DiaryUIHelpers {
                             final stickerUrl = state.availableStickers[index];
                             return GestureDetector(
                               onTap: () {
-                                // Option 1: Use network SVG directly
-                                onSelected(stickerUrl, null);
+                                // Return the URL, then close the sheet
+                                onSelected(stickerUrl);
                                 Navigator.pop(sheetContext);
-
-                                // Option 2: Download first (uncomment below and remove above)
-                                // bloc.add(SelectSupabaseSticker(stickerUrl));
-                                // Navigator.pop(sheetContext);
                               },
                               child: Container(
                                 decoration: BoxDecoration(

@@ -17,13 +17,14 @@ import 'package:intl/intl.dart' as intl;
 // ================== TRANSFORMABLE ITEM WIDGET ===============
 // ============================================================
 
-typedef ItemTransformUpdate = void Function({
-  required String id,
-  required double x,
-  required double y,
-  required double scale,
-  required double rotation,
-});
+typedef ItemTransformUpdate =
+    void Function({
+      required String id,
+      required double x,
+      required double y,
+      required double scale,
+      required double rotation,
+    });
 
 class _TransformableItem extends StatefulWidget {
   final String id;
@@ -65,9 +66,6 @@ class __TransformableItemState extends State<_TransformableItem> {
   Offset? _lastFocalPoint;
   double _initialScaleOnGesture = 1.0;
   double _initialRotationOnGesture = 0.0;
-
-  Offset? _resizeStartFocal;
-  double _resizeStartScale = 1.0;
 
   static const double _handlePadding = 20.0;
   static const double _stickerBaseSize = 100.0;
@@ -125,38 +123,6 @@ class __TransformableItemState extends State<_TransformableItem> {
 
   void _onRemoveTap() => widget.onRemove();
 
-  void _onRotateTap() {
-    setState(() {
-      _rotation += 90 * 3.14159 / 180;
-    });
-    _updateTransform();
-  }
-
-  void _onHandlePanDown(DragDownDetails details, Alignment alignment) {
-    _resizeStartFocal = details.localPosition;
-    _resizeStartScale = _scale;
-  }
-
-  void _onHandlePanUpdate(DragUpdateDetails details, Alignment alignment) {
-    if (_resizeStartFocal == null) return;
-
-    double dx = details.delta.dx;
-    double dy = details.delta.dy;
-
-    double projection = dx + dy;
-
-    double scaleFactor = 1 + projection / 100;
-
-    setState(() {
-      _scale = (_resizeStartScale * scaleFactor).clamp(0.3, 5.0);
-    });
-  }
-
-  void _onHandlePanEnd(DragEndDetails details) {
-    _resizeStartFocal = null;
-    _updateTransform();
-  }
-
   @override
   Widget build(BuildContext context) {
     Widget content;
@@ -171,10 +137,7 @@ class __TransformableItemState extends State<_TransformableItem> {
         width: _stickerBaseSize * _scale,
         height: _stickerBaseSize * _scale,
         alignment: Alignment.center,
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: widget.child,
-        ),
+        child: FittedBox(fit: BoxFit.scaleDown, child: widget.child),
       );
     }
 
@@ -185,14 +148,25 @@ class __TransformableItemState extends State<_TransformableItem> {
       child: content,
     );
 
-    final List<Widget> stackChildren = [paddedChild];
+    Widget displayChild = paddedChild;
 
     if (widget.isSelected) {
+      // Add dashed border around the padded child
+      displayChild = CustomPaint(
+        painter: DashedBorderPainter(
+          color: Theme.of(context).colorScheme.primary,
+          strokeWidth: 2,
+          gap: 4,
+        ),
+        child: paddedChild,
+      );
+    }
+
+    final List<Widget> stackChildren = [displayChild];
+
+    if (widget.isSelected) {
+      // Keep only the remove button (no rotate button, no corner handles)
       stackChildren.addAll([
-        _buildHandle(Alignment.topLeft),
-        _buildHandle(Alignment.topRight),
-        _buildHandle(Alignment.bottomLeft),
-        _buildHandle(Alignment.bottomRight),
         Positioned(
           top: 0,
           left: 0,
@@ -202,18 +176,6 @@ class __TransformableItemState extends State<_TransformableItem> {
               radius: 12,
               backgroundColor: Colors.red,
               child: Icon(Icons.close, size: 14, color: Colors.white),
-            ),
-          ),
-        ),
-        Positioned(
-          bottom: 0,
-          right: 0,
-          child: GestureDetector(
-            onTap: _onRotateTap,
-            child: const CircleAvatar(
-              radius: 14,
-              backgroundColor: Colors.blue,
-              child: Icon(Icons.rotate_right, size: 16, color: Colors.white),
             ),
           ),
         ),
@@ -229,36 +191,6 @@ class __TransformableItemState extends State<_TransformableItem> {
         onScaleUpdate: _onScaleUpdate,
         onScaleEnd: _onScaleEnd,
         child: Stack(clipBehavior: Clip.none, children: stackChildren),
-      ),
-    );
-  }
-
-  Widget _buildHandle(Alignment alignment) {
-    double? left, right, top, bottom;
-
-    if (alignment.x == -1) left = 0;
-    if (alignment.x == 1) right = 0;
-    if (alignment.y == -1) top = 0;
-    if (alignment.y == 1) bottom = 0;
-
-    return Positioned(
-      left: left,
-      right: right,
-      top: top,
-      bottom: bottom,
-      child: GestureDetector(
-        onPanDown: (d) => _onHandlePanDown(d, alignment),
-        onPanUpdate: (d) => _onHandlePanUpdate(d, alignment),
-        onPanEnd: _onHandlePanEnd,
-        child: Container(
-          width: 20,
-          height: 20,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Theme.of(context).colorScheme.primary,
-            border: Border.all(color: Colors.white, width: 2),
-          ),
-        ),
       ),
     );
   }
@@ -457,7 +389,9 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
         style: ElevatedButton.styleFrom(
           foregroundColor: theme.colorScheme.onPrimary,
           backgroundColor: theme.colorScheme.primary,
-          disabledForegroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+          disabledForegroundColor: theme.colorScheme.onSurface.withValues(
+            alpha: 0.3,
+          ),
           disabledBackgroundColor: isDark
               ? theme.colorScheme.surface.withValues(alpha: 0.5)
               : Colors.grey.withValues(alpha: 0.2),
@@ -546,9 +480,9 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
           Text(
             intl.DateFormat('dd').format(state.date),
             style: Theme.of(context).textTheme.headlineLarge!.copyWith(
-                  fontWeight: FontWeight.w900,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
+              fontWeight: FontWeight.w900,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
           Row(
             spacing: 5,
@@ -556,16 +490,18 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
               Text(
                 intl.DateFormat('EE').format(state.date),
                 style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
+                  fontWeight: FontWeight.w700,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
               ),
               Text(
                 intl.DateFormat('MMMM yyyy').format(state.date),
                 style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                      fontWeight: FontWeight.w900,
-                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
-                    ),
+                  fontWeight: FontWeight.w900,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.5),
+                ),
               ),
               Icon(
                 Icons.keyboard_arrow_down_rounded,
@@ -587,7 +523,9 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     return GestureDetector(
       onTap: () => _selectMood(context),
       child: CircleAvatar(
-        backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+        backgroundColor: Theme.of(
+          context,
+        ).colorScheme.primary.withValues(alpha: 0.1),
         radius: 25,
         child: Text(state.mood, style: const TextStyle(fontSize: 24)),
       ),
@@ -633,7 +571,9 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
         clipBehavior: Clip.none,
         children: [
           IgnorePointer(
-            ignoring: state.selectedStickerId != null || state.selectedImageId != null,
+            ignoring:
+                state.selectedStickerId != null ||
+                state.selectedImageId != null,
             child: TextFormField(
               controller: _descriptionController,
               focusNode: _descriptionFocusNode,
@@ -666,21 +606,19 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       initialRotation: sticker.rotation,
       isSelected: isSelected,
       onSelect: () => _bloc.add(SelectSticker(sticker.id)),
-      onUpdate: ({
-        required id,
-        required x,
-        required y,
-        required scale,
-        required rotation,
-      }) {
-        _bloc.add(UpdateStickerTransform(id, x, y, scale, rotation));
-      },
+      onUpdate:
+          ({
+            required id,
+            required x,
+            required y,
+            required scale,
+            required rotation,
+          }) {
+            _bloc.add(UpdateStickerTransform(id, x, y, scale, rotation));
+          },
       onRemove: () => _bloc.add(RemoveSticker(sticker.id)),
       child: sticker.localPath != null && File(sticker.localPath!).existsSync()
-          ? SvgPicture.file(
-              File(sticker.localPath!),
-              fit: BoxFit.contain,
-            )
+          ? SvgPicture.file(File(sticker.localPath!), fit: BoxFit.contain)
           : SvgPicture.network(
               sticker.url,
               fit: BoxFit.contain,
@@ -711,15 +649,16 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       baseWidth: safeWidth,
       baseHeight: safeHeight,
       onSelect: () => _bloc.add(SelectImage(image.id)),
-      onUpdate: ({
-        required id,
-        required x,
-        required y,
-        required scale,
-        required rotation,
-      }) {
-        _bloc.add(UpdateImageTransform(id, x, y, scale, rotation));
-      },
+      onUpdate:
+          ({
+            required id,
+            required x,
+            required y,
+            required scale,
+            required rotation,
+          }) {
+            _bloc.add(UpdateImageTransform(id, x, y, scale, rotation));
+          },
       onRemove: () => _bloc.add(RemoveImage(image.id)),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
@@ -752,7 +691,10 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
                       : theme.colorScheme.surface.withValues(alpha: 0.9),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 15,
+                    vertical: 5,
+                  ),
                   child: Row(
                     children: [
                       _buildActionButton(
@@ -877,8 +819,10 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   void _onBgImagePressed() {
     DiaryUIHelpers.openBgImagePicker(
       context,
-      onPresetSelected: (imageUrl) => _bloc.add(SelectSupabaseBackground(imageUrl)),
-      onGallerySelected: (filePath) => _bloc.add(CropAndSetBackgroundImage(filePath)),
+      onPresetSelected: (imageUrl) =>
+          _bloc.add(SelectSupabaseBackground(imageUrl)),
+      onGallerySelected: (filePath) =>
+          _bloc.add(CropAndSetBackgroundImage(filePath)),
       onClear: () => _bloc.add(const ClearBackground()),
     );
   }
@@ -915,7 +859,8 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     } else {
       insertPos = text.length;
     }
-    final newText = '${text.substring(0, insertPos)}\n• ${text.substring(insertPos)}';
+    final newText =
+        '${text.substring(0, insertPos)}\n• ${text.substring(insertPos)}';
     final newCursorPos = insertPos + 3;
     _descriptionController.value = TextEditingValue(
       text: newText,
@@ -925,10 +870,10 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     FocusScope.of(context).requestFocus(FocusNode());
   }
 
-  void _onStickerPressed() {
-    DiaryUIHelpers.openStickerPicker(context, (url, localPath) {
-      final position = _calculateCenterPosition();
-      _bloc.add(StickerAdded(url, localPath, position.dx, position.dy));
+   void _onStickerPressed() {
+    final position = _calculateCenterPosition();
+    DiaryUIHelpers.openStickerPicker(context, (url) {
+      _bloc.add(SelectSupabaseSticker(url, position.dx, position.dy));
     });
   }
 
@@ -1020,7 +965,9 @@ class __StickerSizeAdjusterState extends State<_StickerSizeAdjuster> {
             const SizedBox(height: 20),
             Text(
               'Scale: ${(_currentScale * 100).round()}%',
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 8),
             Slider(
@@ -1041,7 +988,10 @@ class __StickerSizeAdjusterState extends State<_StickerSizeAdjuster> {
                 _buildSizeButton(
                   icon: Icons.remove,
                   onPressed: () {
-                    final newScale = (_currentScale - scaleStep).clamp(minScale, maxScale);
+                    final newScale = (_currentScale - scaleStep).clamp(
+                      minScale,
+                      maxScale,
+                    );
                     setState(() => _currentScale = newScale);
                     bloc.add(UpdateStickerSize(widget.sticker.id, newScale));
                   },
@@ -1049,7 +999,10 @@ class __StickerSizeAdjusterState extends State<_StickerSizeAdjuster> {
                 _buildSizeButton(
                   icon: Icons.add,
                   onPressed: () {
-                    final newScale = (_currentScale + scaleStep).clamp(minScale, maxScale);
+                    final newScale = (_currentScale + scaleStep).clamp(
+                      minScale,
+                      maxScale,
+                    );
                     setState(() => _currentScale = newScale);
                     bloc.add(UpdateStickerSize(widget.sticker.id, newScale));
                   },
@@ -1060,12 +1013,16 @@ class __StickerSizeAdjusterState extends State<_StickerSizeAdjuster> {
             ListTile(
               leading: Icon(
                 Icons.delete,
-                color: theme.brightness == Brightness.dark ? Colors.white : theme.colorScheme.error,
+                color: theme.brightness == Brightness.dark
+                    ? Colors.white
+                    : theme.colorScheme.error,
               ),
               title: Text(
                 'Remove Sticker',
                 style: TextStyle(
-                  color: theme.brightness == Brightness.dark ? Colors.white : theme.colorScheme.error,
+                  color: theme.brightness == Brightness.dark
+                      ? Colors.white
+                      : theme.colorScheme.error,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -1081,7 +1038,10 @@ class __StickerSizeAdjusterState extends State<_StickerSizeAdjuster> {
     );
   }
 
-  Widget _buildSizeButton({required IconData icon, required VoidCallback onPressed}) {
+  Widget _buildSizeButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
@@ -1177,7 +1137,9 @@ class __ImageSizeAdjusterState extends State<_ImageSizeAdjuster> {
             const SizedBox(height: 20),
             Text(
               'Scale: ${(_currentScale * 100).round()}%',
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 8),
             Slider(
@@ -1198,7 +1160,10 @@ class __ImageSizeAdjusterState extends State<_ImageSizeAdjuster> {
                 _buildSizeButton(
                   icon: Icons.remove,
                   onPressed: () {
-                    final newScale = (_currentScale - 0.2).clamp(minScale, maxScale);
+                    final newScale = (_currentScale - 0.2).clamp(
+                      minScale,
+                      maxScale,
+                    );
                     setState(() => _currentScale = newScale);
                     bloc.add(UpdateImageSize(widget.image.id, newScale));
                   },
@@ -1206,7 +1171,10 @@ class __ImageSizeAdjusterState extends State<_ImageSizeAdjuster> {
                 _buildSizeButton(
                   icon: Icons.add,
                   onPressed: () {
-                    final newScale = (_currentScale + 0.2).clamp(minScale, maxScale);
+                    final newScale = (_currentScale + 0.2).clamp(
+                      minScale,
+                      maxScale,
+                    );
                     setState(() => _currentScale = newScale);
                     bloc.add(UpdateImageSize(widget.image.id, newScale));
                   },
@@ -1238,7 +1206,10 @@ class __ImageSizeAdjusterState extends State<_ImageSizeAdjuster> {
     );
   }
 
-  Widget _buildSizeButton({required IconData icon, required VoidCallback onPressed}) {
+  Widget _buildSizeButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
@@ -1295,21 +1266,30 @@ class _FontPickerSheet extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               'Choose Font',
-              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 8),
             Flexible(
               child: ListView.separated(
                 shrinkWrap: true,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 itemCount: availableFonts.length,
-                separatorBuilder: (_, __) => Divider(height: 1, color: theme.colorScheme.primary),
+                separatorBuilder: (_, __) =>
+                    Divider(height: 1, color: theme.colorScheme.primary),
                 itemBuilder: (context, index) {
                   final font = availableFonts[index];
                   final isSelected = font['family'] == currentFont;
                   return ListTile(
                     leading: isSelected
-                        ? Icon(Icons.check_circle, color: theme.colorScheme.primary)
+                        ? Icon(
+                            Icons.check_circle,
+                            color: theme.colorScheme.primary,
+                          )
                         : const Icon(Icons.circle_outlined),
                     title: Text(
                       font['display']!,
@@ -1338,5 +1318,93 @@ class _FontPickerSheet extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class DashedBorderPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  final double gap;
+
+  DashedBorderPainter({
+    required this.color,
+    required this.strokeWidth,
+    required this.gap,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
+
+    const dashWidth = 5.0; // length of each dash
+    final space = gap; // space between dashes
+
+    // Top border
+    _drawDashedLine(
+      canvas,
+      Offset(0, 0),
+      Offset(size.width, 0),
+      dashWidth,
+      space,
+      paint,
+    );
+    // Right border
+    _drawDashedLine(
+      canvas,
+      Offset(size.width, 0),
+      Offset(size.width, size.height),
+      dashWidth,
+      space,
+      paint,
+    );
+    // Bottom border
+    _drawDashedLine(
+      canvas,
+      Offset(size.width, size.height),
+      Offset(0, size.height),
+      dashWidth,
+      space,
+      paint,
+    );
+    // Left border
+    _drawDashedLine(
+      canvas,
+      Offset(0, size.height),
+      Offset(0, 0),
+      dashWidth,
+      space,
+      paint,
+    );
+  }
+
+  void _drawDashedLine(
+    Canvas canvas,
+    Offset start,
+    Offset end,
+    double dashWidth,
+    double dashSpace,
+    Paint paint,
+  ) {
+    final distance = (end - start).distance;
+    if (distance <= 0) return;
+    final dashCount = (distance / (dashWidth + dashSpace)).floor();
+    for (int i = 0; i <= dashCount; i++) {
+      final tStart = i * (dashWidth + dashSpace) / distance;
+      final tEnd = (i * (dashWidth + dashSpace) + dashWidth) / distance;
+      if (tStart > 1.0) break;
+      final p1 = Offset.lerp(start, end, tStart)!;
+      final p2 = Offset.lerp(start, end, tEnd.clamp(0.0, 1.0))!;
+      canvas.drawLine(p1, p2, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant DashedBorderPainter oldDelegate) {
+    return oldDelegate.color != color ||
+        oldDelegate.strokeWidth != strokeWidth ||
+        oldDelegate.gap != gap;
   }
 }

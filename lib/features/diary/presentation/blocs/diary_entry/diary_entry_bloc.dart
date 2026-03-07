@@ -529,11 +529,34 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
     );
   }
 
-  void _onSelectSupabaseSticker(
+  Future<void> _onSelectSupabaseSticker(
     SelectSupabaseSticker event,
     Emitter<DiaryEntryState> emit,
-  ) {
-    add(DownloadSticker(event.stickerUrl));
+  ) async {
+    emit(state.copyWith(isDownloadingSticker: true, stickerDownloadError: null));
+    try {
+      final localPath = await _stickerRepo.downloadSticker(event.stickerUrl);
+      final newSticker = StickerModel(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        url: event.stickerUrl,
+        localPath: localPath,
+        x: event.x,
+        y: event.y,
+        size: 1.0,
+      );
+      emit(state.copyWith(
+        stickers: [...state.stickers, newSticker],
+        isDownloadingSticker: false,
+        selectedStickerId: null,
+        selectedImageId: null,
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+        isDownloadingSticker: false,
+        stickerDownloadError: e.toString(),
+      ));
+      add(SetError('Failed to download sticker: $e'));
+    }
   }
 
   Future<void> _onDownloadSticker(
