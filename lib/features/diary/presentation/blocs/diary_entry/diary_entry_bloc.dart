@@ -13,6 +13,10 @@ part 'diary_entry_state.dart';
 
 class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
   final BackgroundRepository _backgroundRepo = SupabaseBackgroundRepository();
+
+  // Base font size used for stickers (applied in the UI)
+  static const double kBaseStickerFontSize = 40.0;
+
   DiaryEntryBloc() : super(DiaryEntryState(date: DateTime.now())) {
     on<InitializeDiaryEntry>(_onInitializeDiaryEntry);
     on<TitleChanged>((event, emit) => emit(state.copyWith(title: event.title)));
@@ -70,18 +74,43 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
     final e = event.entry;
 
     if (e != null) {
-      // ignore: unused_local_variable
-      String bgImage = '';
       String? bgGalleryImage = e.bgGalleryImagePath;
 
       if (bgGalleryImage != null && bgGalleryImage.isNotEmpty) {
         final file = File(bgGalleryImage);
         if (!file.existsSync()) {
           bgGalleryImage = null;
-          bgImage = e.bgImagePath ?? '';
         }
-      } else {
-        bgImage = e.bgImagePath ?? '';
+      } else {}
+
+      // Parse stickers and convert legacy font sizes to scale factors
+      List<StickerModel> stickers = [];
+      if (e.stickersJson != null && e.stickersJson!.isNotEmpty) {
+        try {
+          final List<dynamic> stickerList = jsonDecode(e.stickersJson!);
+          stickers = stickerList.map((s) {
+            final sticker = StickerModel.fromJson(s);
+            // Heuristic: if size > 20, it's likely a raw font size (legacy)
+            if (sticker.size > 20) {
+              final double scale = sticker.size / kBaseStickerFontSize;
+              return sticker.copyWith(size: scale);
+            }
+            return sticker;
+          }).toList();
+        } catch (_) {
+          stickers = [];
+        }
+      }
+
+      // Parse images – no conversion needed because they already use a scale factor
+      List<DiaryImage> images = [];
+      if (e.imagesJson != null && e.imagesJson!.isNotEmpty) {
+        try {
+          final List<dynamic> imageList = jsonDecode(e.imagesJson!);
+          images = imageList.map((i) => DiaryImage.fromJson(i)).toList();
+        } catch (_) {
+          images = [];
+        }
       }
 
       emit(
@@ -92,16 +121,8 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
           fontFamily: e.fontFamily,
           bgColor: _parseColorFromString(e.bgColor),
           bgGalleryImage: bgGalleryImage,
-          stickers: e.stickersJson != null
-              ? (jsonDecode(e.stickersJson!) as List)
-                    .map((s) => StickerModel.fromJson(s))
-                    .toList()
-              : [],
-          images: e.imagesJson != null
-              ? (jsonDecode(e.imagesJson!) as List)
-                    .map((i) => DiaryImage.fromJson(i))
-                    .toList()
-              : [],
+          stickers: stickers,
+          images: images,
           date: DateTime.tryParse(e.date) ?? DateTime.now(),
           bgImage: e.bgImagePath ?? '',
           bgLocalPath: e.bgLocalPath,
@@ -272,6 +293,7 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
       sticker: event.sticker,
       x: event.x,
       y: event.y,
+      size: 1.0, // initial scale factor (not font size)
     );
     emit(
       state.copyWith(
@@ -310,7 +332,12 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
   ) {
     final updatedStickers = state.stickers.map((s) {
       if (s.id == event.id) {
-        return s.copyWith(x: event.x, y: event.y, size: event.size);
+        return s.copyWith(
+          x: event.x,
+          y: event.y,
+          size: event.size,
+          rotation: event.rotation,
+        );
       }
       return s;
     }).toList();
@@ -375,7 +402,12 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
   ) {
     final updatedImages = state.images.map((image) {
       if (image.id == event.imageId) {
-        return image.copyWith(x: event.x, y: event.y, scale: event.scale);
+        return image.copyWith(
+          x: event.x,
+          y: event.y,
+          scale: event.scale,
+          rotation: event.rotation,
+        );
       }
       return image;
     }).toList();

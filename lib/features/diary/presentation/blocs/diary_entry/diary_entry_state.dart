@@ -2,6 +2,8 @@ part of 'diary_entry_bloc.dart';
 
 const unset = Object();
 
+// Inside diary_entry_state.dart, replace the DiaryImage class with this:
+
 class DiaryImage extends Equatable {
   final String id;
   final String imagePath;
@@ -10,6 +12,7 @@ class DiaryImage extends Equatable {
   final double width;
   final double height;
   final double scale;
+  final double rotation; // new field
 
   const DiaryImage({
     required this.id,
@@ -19,6 +22,7 @@ class DiaryImage extends Equatable {
     required this.width,
     required this.height,
     required this.scale,
+    this.rotation = 0.0,
   });
 
   DiaryImage copyWith({
@@ -29,6 +33,7 @@ class DiaryImage extends Equatable {
     double? width,
     double? height,
     double? scale,
+    double? rotation,
   }) {
     return DiaryImage(
       id: id ?? this.id,
@@ -38,6 +43,7 @@ class DiaryImage extends Equatable {
       width: width ?? this.width,
       height: height ?? this.height,
       scale: scale ?? this.scale,
+      rotation: rotation ?? this.rotation,
     );
   }
 
@@ -50,6 +56,7 @@ class DiaryImage extends Equatable {
       'width': width,
       'height': height,
       'scale': scale,
+      'rotation': rotation,
     };
   }
 
@@ -62,11 +69,12 @@ class DiaryImage extends Equatable {
       width: json['width'].toDouble(),
       height: json['height'].toDouble(),
       scale: json['scale'].toDouble(),
+      rotation: (json['rotation'] as num?)?.toDouble() ?? 0.0,
     );
   }
 
   @override
-  List<Object?> get props => [id, imagePath, x, y, width, height, scale];
+  List<Object?> get props => [id, imagePath, x, y, width, height, scale, rotation];
 }
 
 class DiaryEntryState extends Equatable {

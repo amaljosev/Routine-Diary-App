@@ -38,6 +38,7 @@ class MoodChanged extends DiaryEntryEvent {
   @override
   List<Object?> get props => [mood];
 }
+
 class FontChanged extends DiaryEntryEvent {
   final String fontFamily;
   const FontChanged(this.fontFamily);
@@ -126,10 +127,11 @@ class UpdateStickerTransform extends DiaryEntryEvent {
   final double x;
   final double y;
   final double size;
-  const UpdateStickerTransform(this.id, this.x, this.y, this.size);
+  final double rotation; 
+  const UpdateStickerTransform(this.id, this.x, this.y, this.size, this.rotation);
 
   @override
-  List<Object?> get props => [id, x, y, size];
+  List<Object?> get props => [id, x, y, size, rotation];
 }
 
 class RemoveSticker extends DiaryEntryEvent {
@@ -174,10 +176,11 @@ class UpdateImageTransform extends DiaryEntryEvent {
   final double x;
   final double y;
   final double scale;
-  const UpdateImageTransform(this.imageId, this.x, this.y, this.scale);
+  final double rotation; 
+  const UpdateImageTransform(this.imageId, this.x, this.y, this.scale, this.rotation);
 
   @override
-  List<Object?> get props => [imageId, x, y, scale];
+  List<Object?> get props => [imageId, x, y, scale, rotation];
 }
 
 class RemoveImage extends DiaryEntryEvent {
@@ -236,6 +239,7 @@ class SelectSupabaseBackground extends DiaryEntryEvent {
   final String imageUrl;
   const SelectSupabaseBackground(this.imageUrl);
 }
+
 class DownloadBackground extends DiaryEntryEvent {
   final String url;
   const DownloadBackground(this.url);

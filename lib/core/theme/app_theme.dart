@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:routine/core/theme/app_colors.dart';
 import 'package:routine/core/theme/theme_extenstions.dart';
 
-final ThemeData lightTheme1 = ThemeData.light().copyWith(
+final ThemeData lightTheme2 = ThemeData.light().copyWith(
   primaryColor: AppColors.light1Primary,
   scaffoldBackgroundColor: AppColors.light1Background,
 
@@ -136,12 +136,12 @@ final ThemeData lightTheme1 = ThemeData.light().copyWith(
 
   // Add background image
   extensions: [
-    const BackgroundImageTheme(imagePath: 'assets/img/themes/theme_1.png'),
+    const BackgroundImageTheme(imagePath: 'assets/img/themes/theme_2.jpg'),
   ],
 );
 
 // ----- LIGHT THEME 2: Blue/Orange (Vibrant) -----
-final ThemeData lightTheme2 = ThemeData.light().copyWith(
+final ThemeData lightTheme1 = ThemeData.light().copyWith(
   primaryColor: AppColors.light2Primary,
   scaffoldBackgroundColor: AppColors.light2Background,
 
@@ -274,7 +274,7 @@ final ThemeData lightTheme2 = ThemeData.light().copyWith(
   ),
 
   extensions: [
-    const BackgroundImageTheme(imagePath: 'assets/img/themes/theme_2.jpg'),
+    const BackgroundImageTheme(imagePath: 'assets/img/themes/theme_1.png'),
   ],
 );
 
@@ -958,8 +958,8 @@ final ThemeData darkTheme3 = ThemeData.dark().copyWith(
   ],
 );
 final List<ThemeData> allThemes = [
-  lightTheme1, // 0 - Purple/Teal (Light)
-  lightTheme2, // 1 - Blue/Orange (Light)
+  lightTheme2, // 0 - Purple/Teal (Light)
+  lightTheme1, // 1 - Blue/Orange (Light)
   lightTheme3, // 2 - Green/Coral (Light)
   lightTheme4, // 3 - Orange/Purple (Light)
   darkTheme1,  // 4 - Deep Purple/Amber (Dark)

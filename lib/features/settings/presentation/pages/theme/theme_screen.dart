@@ -17,8 +17,9 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
   bool _isLoading = true;
 
   final List<String> _themes = [
-    'assets/img/themes/theme_1.png',
+    
     'assets/img/themes/theme_2.jpg',
+    'assets/img/themes/theme_1.png',
     'assets/img/themes/theme_3.png',
     'assets/img/themes/theme_7.png',
     'assets/img/themes/theme_4.jpg',

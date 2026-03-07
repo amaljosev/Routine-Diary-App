@@ -381,133 +381,101 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
   }
 
   Widget _buildDescriptionSection(BuildContext context, DiaryEntryModel entry) {
-    final theme = Theme.of(context);
+  final theme = Theme.of(context);
 
-    List<StickerModel> stickers = [];
-    List<DiaryImage> images = [];
+  List<StickerModel> stickers = [];
+  List<DiaryImage> images = [];
 
-    try {
-      stickers = (entry.stickersJson != null)
-          ? (List<Map<String, dynamic>>.from(
-              jsonDecode(entry.stickersJson ?? '[]'),
-            )).map((m) => StickerModel.fromJson(m)).toList()
-          : [];
-    } catch (_) {}
+  try {
+    stickers = (entry.stickersJson != null)
+        ? (List<Map<String, dynamic>>.from(
+            jsonDecode(entry.stickersJson ?? '[]'),
+          )).map((m) => StickerModel.fromJson(m)).toList()
+        : [];
+  } catch (_) {}
 
-    try {
-      images = (entry.imagesJson != null)
-          ? (List<Map<String, dynamic>>.from(
-              jsonDecode(entry.imagesJson ?? '[]'),
-            )).map((m) => DiaryImage.fromJson(m)).toList()
-          : [];
-    } catch (_) {}
+  try {
+    images = (entry.imagesJson != null)
+        ? (List<Map<String, dynamic>>.from(
+            jsonDecode(entry.imagesJson ?? '[]'),
+          )).map((m) => DiaryImage.fromJson(m)).toList()
+        : [];
+  } catch (_) {}
 
-    return Container(
-      key: _descriptionKey,
-      constraints: const BoxConstraints(minHeight: 400),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: SelectableText(
-              entry.content.isEmpty ? "What's on your mind?" : entry.content,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurface,
-                height: 1.5,
-                fontFamily: entry.fontFamily, // <-- APPLY FONT
-              ),
+  return Container(
+    key: _descriptionKey,
+    constraints: const BoxConstraints(minHeight: 400),
+    child: Stack(
+      clipBehavior: Clip.none,
+      children: [
+        // Text content
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: SelectableText(
+            entry.content.isEmpty ? "What's on your mind?" : entry.content,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: theme.colorScheme.onSurface,
+              height: 1.5,
+              fontFamily: entry.fontFamily,
             ),
           ),
-          // Stickers - positions preserved exactly as saved
-          ...stickers.map((sticker) {
-            return Positioned(
-              left: sticker.x,
-              top: sticker.y,
-              child: RepaintBoundary(
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  color: Colors.transparent,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    child: Text(
-                      sticker.sticker,
-                      style: TextStyle(
-                        fontSize: sticker.size,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                    ),
-                  ),
+        ),
+
+        // Stickers – apply rotation, scale, and correct positioning
+        ...stickers.map((sticker) {
+          return Positioned(
+            left: sticker.x,
+            top: sticker.y,
+            child: Transform.rotate(
+              angle: sticker.rotation,
+              child: Transform.scale(
+                scale: sticker.size,  // size acts as scale factor
+                child: Text(
+                  sticker.sticker,
+                  // Use a fixed base font size (40) – adjust as needed
+                  style: const TextStyle(fontSize: 40),
                 ),
               ),
-            );
-          }),
-          ...images.map((image) {
-            return Positioned(
-              left: image.x,
-              top: image.y,
-              child: RepaintBoundary(
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  color: Colors.transparent,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    child: Transform.scale(
-                      scale: image.scale,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: _buildImageWidget(image, theme),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildImageWidget(DiaryImage image, ThemeData theme) {
-    try {
-      if (image.imagePath.isEmpty) return const SizedBox();
-      final file = File(image.imagePath);
-      if (!file.existsSync()) {
-        return Container(
-          width: image.width,
-          height: image.height,
-          decoration: BoxDecoration(
-            color: theme.colorScheme.error.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: theme.colorScheme.error),
-          ),
-          child: Icon(
-            Icons.broken_image,
-            color: theme.colorScheme.error,
-            size: 30,
-          ),
-        );
-      }
-
-      return Image.file(
-        file,
-        width: image.width,
-        height: image.height,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return Container(
-            width: image.width,
-            height: image.height,
-            color: Colors.grey,
-            child: const Icon(Icons.broken_image, color: Colors.white),
+            ),
           );
-        },
-      );
-    } catch (_) {
-      return const SizedBox();
-    }
-  }
+        }),
+
+        // Images – apply rotation, scale, and correct positioning
+        ...images.map((image) {
+          return Positioned(
+            left: image.x,
+            top: image.y,
+            child: Transform.rotate(
+              angle: image.rotation,
+              child: Transform.scale(
+                scale: image.scale,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.file(
+                    File(image.imagePath),
+                    width: image.width,
+                    height: image.height,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        width: image.width,
+                        height: image.height,
+                        color: Colors.grey,
+                        child: const Icon(Icons.broken_image, color: Colors.white),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+          );
+        }),
+      ],
+    ),
+  );
+}
+
+  
 
   Color? _parseColorFromString(String? input) {
     if (input == null || input.isEmpty) return null;

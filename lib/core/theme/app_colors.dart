@@ -2,20 +2,20 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   // ----- LIGHT THEME 1: Purple/Teal (Modern) -----
-  static const Color light1Primary = Color(0xFF7B1FA2); // Deep Purple 700
-  static const Color light1Secondary = Color(0xFF00897B); // Teal 600
-  static const Color light1Surface = Color(0xFFFFFFFF); // White
-  static const Color light1Background = Color(0xFFF3E5F5); // Deep Purple 50
-  static const Color light1OnBackground = Color(0xFF1A1A1A); // Near black
-  static const Color light1Error = Color(0xFFD32F2F); // Red 700
+  static const Color light2Primary = Color(0xFF7B1FA2); // Deep Purple 700
+  static const Color light2Secondary = Color(0xFF00897B); // Teal 600
+  static const Color light2Surface = Color(0xFFFFFFFF); // White
+  static const Color light2Background = Color(0xFFF3E5F5); // Deep Purple 50
+  static const Color light2OnBackground = Color(0xFF1A1A1A); // Near black
+  static const Color light2Error = Color(0xFFD32F2F); // Red 700
 
   // ----- LIGHT THEME 2: Blue/Orange (Vibrant) -----
-  static const Color light2Primary = Color(0xFF1976D2); // Blue 700
-  static const Color light2Secondary = Color(0xFFFF6F00); // Amber 900
-  static const Color light2Surface = Color(0xFFFFFFFF); // White
-  static const Color light2Background = Color(0xFFE3F2FD); // Blue 50
-  static const Color light2OnBackground = Color(0xFF1A1A1A); // Near black
-  static const Color light2Error = Color(0xFFC62828); // Red 800
+  static const Color light1Primary = Color(0xFF1976D2); // Blue 700
+  static const Color light1Secondary = Color(0xFFFF6F00); // Amber 900
+  static const Color light1Surface = Color(0xFFFFFFFF); // White
+  static const Color light1Background = Color(0xFFE3F2FD); // Blue 50
+  static const Color light1OnBackground = Color(0xFF1A1A1A); // Near black
+  static const Color light1Error = Color(0xFFC62828); // Red 800
 
   // ----- LIGHT THEME 3: Green/Coral (Fresh) -----
   static const Color light3Primary = Color(0xFF2E7D32); // Green 800
