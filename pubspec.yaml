@@ -124,7 +124,16 @@ flutter:
     - family: PlayfairDisplay
       fonts:
         - asset: assets/fonts/PlayfairDisplay-Medium.ttf
-
+    - family: AmaticSC
+      fonts:
+        - asset: assets/fonts/AmaticSC-Regular.ttf      
+    - family: Goldman
+      fonts:
+        - asset: assets/fonts/Goldman-Regular.ttf
+    - family: ShadowsIntoLight
+      fonts:
+        - asset: assets/fonts/ShadowsIntoLight-Regular.ttf
+        
     - family: MyFlutterApp
       fonts:
         - asset: assets/icons/MyFlutterApp.ttf

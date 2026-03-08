@@ -870,7 +870,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     FocusScope.of(context).requestFocus(FocusNode());
   }
 
-   void _onStickerPressed() {
+  void _onStickerPressed() {
     final position = _calculateCenterPosition();
     DiaryUIHelpers.openStickerPicker(context, (url) {
       _bloc.add(SelectSupabaseSticker(url, position.dx, position.dy));
@@ -1230,6 +1230,11 @@ const List<Map<String, String>> availableFonts = [
   {'display': 'Cormorant Garamond', 'family': 'CormorantGaramond'},
   {'display': 'Dancing Script', 'family': 'DancingScript'},
   {'display': 'Playfair Display', 'family': 'PlayfairDisplay'},
+
+  {'display': 'AmaticSC', 'family': 'AmaticSC'},
+  {'display': 'GoldmanGoldman', 'family': 'Goldman'},
+  {'display': 'ShadowsIntoLight', 'family': 'ShadowsIntoLight'},
+  
 ];
 
 class _FontPickerSheet extends StatelessWidget {
@@ -1254,6 +1259,7 @@ class _FontPickerSheet extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Handle
             Container(
               margin: const EdgeInsets.only(top: 12),
               width: 40,
@@ -1264,56 +1270,62 @@ class _FontPickerSheet extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
+            // Title
             Text(
               'Choose Font',
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 8),
-            Flexible(
-              child: ListView.separated(
+            const SizedBox(height: 16),
+            // Grid of fonts
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: GridView.builder(
                 shrinkWrap: true,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  childAspectRatio: 2.0,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
                 ),
                 itemCount: availableFonts.length,
-                separatorBuilder: (_, __) =>
-                    Divider(height: 1, color: theme.colorScheme.primary),
                 itemBuilder: (context, index) {
                   final font = availableFonts[index];
                   final isSelected = font['family'] == currentFont;
-                  return ListTile(
-                    leading: isSelected
-                        ? Icon(
-                            Icons.check_circle,
-                            color: theme.colorScheme.primary,
-                          )
-                        : const Icon(Icons.circle_outlined),
-                    title: Text(
-                      font['display']!,
-                      style: TextStyle(
-                        fontFamily: font['family'],
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    subtitle: Text(
-                      'The quick brown fox jumps over the lazy dog',
-                      style: TextStyle(
-                        fontFamily: font['family'],
-                        fontSize: 14,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                  return GestureDetector(
                     onTap: () => onFontSelected(font['family']!),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: theme.scaffoldBackgroundColor,
+                        borderRadius: BorderRadius.circular(16),
+                        border: isSelected
+                            ? Border.all(
+                                color: theme.colorScheme.primary,
+                                width: 2,
+                              )
+                            : null,
+                      ),
+                      padding: const EdgeInsets.all(8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              font['display']!,
+                              style: Theme.of(context).textTheme.bodyMedium!
+                                  .copyWith(fontFamily: font['family']),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   );
                 },
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
           ],
         ),
       ),

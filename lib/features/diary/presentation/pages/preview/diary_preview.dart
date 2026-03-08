@@ -544,3 +544,4 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
     return null;
   }
 }
+
