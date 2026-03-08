@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:routine/features/diary/data/models/diary_entry_model.dart';
 import 'package:routine/features/diary/domain/entities/sticker_model.dart';
@@ -794,20 +795,27 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     );
   }
 
-  void _onPhotoPressed() => _pickImageFromGallery();
-
-  void _pickImageFromGallery() async {
-    try {
-      final ImagePicker picker = ImagePicker();
-      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-      if (image != null && mounted) {
-        final position = _calculateCenterPosition();
-        _bloc.add(ImageAdded(image.path, position.dx, position.dy));
-      }
-    } catch (e) {
-      _bloc.add(SetError('Failed to pick image: $e'));
+ void _onPhotoPressed() async {
+  try {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null && mounted) {
+      const double defaultImageSize = 100.0; 
+      final position = _findFreePositionForNewItem(defaultImageSize, defaultImageSize);
+      _bloc.add(ImageAdded(image.path, position.dx, position.dy));
     }
+  } catch (e) {
+    _bloc.add(SetError('Failed to pick image: $e'));
   }
+}
+
+void _onStickerPressed() {
+  const double stickerSize = 100.0; 
+  final position = _findFreePositionForNewItem(stickerSize, stickerSize);
+  DiaryUIHelpers.openStickerPicker(context, (url) {
+    _bloc.add(SelectSupabaseSticker(url, position.dx, position.dy));
+  });
+}
 
   void _onBgColorPressed() {
     DiaryUIHelpers.openColorPicker(
@@ -870,23 +878,87 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     FocusScope.of(context).requestFocus(FocusNode());
   }
 
-  void _onStickerPressed() {
-    final position = _calculateCenterPosition();
-    DiaryUIHelpers.openStickerPicker(context, (url) {
-      _bloc.add(SelectSupabaseSticker(url, position.dx, position.dy));
-    });
+  
+
+  
+  Offset _findFreePositionForNewItem(double width, double height) {
+  final renderBox = _descriptionKey.currentContext?.findRenderObject() as RenderBox?;
+  if (renderBox == null) return const Offset(150, 150); // fallback
+
+  final containerSize = renderBox.size;
+  final double containerW = containerSize.width;
+  final double containerH = containerSize.height;
+
+  // Collect existing item rects from current state
+  final state = _bloc.state;
+  final List<Rect> existingRects = [];
+
+  for (final sticker in state.stickers) {
+    final double w = 100.0 * sticker.size;
+    final double h = 100.0 * sticker.size;
+    existingRects.add(Rect.fromCenter(
+      center: Offset(sticker.x, sticker.y),
+      width: w,
+      height: h,
+    ));
   }
 
-  Offset _calculateCenterPosition() {
-    try {
-      final RenderBox renderBox =
-          _descriptionKey.currentContext!.findRenderObject() as RenderBox;
-      final size = renderBox.size;
-      return Offset(size.width / 2, size.height / 2);
-    } catch (e) {
-      return const Offset(150, 150);
+  for (final image in state.images) {
+    final double w = image.width * image.scale;
+    final double h = image.height * image.scale;
+    existingRects.add(Rect.fromCenter(
+      center: Offset(image.x, image.y),
+      width: w,
+      height: h,
+    ));
+  }
+
+  // Start at center
+  Offset center = Offset(containerW / 2, containerH / 2);
+  Rect candidateRect = Rect.fromCenter(
+    center: center,
+    width: width,
+    height: height,
+  );
+
+  if (_isPositionValid(candidateRect, existingRects, containerW, containerH)) {
+    return center;
+  }
+
+  // Try spiral pattern
+  const step = 20.0;
+  const maxRadius = 500.0;
+  for (double r = step; r <= maxRadius; r += step) {
+    for (int direction = 0; direction < 8; direction++) {
+      double angle = direction * math.pi / 4; // 45° increments
+      Offset offset = Offset(r * math.cos(angle), r * math.sin(angle));
+      Offset candidate = center + offset;
+      candidateRect = Rect.fromCenter(
+        center: candidate,
+        width: width,
+        height: height,
+      );
+      if (_isPositionValid(candidateRect, existingRects, containerW, containerH)) {
+        return candidate;
+      }
     }
   }
+
+  // Fallback
+  return center;
+}
+
+bool _isPositionValid(Rect rect, List<Rect> existing, double containerW, double containerH) {
+  // Must be completely inside container
+  if (rect.left < 0 || rect.top < 0 || rect.right > containerW || rect.bottom > containerH) {
+    return false;
+  }
+  // Must not overlap any existing item
+  for (final r in existing) {
+    if (rect.overlaps(r)) return false;
+  }
+  return true;
+}
 }
 
 // ============================================================

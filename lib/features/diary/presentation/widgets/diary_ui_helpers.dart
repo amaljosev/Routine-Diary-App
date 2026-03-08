@@ -420,7 +420,7 @@ class DiaryUIHelpers {
 
   static void openStickerPicker(
     BuildContext context,
-    Function(String url) onSelected, // Now only returns the URL
+    Function(String url) onSelected, 
   ) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
