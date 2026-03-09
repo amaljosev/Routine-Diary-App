@@ -285,7 +285,9 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
         if (_descriptionController.text != state.description) {
           _descriptionController.value = TextEditingValue(
             text: state.description,
-            selection: TextSelection.collapsed(offset: state.description.length),
+            selection: TextSelection.collapsed(
+              offset: state.description.length,
+            ),
           );
         }
         if (state.errorMessage != null && state.errorMessage!.isNotEmpty) {
@@ -351,7 +353,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       child: SafeArea(
         child: Stack(
           children: [
-            Container(color: theme.colorScheme.surface.withValues(alpha:0.4)),
+            Container(color: theme.colorScheme.surface.withValues(alpha: 0.4)),
             _buildContent(state, context),
           ],
         ),
@@ -399,10 +401,12 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
         style: ElevatedButton.styleFrom(
           foregroundColor: theme.colorScheme.onPrimary,
           backgroundColor: theme.colorScheme.primary,
-          disabledForegroundColor: theme.colorScheme.onSurface.withValues(alpha:0.3),
+          disabledForegroundColor: theme.colorScheme.onSurface.withValues(
+            alpha: 0.3,
+          ),
           disabledBackgroundColor: isDark
-              ? theme.colorScheme.surface.withValues(alpha:0.5)
-              : Colors.grey.withValues(alpha:0.2),
+              ? theme.colorScheme.surface.withValues(alpha: 0.5)
+              : Colors.grey.withValues(alpha: 0.2),
           elevation: isValid ? 2 : 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
@@ -488,26 +492,28 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
           Text(
             intl.DateFormat('dd').format(state.date),
             style: Theme.of(context).textTheme.headlineLarge!.copyWith(
-                  fontWeight: FontWeight.w900,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
+              fontWeight: FontWeight.w900,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
           Row(
             children: [
               Text(
                 intl.DateFormat('EE').format(state.date),
                 style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
+                  fontWeight: FontWeight.w700,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
               ),
               const SizedBox(width: 8),
               Text(
                 intl.DateFormat('MMMM yyyy').format(state.date),
                 style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                      fontWeight: FontWeight.w900,
-                      color: Theme.of(context).colorScheme.primary.withValues(alpha:0.5),
-                    ),
+                  fontWeight: FontWeight.w900,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.5),
+                ),
               ),
               const SizedBox(width: 6),
               Icon(
@@ -519,8 +525,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
           Container(
             height: 10,
             width: 150,
-            color:
-                Theme.of(context).colorScheme.primary.withValues(alpha:0.5),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
           ),
         ],
       ),
@@ -531,7 +536,9 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     return GestureDetector(
       onTap: () => _selectMood(context),
       child: CircleAvatar(
-        backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha:0.1),
+        backgroundColor: Theme.of(
+          context,
+        ).colorScheme.primary.withValues(alpha: 0.1),
         radius: 25,
         child: Text(state.mood, style: const TextStyle(fontSize: 24)),
       ),
@@ -552,12 +559,12 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
         hintStyle: theme.textTheme.bodyLarge?.copyWith(
           fontWeight: FontWeight.w900,
           fontSize: 24,
-          color: theme.colorScheme.onSurface.withValues(alpha:0.5),
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
           fontFamily: state.fontFamily,
         ),
         border: InputBorder.none,
         counterStyle: TextStyle(
-          color: theme.colorScheme.onSurface.withValues(alpha:0.5),
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
         ),
       ),
       style: theme.textTheme.bodyLarge?.copyWith(
@@ -616,7 +623,13 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
         fit: BoxFit.contain,
         placeholder: (context, url) => Container(
           color: Colors.grey.shade200,
-          child: const Center(child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))),
+          child: const Center(
+            child: SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
         ),
         errorWidget: (context, url, error) => const Icon(Icons.broken_image),
       );
@@ -635,9 +648,15 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       isSelected: isSelected,
       onSelect: () => _bloc.add(SelectSticker(sticker.id)),
       onUpdate:
-          ({required id, required x, required y, required scale, required rotation}) {
-        _bloc.add(UpdateStickerTransform(id, x, y, scale, rotation));
-      },
+          ({
+            required id,
+            required x,
+            required y,
+            required scale,
+            required rotation,
+          }) {
+            _bloc.add(UpdateStickerTransform(id, x, y, scale, rotation));
+          },
       onRemove: () => _bloc.add(RemoveSticker(sticker.id)),
       child: content,
     );
@@ -663,9 +682,15 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       baseHeight: safeHeight,
       onSelect: () => _bloc.add(SelectImage(image.id)),
       onUpdate:
-          ({required id, required x, required y, required scale, required rotation}) {
-        _bloc.add(UpdateImageTransform(id, x, y, scale, rotation));
-      },
+          ({
+            required id,
+            required x,
+            required y,
+            required scale,
+            required rotation,
+          }) {
+            _bloc.add(UpdateImageTransform(id, x, y, scale, rotation));
+          },
       onRemove: () => _bloc.add(RemoveImage(image.id)),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
@@ -695,7 +720,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
                   borderRadius: BorderRadius.circular(40),
                   color: isDark
                       ? theme.colorScheme.surface
-                      : theme.colorScheme.surface.withValues(alpha:0.9),
+                      : theme.colorScheme.surface.withValues(alpha: 0.9),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
@@ -802,12 +827,27 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   }
 
   Future<void> _onPhotoPressed() async {
+    final currentState = _bloc.state;
+    if (currentState.images.length >= 5) {
+      _showLimitSnackbar('You can only add up to 5 images.');
+      return;
+    }
+
     try {
       final ImagePicker picker = ImagePicker();
       final XFile? image = await picker.pickImage(source: ImageSource.gallery);
       if (image != null && mounted) {
+        // Double‑check in case something changed while picking
+        final newState = _bloc.state;
+        if (newState.images.length >= 5) {
+          _showLimitSnackbar('You can only add up to 5 images.');
+          return;
+        }
         const double defaultImageSize = 100.0;
-        final position = _findFreePositionForNewItem(defaultImageSize, defaultImageSize);
+        final position = _findFreePositionForNewItem(
+          defaultImageSize,
+          defaultImageSize,
+        );
         _bloc.add(ImageAdded(image.path, position.dx, position.dy));
       }
     } catch (e) {
@@ -816,14 +856,24 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   }
 
   void _onStickerPressed() {
-    const double stickerSize = 100.0;
-    _findFreePositionForNewItem(stickerSize, stickerSize);
+    final currentState = _bloc.state;
+    if (currentState.stickers.length >= 10) {
+      _showLimitSnackbar('You can only add up to 10 stickers.');
+      return;
+    }
+
     DiaryUIHelpers.openStickerPicker(
       context,
       onStickerSelected: (url, x, y) {
-        context.read<DiaryEntryBloc>().add(
-              SelectSupabaseSticker(url, x, y),
-            );
+        // Re‑check the count after the picker is closed
+        final newState = _bloc.state;
+        if (newState.stickers.length >= 10) {
+          _showLimitSnackbar('You can only add up to 10 stickers.');
+          return;
+        }
+        const double stickerSize = 100.0;
+        final position = _findFreePositionForNewItem(stickerSize, stickerSize);
+        _bloc.add(SelectSupabaseSticker(url, position.dx, position.dy));
       },
     );
   }
@@ -838,8 +888,10 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   void _onBgImagePressed() {
     DiaryUIHelpers.openBgImagePicker(
       context,
-      onPresetSelected: (imageUrl) => _bloc.add(SelectSupabaseBackground(imageUrl)),
-      onGallerySelected: (filePath) => _bloc.add(CropAndSetBackgroundImage(filePath)),
+      onPresetSelected: (imageUrl) =>
+          _bloc.add(SelectSupabaseBackground(imageUrl)),
+      onGallerySelected: (filePath) =>
+          _bloc.add(CropAndSetBackgroundImage(filePath)),
       onClear: () => _bloc.add(const ClearBackground()),
     );
   }
@@ -869,12 +921,15 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     final selection = _descriptionController.selection;
 
     int insertPos;
-    if (selection.isValid && selection.baseOffset >= 0 && selection.baseOffset <= text.length) {
+    if (selection.isValid &&
+        selection.baseOffset >= 0 &&
+        selection.baseOffset <= text.length) {
       insertPos = selection.baseOffset;
     } else {
       insertPos = text.length;
     }
-    final newText = '${text.substring(0, insertPos)}\n• ${text.substring(insertPos)}';
+    final newText =
+        '${text.substring(0, insertPos)}\n• ${text.substring(insertPos)}';
     final newCursorPos = insertPos + 3;
     _descriptionController.value = TextEditingValue(
       text: newText,
@@ -885,7 +940,8 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   }
 
   Offset _findFreePositionForNewItem(double width, double height) {
-    final renderBox = _descriptionKey.currentContext?.findRenderObject() as RenderBox?;
+    final renderBox =
+        _descriptionKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox == null) return const Offset(150, 150); // fallback
 
     final containerSize = renderBox.size;
@@ -899,21 +955,21 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     for (final sticker in state.stickers) {
       final double w = 100.0 * sticker.size;
       final double h = 100.0 * sticker.size;
-      existingRects.add(Rect.fromCenter(
-        center: Offset(sticker.x, sticker.y),
-        width: w,
-        height: h,
-      ));
+      existingRects.add(
+        Rect.fromCenter(
+          center: Offset(sticker.x, sticker.y),
+          width: w,
+          height: h,
+        ),
+      );
     }
 
     for (final image in state.images) {
       final double w = image.width * image.scale;
       final double h = image.height * image.scale;
-      existingRects.add(Rect.fromCenter(
-        center: Offset(image.x, image.y),
-        width: w,
-        height: h,
-      ));
+      existingRects.add(
+        Rect.fromCenter(center: Offset(image.x, image.y), width: w, height: h),
+      );
     }
 
     // Start at center
@@ -924,7 +980,12 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       height: height,
     );
 
-    if (_isPositionValid(candidateRect, existingRects, containerW, containerH)) {
+    if (_isPositionValid(
+      candidateRect,
+      existingRects,
+      containerW,
+      containerH,
+    )) {
       return center;
     }
 
@@ -941,7 +1002,12 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
           width: width,
           height: height,
         );
-        if (_isPositionValid(candidateRect, existingRects, containerW, containerH)) {
+        if (_isPositionValid(
+          candidateRect,
+          existingRects,
+          containerW,
+          containerH,
+        )) {
           return candidate;
         }
       }
@@ -951,9 +1017,17 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     return center;
   }
 
-  bool _isPositionValid(Rect rect, List<Rect> existing, double containerW, double containerH) {
+  bool _isPositionValid(
+    Rect rect,
+    List<Rect> existing,
+    double containerW,
+    double containerH,
+  ) {
     // Must be completely inside container
-    if (rect.left < 0 || rect.top < 0 || rect.right > containerW || rect.bottom > containerH) {
+    if (rect.left < 0 ||
+        rect.top < 0 ||
+        rect.right > containerW ||
+        rect.bottom > containerH) {
       return false;
     }
     // Must not overlap any existing item
@@ -961,6 +1035,24 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       if (rect.overlaps(r)) return false;
     }
     return true;
+  }
+
+  void _showLimitSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        duration: Duration(seconds: 1),
+        content: Text(
+          message,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.titleSmall!.copyWith(
+            color: Theme.of(context).colorScheme.onPrimary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+      ),
+    );
   }
 }
 
@@ -1000,21 +1092,39 @@ class __StickerSizeAdjusterState extends State<_StickerSizeAdjuster> {
     const double kBaseStickerPreviewSize = 80.0;
 
     Widget preview;
-    if (widget.sticker.localPath != null && File(widget.sticker.localPath!).existsSync()) {
-      preview = Image.file(File(widget.sticker.localPath!), width: kBaseStickerPreviewSize, height: kBaseStickerPreviewSize, fit: BoxFit.contain);
-    } else if (widget.sticker.url.isNotEmpty && widget.sticker.url.startsWith('http')) {
+    if (widget.sticker.localPath != null &&
+        File(widget.sticker.localPath!).existsSync()) {
+      preview = Image.file(
+        File(widget.sticker.localPath!),
+        width: kBaseStickerPreviewSize,
+        height: kBaseStickerPreviewSize,
+        fit: BoxFit.contain,
+      );
+    } else if (widget.sticker.url.isNotEmpty &&
+        widget.sticker.url.startsWith('http')) {
       preview = CachedNetworkImage(
         imageUrl: widget.sticker.url,
         width: kBaseStickerPreviewSize,
         height: kBaseStickerPreviewSize,
         fit: BoxFit.contain,
-        placeholder: (_, __) => SizedBox(width: kBaseStickerPreviewSize, height: kBaseStickerPreviewSize),
+        placeholder: (_, __) => SizedBox(
+          width: kBaseStickerPreviewSize,
+          height: kBaseStickerPreviewSize,
+        ),
         errorWidget: (_, __, ___) => const Icon(Icons.broken_image),
       );
     } else if (widget.sticker.url.isNotEmpty) {
-      preview = Image.asset(widget.sticker.url, width: kBaseStickerPreviewSize, height: kBaseStickerPreviewSize, fit: BoxFit.contain);
+      preview = Image.asset(
+        widget.sticker.url,
+        width: kBaseStickerPreviewSize,
+        height: kBaseStickerPreviewSize,
+        fit: BoxFit.contain,
+      );
     } else {
-      preview = const SizedBox(width: kBaseStickerPreviewSize, height: kBaseStickerPreviewSize);
+      preview = const SizedBox(
+        width: kBaseStickerPreviewSize,
+        height: kBaseStickerPreviewSize,
+      );
     }
 
     return SafeArea(
@@ -1036,7 +1146,7 @@ class __StickerSizeAdjusterState extends State<_StickerSizeAdjuster> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: theme.colorScheme.onSurface.withValues(alpha:0.3),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1044,13 +1154,10 @@ class __StickerSizeAdjusterState extends State<_StickerSizeAdjuster> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha:0.1),
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Transform.scale(
-                scale: _currentScale,
-                child: preview,
-              ),
+              child: Transform.scale(scale: _currentScale, child: preview),
             ),
             const SizedBox(height: 20),
             Text(
@@ -1078,7 +1185,10 @@ class __StickerSizeAdjusterState extends State<_StickerSizeAdjuster> {
                 _buildSizeButton(
                   icon: Icons.remove,
                   onPressed: () {
-                    final newScale = (_currentScale - scaleStep).clamp(minScale, maxScale);
+                    final newScale = (_currentScale - scaleStep).clamp(
+                      minScale,
+                      maxScale,
+                    );
                     setState(() => _currentScale = newScale);
                     bloc.add(UpdateStickerSize(widget.sticker.id, newScale));
                   },
@@ -1086,7 +1196,10 @@ class __StickerSizeAdjusterState extends State<_StickerSizeAdjuster> {
                 _buildSizeButton(
                   icon: Icons.add,
                   onPressed: () {
-                    final newScale = (_currentScale + scaleStep).clamp(minScale, maxScale);
+                    final newScale = (_currentScale + scaleStep).clamp(
+                      minScale,
+                      maxScale,
+                    );
                     setState(() => _currentScale = newScale);
                     bloc.add(UpdateStickerSize(widget.sticker.id, newScale));
                   },
@@ -1097,12 +1210,16 @@ class __StickerSizeAdjusterState extends State<_StickerSizeAdjuster> {
             ListTile(
               leading: Icon(
                 Icons.delete,
-                color: theme.brightness == Brightness.dark ? Colors.white : theme.colorScheme.error,
+                color: theme.brightness == Brightness.dark
+                    ? Colors.white
+                    : theme.colorScheme.error,
               ),
               title: Text(
                 'Remove Sticker',
                 style: TextStyle(
-                  color: theme.brightness == Brightness.dark ? Colors.white : theme.colorScheme.error,
+                  color: theme.brightness == Brightness.dark
+                      ? Colors.white
+                      : theme.colorScheme.error,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -1118,11 +1235,14 @@ class __StickerSizeAdjusterState extends State<_StickerSizeAdjuster> {
     );
   }
 
-  Widget _buildSizeButton({required IconData icon, required VoidCallback onPressed}) {
+  Widget _buildSizeButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Theme.of(context).colorScheme.primary.withValues(alpha:0.1),
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
       ),
       child: IconButton(
         icon: Icon(icon),
@@ -1311,7 +1431,6 @@ const List<Map<String, String>> availableFonts = [
   {'display': 'AmaticSC', 'family': 'AmaticSC'},
   {'display': 'GoldmanGoldman', 'family': 'Goldman'},
   {'display': 'ShadowsIntoLight', 'family': 'ShadowsIntoLight'},
-  
 ];
 
 class _FontPickerSheet extends StatelessWidget {
