@@ -102,6 +102,7 @@ class DiaryEntryState extends Equatable {
   final String? stickersError;
   final bool isDownloadingSticker;
   final String? stickerDownloadError;
+  final Map<String, List<String>> stickersByCategory;
 
   const DiaryEntryState({
     this.title = '',
@@ -129,6 +130,7 @@ class DiaryEntryState extends Equatable {
     this.stickersError,
     this.isDownloadingSticker = false,
     this.stickerDownloadError,
+     this.stickersByCategory = const {}, 
   });
 
   @override
@@ -157,6 +159,7 @@ class DiaryEntryState extends Equatable {
         stickersError,
         isDownloadingSticker,
         stickerDownloadError,
+        stickersByCategory
       ];
 
   DiaryEntryState copyWith({
@@ -184,6 +187,7 @@ class DiaryEntryState extends Equatable {
     String? stickersError,
     bool? isDownloadingSticker,
     String? stickerDownloadError,
+    Map<String, List<String>>? stickersByCategory
   }) {
     return DiaryEntryState(
       title: title == unset ? this.title : title as String,
@@ -210,6 +214,7 @@ class DiaryEntryState extends Equatable {
       stickersError: stickersError ?? this.stickersError,
       isDownloadingSticker: isDownloadingSticker ?? this.isDownloadingSticker,
       stickerDownloadError: stickerDownloadError ?? this.stickerDownloadError,
+      stickersByCategory: stickersByCategory??this.stickersByCategory
     );
   }
 }

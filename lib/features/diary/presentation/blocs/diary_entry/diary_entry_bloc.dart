@@ -56,6 +56,7 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
 
     // Sticker events
     on<LoadStickers>(_onLoadStickers);
+    on<StickersByCategoryLoaded>(_onStickersByCategoryLoaded);
     on<StickersLoaded>(_onStickersLoaded);
     on<StickersLoadFailed>(_onStickersLoadFailed);
     on<SelectSupabaseSticker>(_onSelectSupabaseSticker);
@@ -496,17 +497,28 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
 
   // Sticker Supabase methods
   Future<void> _onLoadStickers(
-    LoadStickers event,
-    Emitter<DiaryEntryState> emit,
-  ) async {
-    emit(state.copyWith(isLoadingStickers: true, stickersError: null));
-    try {
-      final urls = await _stickerRepo.getStickerUrls();
-      add(StickersLoaded(urls));
-    } catch (e) {
-      add(StickersLoadFailed(e.toString()));
-    }
+  LoadStickers event,
+  Emitter<DiaryEntryState> emit,
+) async {
+  emit(state.copyWith(isLoadingStickers: true, stickersError: null));
+  try {
+    final map = await _stickerRepo.getStickersByCategory();
+    add(StickersByCategoryLoaded(map));
+  } catch (e) {
+    add(StickersLoadFailed(e.toString()));
   }
+}
+void _onStickersByCategoryLoaded(
+  StickersByCategoryLoaded event,
+  Emitter<DiaryEntryState> emit,
+) {
+  emit(
+    state.copyWith(
+      stickersByCategory: event.stickersByCategory,
+      isLoadingStickers: false,
+    ),
+  );
+}
 
   void _onStickersLoaded(StickersLoaded event, Emitter<DiaryEntryState> emit) {
     emit(

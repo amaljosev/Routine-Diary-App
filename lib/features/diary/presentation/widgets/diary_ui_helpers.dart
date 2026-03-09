@@ -1,6 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:routine/core/theme/app_colors.dart';
 import 'package:routine/core/constants/diary_items.dart';
@@ -16,6 +15,7 @@ class DiaryUIHelpers {
     Function(DateTime) onChanged, {
     bool allowFutureDates = false,
   }) {
+    FocusManager.instance.primaryFocus?.unfocus();
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -33,8 +33,9 @@ class DiaryUIHelpers {
             children: [
               Expanded(
                 child: CupertinoDatePicker(
-                  backgroundColor:
-                      isDark ? theme.colorScheme.surface : Colors.white,
+                  backgroundColor: isDark
+                      ? theme.colorScheme.surface
+                      : Colors.white,
                   initialDateTime: initialDate,
                   mode: CupertinoDatePickerMode.date,
                   minimumDate: minDate,
@@ -64,7 +65,9 @@ class DiaryUIHelpers {
                       child: Text(
                         'Done',
                         style: TextStyle(
-                          color: isDark ? Colors.white : theme.colorScheme.primary,
+                          color: isDark
+                              ? Colors.white
+                              : theme.colorScheme.primary,
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
@@ -85,6 +88,8 @@ class DiaryUIHelpers {
     BuildContext context,
     Function(String) onSelected,
   ) {
+    FocusManager.instance.primaryFocus?.unfocus();
+    FocusManager.instance.primaryFocus?.unfocus();
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -102,10 +107,9 @@ class DiaryUIHelpers {
               padding: const EdgeInsets.all(16),
               child: Text(
                 'What is your mood',
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w600),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
               ),
             ),
             Expanded(
@@ -132,7 +136,10 @@ class DiaryUIHelpers {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Center(
-                        child: Text(emoji, style: const TextStyle(fontSize: 28)),
+                        child: Text(
+                          emoji,
+                          style: const TextStyle(fontSize: 28),
+                        ),
                       ),
                     ),
                   );
@@ -150,6 +157,7 @@ class DiaryUIHelpers {
     BuildContext context,
     Function(Color) onSelected,
   ) {
+    FocusManager.instance.primaryFocus?.unfocus();
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final colors = isDark ? AppColors.darkColors : AppColors.lightColors;
@@ -168,10 +176,9 @@ class DiaryUIHelpers {
               padding: const EdgeInsets.all(16),
               child: Text(
                 'Choose Background Color',
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w600),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
               ),
             ),
             Expanded(
@@ -201,7 +208,9 @@ class DiaryUIHelpers {
                           border: Border.all(
                             width: 2,
                             color: isDark
-                                ? theme.colorScheme.onSurface.withValues(alpha: 0.2)
+                                ? theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.2,
+                                  )
                                 : Colors.black12,
                           ),
                         ),
@@ -252,6 +261,7 @@ class DiaryUIHelpers {
     required Function(String filePath) onGallerySelected,
     required VoidCallback onClear,
   }) {
+    FocusManager.instance.primaryFocus?.unfocus();
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final bloc = context.read<DiaryEntryBloc>();
@@ -260,156 +270,193 @@ class DiaryUIHelpers {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: theme.colorScheme.surface,
+      backgroundColor: theme.scaffoldBackgroundColor,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      shape: Border(),
+
       builder: (sheetContext) {
         return BlocProvider.value(
           value: bloc,
           child: SafeArea(
             child: SizedBox(
-              height: MediaQuery.of(sheetContext).size.height * 0.65,
-              child: Column(
-                children: [
-                  const SizedBox(height: 12),
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.withValues(alpha: 0.4),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Choose Background',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  ListTile(
-                    leading: const Icon(Icons.photo_library),
-                    title: const Text('Choose from Gallery'),
-                    onTap: () async {
-                      Navigator.pop(sheetContext);
-                      try {
-                        final ImagePicker picker = ImagePicker();
-                        final XFile? image = await picker.pickImage(
-                          source: ImageSource.gallery,
-                          imageQuality: 85,
-                        );
-                        if (image != null && context.mounted) {
-                          onGallerySelected(image.path);
-                        }
-                      } catch (e) {
-                        debugPrint('Gallery pick failed: $e');
-                      }
-                    },
-                  ),
-                  const Divider(thickness: 2, indent: 16, endIndent: 16),
-                  Expanded(
-                    child: BlocBuilder<DiaryEntryBloc, DiaryEntryState>(
-                      buildWhen: (prev, current) =>
-                          prev.availableBackgrounds != current.availableBackgrounds ||
-                          prev.isLoadingBackgrounds != current.isLoadingBackgrounds ||
-                          prev.backgroundsError != current.backgroundsError,
-                      builder: (context, state) {
-                        if (state.isLoadingBackgrounds) {
-                          return const Center(child: CircularProgressIndicator());
-                        }
-                        if (state.backgroundsError != null) {
-                          return Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.error_outline, size: 48),
-                                const SizedBox(height: 8),
-                                Text('Failed to load: Please check your internet connection'),
-                                TextButton(
-                                  onPressed: () => bloc.add(LoadBackgrounds()),
-                                  child: const Text('Retry'),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-                        if (state.availableBackgrounds.isEmpty) {
-                          return const Center(child: Text('No background images found'));
-                        }
+              height: MediaQuery.of(sheetContext).size.height * 0.5,
 
-                        return GridView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 3,
-                                mainAxisSpacing: 12,
-                                crossAxisSpacing: 12,
-                                childAspectRatio: 0.6,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 10.0),
+                child: Column(
+                  children: [
+                    Text(
+                      'Choose Background',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                    GestureDetector(
+                      onTap: () async {
+                        Navigator.pop(sheetContext);
+                        try {
+                          final ImagePicker picker = ImagePicker();
+                          final XFile? image = await picker.pickImage(
+                            source: ImageSource.gallery,
+                          );
+                          if (image != null && context.mounted) {
+                            onGallerySelected(image.path);
+                          }
+                        } catch (e) {
+                          debugPrint('Gallery pick failed: $e');
+                        }
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.all(Radius.circular(12)),
+                          color: theme.colorScheme.primary,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 8,
+                          ),
+                          child: Row(
+                            spacing: 10,
+                            children: [
+                              Icon(
+                                CupertinoIcons.photo,
+                                color: theme.colorScheme.onPrimary,
                               ),
-                          itemCount: state.availableBackgrounds.length + 1,
-                          itemBuilder: (gridContext, index) {
-                            if (index == 0) {
+                              Expanded(
+                                child: Text(
+                                  'Choose from gallery',
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: theme.colorScheme.onPrimary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    Expanded(
+                      child: BlocBuilder<DiaryEntryBloc, DiaryEntryState>(
+                        buildWhen: (prev, current) =>
+                            prev.availableBackgrounds !=
+                                current.availableBackgrounds ||
+                            prev.isLoadingBackgrounds !=
+                                current.isLoadingBackgrounds ||
+                            prev.backgroundsError != current.backgroundsError,
+                        builder: (context, state) {
+                          if (state.isLoadingBackgrounds) {
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          }
+                          if (state.backgroundsError != null) {
+                            return Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.error_outline, size: 48),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Failed to load: Please check your internet connection',
+                                  ),
+                                  TextButton(
+                                    onPressed: () =>
+                                        bloc.add(LoadBackgrounds()),
+                                    child: const Text('Retry'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+                          if (state.availableBackgrounds.isEmpty) {
+                            return const Center(
+                              child: Text('No background images found'),
+                            );
+                          }
+
+                          return GridView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 5,
+                                  mainAxisSpacing: 12,
+                                  crossAxisSpacing: 12,
+                                  childAspectRatio: 0.6,
+                                ),
+                            itemCount: state.availableBackgrounds.length + 1,
+                            itemBuilder: (gridContext, index) {
+                              if (index == 0) {
+                                return GestureDetector(
+                                  onTap: () {
+                                    Navigator.pop(sheetContext);
+                                    onClear();
+                                  },
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(16),
+                                      color: isDark
+                                          ? theme.colorScheme.surface
+                                          : Colors.grey.shade200,
+                                      border: Border.all(
+                                        color: Colors.grey.withValues(
+                                          alpha: 0.3,
+                                        ),
+                                      ),
+                                    ),
+                                    child: const Center(
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.clear),
+                                          SizedBox(height: 6),
+                                          Text("Clear"),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }
+
+                              final imageUrl =
+                                  state.availableBackgrounds[index - 1];
                               return GestureDetector(
                                 onTap: () {
                                   Navigator.pop(sheetContext);
-                                  onClear();
+                                  onPresetSelected(imageUrl);
                                 },
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(16),
-                                    color: isDark
-                                        ? theme.colorScheme.surface
-                                        : Colors.grey.shade200,
-                                    border: Border.all(
-                                      color: Colors.grey.withValues(alpha: 0.3),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: CachedNetworkImage(
+                                    imageUrl: imageUrl,
+                                    fit: BoxFit.cover,
+                                    placeholder: (context, url) => Container(
+                                      color: Colors.grey.shade300,
+                                      child: const Center(
+                                        child: CircularProgressIndicator(),
+                                      ),
                                     ),
-                                  ),
-                                  child: const Center(
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(Icons.clear),
-                                        SizedBox(height: 6),
-                                        Text("Clear"),
-                                      ],
-                                    ),
+                                    errorWidget: (context, url, error) =>
+                                        Container(
+                                          color: Colors.grey.shade300,
+                                          child: const Icon(Icons.broken_image),
+                                        ),
                                   ),
                                 ),
                               );
-                            }
-
-                            final imageUrl = state.availableBackgrounds[index - 1];
-                            return GestureDetector(
-                              onTap: () {
-                                Navigator.pop(sheetContext);
-                                onPresetSelected(imageUrl);
-                              },
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(16),
-                                child: CachedNetworkImage(
-                                  imageUrl: imageUrl,
-                                  fit: BoxFit.cover,
-                                  placeholder: (context, url) => Container(
-                                    color: Colors.grey.shade300,
-                                    child: const Center(child: CircularProgressIndicator()),
-                                  ),
-                                  errorWidget: (context, url, error) => Container(
-                                    color: Colors.grey.shade300,
-                                    child: const Icon(Icons.broken_image),
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      },
+                            },
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
+                    const SizedBox(height: 16),
+                  ],
+                ),
               ),
             ),
           ),
@@ -419,122 +466,178 @@ class DiaryUIHelpers {
   }
 
   static void openStickerPicker(
-    BuildContext context,
-    Function(String url) onSelected, 
-  ) {
+    BuildContext context, {
+    required Function(String stickerUrl, double x, double y) onStickerSelected,
+  }) {
+    FocusManager.instance.primaryFocus?.unfocus();
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final bloc = context.read<DiaryEntryBloc>();
 
     bloc.add(LoadStickers());
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: theme.colorScheme.surface,
+      backgroundColor: theme.scaffoldBackgroundColor,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      shape: Border(),
       builder: (sheetContext) {
         return BlocProvider.value(
           value: bloc,
           child: SafeArea(
             child: SizedBox(
-              height: MediaQuery.of(sheetContext).size.height * 0.65,
-              child: Column(
-                children: [
-                  const SizedBox(height: 12),
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.withValues(alpha: 0.4),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Choose Sticker',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: BlocBuilder<DiaryEntryBloc, DiaryEntryState>(
-                      buildWhen: (prev, current) =>
-                          prev.availableStickers != current.availableStickers ||
-                          prev.isLoadingStickers != current.isLoadingStickers ||
-                          prev.stickersError != current.stickersError,
-                      builder: (context, state) {
-                        if (state.isLoadingStickers) {
-                          return const Center(child: CircularProgressIndicator());
-                        }
-                        if (state.stickersError != null) {
-                          return Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.error_outline, size: 48),
-                                const SizedBox(height: 8),
-                                Text('Failed to load stickers.'),
-                                TextButton(
-                                  onPressed: () => bloc.add(LoadStickers()),
-                                  child: const Text('Retry'),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-                        if (state.availableStickers.isEmpty) {
-                          return const Center(child: Text('No stickers found'));
-                        }
+              height: MediaQuery.of(sheetContext).size.height * 0.5,
 
-                        return GridView.builder(
-                          padding: const EdgeInsets.all(16),
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 4,
-                            mainAxisSpacing: 12,
-                            crossAxisSpacing: 12,
-                            childAspectRatio: 1,
+              child: BlocBuilder<DiaryEntryBloc, DiaryEntryState>(
+                buildWhen: (prev, current) =>
+                    prev.stickersByCategory != current.stickersByCategory ||
+                    prev.isLoadingStickers != current.isLoadingStickers ||
+                    prev.stickersError != current.stickersError,
+                builder: (context, state) {
+                  if (state.isLoadingStickers) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (state.stickersError != null) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            size: 48,
+                            color: theme.colorScheme.error,
                           ),
-                          itemCount: state.availableStickers.length,
-                          itemBuilder: (gridContext, index) {
-                            final stickerUrl = state.availableStickers[index];
-                            return GestureDetector(
-                              onTap: () {
-                                // Return the URL, then close the sheet
-                                onSelected(stickerUrl);
-                                Navigator.pop(sheetContext);
-                              },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: isDark
-                                      ? theme.colorScheme.surface.withValues(alpha: 0.5)
-                                      : theme.colorScheme.surface.withValues(alpha: 0.5),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: SvgPicture.network(
-                                    stickerUrl,
-                                    placeholderBuilder: (context) => Container(
-                                      color: Colors.grey.shade300,
-                                      child: const Center(
-                                        child: CircularProgressIndicator(),
-                                      ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Please check your internet connection, or please restart the app',
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                          const SizedBox(height: 12),
+                          FilledButton.tonal(
+                            onPressed: () => bloc.add(LoadStickers()),
+                            child: const Text("Try again"),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  final categories = state.stickersByCategory.keys.toList();
+
+                  if (categories.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.auto_awesome_outlined,
+                            size: 64,
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.3,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            "No stickers yet",
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.6,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return DefaultTabController(
+                    length: categories.length,
+                    child: Column(
+                      children: [
+                        SizedBox(
+                          height: 80,
+                          child: TabBar(
+                            padding: EdgeInsets.all(5),
+                            isScrollable: true,
+                            tabAlignment: TabAlignment.start,
+                            tabs: categories.map((cat) {
+                              return Tab(text: cat);
+                            }).toList(),
+                            labelStyle: theme.textTheme.titleSmall!.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            indicatorSize: TabBarIndicatorSize.label,
+                            indicatorColor: theme.colorScheme.primary,
+                            unselectedLabelColor: Colors.grey,
+                          ),
+                        ),
+                        Expanded(
+                          child: TabBarView(
+                            children: categories.map((category) {
+                              final stickerUrls =
+                                  state.stickersByCategory[category] ?? [];
+
+                              if (stickerUrls.isEmpty) {
+                                return Center(
+                                  child: Text(
+                                    "Nothing in this category",
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: theme.colorScheme.onSurface
+                                          .withValues(alpha: 0.5),
                                     ),
                                   ),
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      },
+                                );
+                              }
+
+                              return GridView.builder(
+                                padding: const EdgeInsets.all(16),
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 5,
+                                      mainAxisSpacing: 12,
+                                      crossAxisSpacing: 12,
+                                      childAspectRatio: 1,
+                                    ),
+                                itemCount: stickerUrls.length,
+                                itemBuilder: (ctx, index) {
+                                  final url = stickerUrls[index];
+                                  return InkWell(
+                                    borderRadius: BorderRadius.circular(16),
+                                    onTap: () {
+                                      Navigator.pop(sheetContext);
+                                      onStickerSelected(url, 0.5, 0.5);
+                                    },
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: CachedNetworkImage(
+                                        imageUrl: url,
+                                        fit: BoxFit.contain,
+                                        placeholder: (context, url) =>
+                                            const Center(
+                                              child: SizedBox(
+                                                width: 20,
+                                                height: 20,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                    ),
+                                              ),
+                                            ),
+                                        errorWidget: (context, url, error) =>
+                                            const Icon(Icons.broken_image),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
+                  );
+                },
               ),
             ),
           ),

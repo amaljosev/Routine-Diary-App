@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:routine/features/diary/data/models/diary_entry_model.dart';
 import 'package:routine/features/diary/domain/entities/sticker_model.dart';
 import 'package:routine/features/diary/presentation/blocs/diary/diary_bloc.dart';
@@ -82,7 +81,7 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
             if (state.errorMessage != null) {
               return Center(
                 child: Text(
-                  "Error: ${state.errorMessage}",
+                  "Please try again later",
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
               );
@@ -425,43 +424,65 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
           ),
 
           // Stickers – with proper size, scale, rotation
-          ...stickers.map((sticker) {
-            Widget stickerWidget;
-            if (sticker.localPath != null && File(sticker.localPath!).existsSync()) {
-              stickerWidget = SvgPicture.file(
-                File(sticker.localPath!),
-                fit: BoxFit.contain,
-              );
-            } else {
-              // Use network with a simple grey placeholder (no spinner)
-              stickerWidget = SvgPicture.network(
-                sticker.url,
-                fit: BoxFit.contain,
-                placeholderBuilder: (context) => Container(
-                  color: Colors.grey.shade300,
-                ),
-              );
-            }
+          // Stickers – load from local file first (WEBP/PNG/JPG)
+...stickers.map((sticker) {
+  Widget stickerWidget;
 
-            // Wrap in sized container with base size * scale
-            final sizedSticker = SizedBox(
-              width: _stickerBaseSize * sticker.size,
-              height: _stickerBaseSize * sticker.size,
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: stickerWidget,
-              ),
-            );
+  // 1️⃣ Try loading local file
+  if (sticker.localPath != null && sticker.localPath!.isNotEmpty) {
+    final file = File(sticker.localPath!);
+    if (file.existsSync()) {
+      stickerWidget = Image.file(
+        file,
+        fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) =>
+            const Icon(Icons.broken_image, size: 40),
+      );
+    } else {
+      stickerWidget = const Icon(Icons.broken_image, size: 40);
+    }
+  }
 
-            return Positioned(
-              left: sticker.x,
-              top: sticker.y,
-              child: Transform.rotate(
-                angle: sticker.rotation,
-                child: sizedSticker,
-              ),
-            );
-          }),
+  // 2️⃣ Else fallback to network (if exists)
+  else if (sticker.url.isNotEmpty) {
+    stickerWidget = Image.network(
+      sticker.url,
+      fit: BoxFit.contain,
+      errorBuilder: (_, __, ___) =>
+          const Icon(Icons.broken_image, size: 40),
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return Container(
+          color: Colors.grey.shade300,
+        );
+      },
+    );
+  }
+
+  // 3️⃣ Absolute fallback
+  else {
+    stickerWidget = const Icon(Icons.broken_image, size: 40);
+  }
+
+  // Wrap correctly with height/scale/rotation
+  final sizedSticker = SizedBox(
+    width: _stickerBaseSize * sticker.size,
+    height: _stickerBaseSize * sticker.size,
+    child: FittedBox(
+      fit: BoxFit.contain,
+      child: stickerWidget,
+    ),
+  );
+
+  return Positioned(
+    left: sticker.x,
+    top: sticker.y,
+    child: Transform.rotate(
+      angle: sticker.rotation,
+      child: sizedSticker,
+    ),
+  );
+}),
 
           // Images – with width/height * scale, rotation
           ...images.map((image) {

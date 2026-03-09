@@ -298,3 +298,7 @@ class StickerDownloadFailed extends DiaryEntryEvent {
   final String error;
   const StickerDownloadFailed(this.url, this.error);
 }
+class StickersByCategoryLoaded extends DiaryEntryEvent {
+  final Map<String, List<String>> stickersByCategory;
+  const StickersByCategoryLoaded(this.stickersByCategory);
+}
