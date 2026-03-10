@@ -230,6 +230,8 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
 
   final FocusNode _titleFocusNode = FocusNode();
   final FocusNode _descriptionFocusNode = FocusNode();
+  String _previousDescriptionText = '';
+  bool _isAutoInsertingBullet = false;
 
   // make mutable so you can toggle when dragging overlays
   final bool _isDraggingOverlay = false;
@@ -242,7 +244,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     _titleController.addListener(() {
       _bloc.add(TitleChanged(_titleController.text));
     });
-
+    _descriptionController.addListener(_handleDescriptionChange);
     _descriptionController.addListener(() {
       _bloc.add(DescriptionChanged(_descriptionController.text));
     });
@@ -259,6 +261,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   @override
   void dispose() {
     _titleController.dispose();
+    _descriptionController.removeListener(_handleDescriptionChange);
     _descriptionController.dispose();
     _scrollController.dispose();
     _titleFocusNode.dispose();
@@ -912,11 +915,6 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   }
 
   void _onBulletPressed() {
-    final FocusScopeNode focusScope = FocusScope.of(context);
-    if (!focusScope.hasFocus) {
-      focusScope.requestFocus(FocusNode());
-    }
-
     final text = _descriptionController.text;
     final selection = _descriptionController.selection;
 
@@ -935,8 +933,50 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       text: newText,
       selection: TextSelection.collapsed(offset: newCursorPos),
     );
+  }
 
-    FocusScope.of(context).requestFocus(FocusNode());
+  void _handleDescriptionChange() {
+    if (_isAutoInsertingBullet) return;
+    final newText = _descriptionController.text;
+    final oldText = _previousDescriptionText;
+    if (newText.length == oldText.length + 1 &&
+        newText.endsWith('\n') &&
+        !oldText.endsWith('\n')) {     
+      int lineStart = oldText.length - 1;
+      while (lineStart > 0 && oldText[lineStart - 1] != '\n') {
+        lineStart--;
+      }
+      final previousLine = oldText.substring(lineStart, oldText.length).trim();
+
+      if (previousLine.startsWith('• ') ||
+          previousLine.startsWith('- ') ||
+          previousLine.startsWith('* ') ||
+          previousLine.startsWith('\u2022 ')) {
+        _isAutoInsertingBullet = true;
+
+        final updatedText = '$newText• ';
+        final newCursorPos = updatedText.length;
+
+        _descriptionController.value = TextEditingValue(
+          text: updatedText,
+          selection: TextSelection.collapsed(offset: newCursorPos),
+        );
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_descriptionFocusNode.hasFocus) {
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 100),
+              curve: Curves.easeOut,
+            );
+          }
+        });
+
+        _isAutoInsertingBullet = false;
+      }
+    }
+
+    // Update the stored previous text after handling
+    _previousDescriptionText = _descriptionController.text;
   }
 
   Offset _findFreePositionForNewItem(double width, double height) {
