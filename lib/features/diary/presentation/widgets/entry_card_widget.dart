@@ -4,7 +4,6 @@ import 'package:routine/core/utils/converters.dart';
 import 'package:routine/features/diary/data/models/diary_entry_model.dart';
 import 'package:routine/features/diary/presentation/blocs/diary/diary_bloc.dart';
 import 'package:routine/features/diary/presentation/pages/preview/diary_preview.dart';
-import 'package:routine/features/diary/presentation/widgets/diary_ui_helpers.dart';
 
 class DiaryEntryCard extends StatelessWidget {
   final DiaryEntryModel entry;
@@ -15,10 +14,8 @@ class DiaryEntryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final color = _generateColorFromText(entry.mood + entry.title);
-    final colorD = DiaryUIHelpers.generateDarkColorFromText(
-      entry.mood + entry.title,
-    );
+    final color = theme.colorScheme.primary;
+    final colorD = theme.colorScheme.primary;
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 12),
       decoration: BoxDecoration(
@@ -65,7 +62,7 @@ class DiaryEntryCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: isDark
                         ? color.withValues(alpha: 0.1)
-                        : color.withValues(alpha: 0.3),
+                        : color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: isDark
@@ -78,7 +75,7 @@ class DiaryEntryCard extends StatelessWidget {
                     children: [
                       Text(
                         _getDay(entry.date),
-                        style: theme.textTheme.titleLarge!.copyWith(
+                        style: theme.textTheme.headlineMedium!.copyWith(
                           fontWeight: FontWeight.w900,
                           color: isDark ? Colors.white : colorD,
                         ),
@@ -312,9 +309,4 @@ class DiaryEntryCard extends StatelessWidget {
     return "$day/$month/$year";
   }
 
-  Color _generateColorFromText(String text) {
-    final hash = text.hashCode;
-    final hue = (hash.abs() % 360).toDouble();
-    return HSLColor.fromAHSL(1.0, hue, 0.7, 0.8).toColor();
-  }
 }

@@ -67,15 +67,12 @@ class _DiaryScreenState extends State<DiaryScreen> {
                   background: Stack(
                     fit: StackFit.expand,
                     children: [
-                      Hero(
-                        tag: 'headerTag',
-                        child: Image.asset(
-                          Theme.of(
-                                context,
-                              ).extension<BackgroundImageTheme>()?.imagePath ??
-                              'assets/img/themes/theme_1.png',
-                          fit: BoxFit.cover,
-                        ),
+                      Image.asset(
+                        Theme.of(
+                              context,
+                            ).extension<BackgroundImageTheme>()?.imagePath ??
+                            'assets/img/themes/theme_1.png',
+                        fit: BoxFit.cover,
                       ),
                     ],
                   ),
