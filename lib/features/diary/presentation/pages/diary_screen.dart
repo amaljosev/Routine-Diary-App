@@ -37,16 +37,12 @@ class _DiaryScreenState extends State<DiaryScreen> {
 
   Widget _buildNavItem({required IconData icon, required int index}) {
     final theme = Theme.of(context);
-    final isActive = selectedIndex == index;
-
     return GestureDetector(
       onTap: () => _onItemTapped(index),
       child: Icon(
         icon,
         size: 25,
-        color: isActive
-            ? theme.colorScheme.primary
-            : theme.colorScheme.onSurface.withValues(alpha: 0.5),
+        color:theme.colorScheme.primary,
       ),
     );
   }
@@ -253,9 +249,8 @@ class _DiaryScreenState extends State<DiaryScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildNavItem(icon: Icons.book_outlined, index: 0),
+              // _buildNavItem(icon: Icons.book_outlined, index: 0),
               _buildNavItem(icon: CupertinoIcons.calendar, index: 1),
-              _buildNavItem(icon: Icons.settings_rounded, index: 2),
               GestureDetector(
                 onTap: () async {
                   final result = await Navigator.of(context).push(
@@ -279,6 +274,8 @@ class _DiaryScreenState extends State<DiaryScreen> {
                   ),
                 ),
               ),
+              _buildNavItem(icon: Icons.settings_rounded, index: 2),
+              
             ],
           ),
         ),

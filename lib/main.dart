@@ -13,7 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:routine/features/onboarding/data/repositories/onboarding_repository_impl.dart';
 import 'package:routine/features/onboarding/domain/repositories/onboarding_repository.dart';
-import 'package:routine/features/onboarding/pages/splash_screen.dart';
+import 'package:routine/features/onboarding/presentation/pages/splash_screen.dart';
 import 'package:routine/features/settings/data/theme_repository_impl.dart';
 import 'package:routine/features/settings/domain/theme_repository.dart';
 import 'package:routine/features/settings/presentation/bloc/apptheme_bloc.dart';

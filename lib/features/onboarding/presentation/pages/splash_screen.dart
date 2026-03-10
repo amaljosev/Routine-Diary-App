@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:routine/core/services/app_update_service.dart';
 import 'package:routine/features/app_lock/presentation/widgets/lock_gate.dart';
-import 'package:routine/features/onboarding/pages/onboarding_screen.dart';
+import 'package:routine/features/onboarding/presentation/pages/onboarding_screen.dart';
 import 'package:routine/features/onboarding/presentation/bloc/splash_bloc.dart';
 import 'package:routine/features/onboarding/domain/repositories/onboarding_repository.dart';
 import 'package:routine/core/version/app_version.dart';

@@ -33,25 +33,37 @@ class _OnboardingViewState extends State<OnboardingView>
   late final AnimationController _slideController;
   late final AnimationController _scaleController;
 
-  // Data for each onboarding page
+  // Enhanced onboarding pages highlighting key app features
   final List<OnboardingPageData> _pages = const [
     OnboardingPageData(
-      icon: Icons.book_outlined,
-      title: 'Write Your Story',
+      icon: Icons.menu_book_outlined,
+      title: 'Your Personal Diary',
       description:
-          'Capture your daily thoughts and moments in a secure personal diary.',
+          'Capture your daily thoughts, feelings, and experiences in a beautiful, private space. Add titles, moods, and rich descriptions to every entry.',
     ),
     OnboardingPageData(
-      icon: Icons.storage_outlined,
-      title: 'Offline & Private',
+      icon: Icons.auto_awesome_outlined,
+      title: 'Express Yourself',
       description:
-          'All entries are stored locally on your device. No internet required.',
+          'Make each entry unique with stickers, photos, and custom backgrounds. Choose from multiple fonts and express your mood with emojis.',
+    ),
+    OnboardingPageData(
+      icon: Icons.lock_outline,
+      title: 'Secure & Private',
+      description:
+          'Your diary stays on your device. Add an extra layer of security with PIN lock, device biometrics, or a personal security question.',
+    ),
+    OnboardingPageData(
+      icon: Icons.calendar_month_outlined,
+      title: 'Memory Timeline',
+      description:
+          'Browse your entries visually with the calendar view. See your journey through time and relive special moments with ease.',
     ),
     OnboardingPageData(
       icon: Icons.palette_outlined,
-      title: 'Multiple Themes',
+      title: 'Your Style, Your Way',
       description:
-          'Switch between beautiful light, dark, and custom themes anytime.',
+          'Switch between light and dark themes, customize fonts, and download new sticker packs to keep your diary fresh and personal.',
     ),
   ];
 
@@ -126,38 +138,42 @@ class _OnboardingViewState extends State<OnboardingView>
       child: Scaffold(
         body: Stack(
           children: [
+            // Background particles for visual interest
             FloatingParticles(color: theme.colorScheme.primary),
 
             // Main content
             SafeArea(
               child: Column(
                 children: [
-                  // Animated skip button
+                  // Animated skip button - only shows when not on last page
                   BlocBuilder<OnboardingBloc, OnboardingState>(
                     builder: (context, state) {
                       if (state is OnboardingLoaded && !state.isLastPage) {
-                        return Align(
-                          alignment: Alignment.topRight,
-                          child: TextButton(
-                            onPressed: () {
-                              context
-                                  .read<OnboardingBloc>()
-                                  .add(SkipToEndTapped());
-                              // Also animate page view to last page
-                              _pageController.animateToPage(
-                                state.totalPages - 1,
-                                duration: const Duration(milliseconds: 600),
-                                curve: Curves.easeInOutCubic,
-                              );
-                            },
-                            style: TextButton.styleFrom(
-                              foregroundColor: theme.colorScheme.primary,
-                              textStyle:
-                                  theme.textTheme.labelLarge?.copyWith(
-                                fontWeight: FontWeight.w600,
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8, right: 16),
+                          child: Align(
+                            alignment: Alignment.topRight,
+                            child: TextButton(
+                              onPressed: () {
+                                context
+                                    .read<OnboardingBloc>()
+                                    .add(SkipToEndTapped());
+                                // Animate page view to last page
+                                _pageController.animateToPage(
+                                  state.totalPages - 1,
+                                  duration: const Duration(milliseconds: 600),
+                                  curve: Curves.easeInOutCubic,
+                                );
+                              },
+                              style: TextButton.styleFrom(
+                                foregroundColor: theme.colorScheme.primary,
+                                textStyle:
+                                    theme.textTheme.labelLarge?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
+                              child: const Text('Skip'),
                             ),
-                            child: const Text('Skip'),
                           ),
                         );
                       }
@@ -199,7 +215,7 @@ class _OnboardingViewState extends State<OnboardingView>
                                           mainAxisAlignment:
                                               MainAxisAlignment.center,
                                           children: [
-                                            // Animated icon container
+                                            // Animated icon container with gradient
                                             Transform.scale(
                                               scale: 0.8 +
                                                   (0.2 * _scaleController.value),
@@ -232,7 +248,7 @@ class _OnboardingViewState extends State<OnboardingView>
 
                                             SizedBox(height: size.height * 0.03),
 
-                                            // Animated title
+                                            // Animated title with elegant typography
                                             SlideTransition(
                                               position: Tween<Offset>(
                                                 begin: const Offset(0, 0.3),
@@ -257,7 +273,7 @@ class _OnboardingViewState extends State<OnboardingView>
 
                                             SizedBox(height: size.height * 0.015),
 
-                                            // Animated description
+                                            // Animated description with better readability
                                             SlideTransition(
                                               position: Tween<Offset>(
                                                 begin: const Offset(0, 0.2),
@@ -296,7 +312,7 @@ class _OnboardingViewState extends State<OnboardingView>
                     ),
                   ),
 
-                  // Animated page indicator
+                  // Animated page indicator with smooth transitions
                   BlocBuilder<OnboardingBloc, OnboardingState>(
                     builder: (context, state) {
                       if (state is OnboardingLoaded) {
@@ -337,7 +353,7 @@ class _OnboardingViewState extends State<OnboardingView>
 
                   SizedBox(height: size.height * 0.02),
 
-                  // Animated button
+                  // Animated action button (Next/Get Started)
                   Padding(
                     padding: EdgeInsets.symmetric(
                       horizontal: size.width * 0.08,
