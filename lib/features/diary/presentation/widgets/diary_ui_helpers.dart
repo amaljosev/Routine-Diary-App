@@ -433,14 +433,12 @@ class DiaryUIHelpers {
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(16),
                                   child: CachedNetworkImage(
+                                    fadeInDuration: Duration.zero,
+                                    fadeOutDuration: Duration.zero,
+                                    placeholder: (_, __) =>
+                                        Container(color: Colors.grey.shade200),
                                     imageUrl: imageUrl,
                                     fit: BoxFit.cover,
-                                    placeholder: (context, url) => Container(
-                                      color: Colors.grey.shade300,
-                                      child: const Center(
-                                        child: CircularProgressIndicator(),
-                                      ),
-                                    ),
                                     errorWidget: (context, url, error) =>
                                         Container(
                                           color: Colors.grey.shade300,
@@ -473,7 +471,9 @@ class DiaryUIHelpers {
     final theme = Theme.of(context);
     final bloc = context.read<DiaryEntryBloc>();
 
-    bloc.add(LoadStickers());
+    if (bloc.state.stickersByCategory.isEmpty) {
+      bloc.add(LoadStickers());
+    }
 
     showModalBottomSheet(
       context: context,
@@ -611,21 +611,18 @@ class DiaryUIHelpers {
                                     child: ClipRRect(
                                       borderRadius: BorderRadius.circular(12),
                                       child: CachedNetworkImage(
+                                        fadeInDuration: Duration.zero,
+                                        fadeOutDuration: Duration.zero,
+                                        placeholder: (_, __) =>
+                                            const SizedBox.shrink(),
                                         imageUrl: url,
                                         fit: BoxFit.contain,
-                                        placeholder: (context, url) =>
-                                            const Center(
-                                              child: SizedBox(
-                                                width: 20,
-                                                height: 20,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                      strokeWidth: 2,
-                                                    ),
-                                              ),
-                                            ),
+
                                         errorWidget: (context, url, error) =>
-                                            const Icon(Icons.broken_image),
+                                            const Icon(
+                                              Icons.broken_image,
+                                              color: Colors.grey,
+                                            ),
                                       ),
                                     ),
                                   );
