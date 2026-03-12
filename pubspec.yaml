@@ -31,7 +31,6 @@ dependencies:
   cached_network_image: ^3.4.1
   cupertino_icons: ^1.0.8
   equatable: ^2.0.8
-  fl_chart: ^1.0.0
   flutter:
     sdk: flutter
   flutter_bloc: ^9.1.1
@@ -133,6 +132,3 @@ flutter:
       fonts:
         - asset: assets/fonts/ShadowsIntoLight-Regular.ttf
         
-    - family: MyFlutterApp
-      fonts:
-        - asset: assets/icons/MyFlutterApp.ttf

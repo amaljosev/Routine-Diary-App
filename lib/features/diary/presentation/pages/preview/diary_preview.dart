@@ -1,15 +1,24 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:cached_network_image/cached_network_image.dart';
+
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart' as intl;
+
+import 'package:routine/core/utils/diary_color_parser.dart';
 import 'package:routine/features/diary/data/models/diary_entry_model.dart';
 import 'package:routine/features/diary/domain/entities/sticker_model.dart';
 import 'package:routine/features/diary/presentation/blocs/diary/diary_bloc.dart';
 import 'package:routine/features/diary/presentation/blocs/diary_entry/diary_entry_bloc.dart';
 import 'package:routine/features/diary/presentation/pages/entry/diary_entry.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart' as intl;
+import 'package:routine/features/diary/presentation/widgets/delete_entry_dialog.dart';
+import 'package:routine/features/diary/presentation/widgets/image_overlay.dart';
+import 'package:routine/features/diary/presentation/widgets/sticker_overlay.dart';
+
+// ============================================================
+// ================== ENTRY POINT =============================
+// ============================================================
 
 class DiaryPreviewScreen extends StatelessWidget {
   final String entryId;
@@ -25,6 +34,10 @@ class DiaryPreviewScreen extends StatelessWidget {
   }
 }
 
+// ============================================================
+// ================== FORM ====================================
+// ============================================================
+
 class DiaryEntryPreviewForm extends StatefulWidget {
   final String entryId;
 
@@ -36,69 +49,75 @@ class DiaryEntryPreviewForm extends StatefulWidget {
 
 class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
   final ScrollController _scrollController = ScrollController();
-  final GlobalKey _descriptionKey = GlobalKey();
-  double scrollOffset = 0.0;
 
-  // Base size for stickers (same as in _TransformableItem)
-  static const double _stickerBaseSize = 100.0;
-
-  @override
-  void initState() {
-    super.initState();
-    _scrollController.addListener(_updateScrollOffset);
-  }
-
-  void _updateScrollOffset() {
-    setState(() {
-      scrollOffset = _scrollController.offset;
-    });
-  }
+  // ── Lifecycle ──────────────────────────────────────────────────────────────
 
   @override
   void dispose() {
-    _scrollController.removeListener(_updateScrollOffset);
     _scrollController.dispose();
     super.dispose();
   }
 
+  // ── JSON parsers ───────────────────────────────────────────────────────────
+
+  List<StickerModel> _parseStickers(DiaryEntryModel entry) {
+    try {
+      if (entry.stickersJson == null || entry.stickersJson!.isEmpty) return [];
+      return (List<Map<String, dynamic>>.from(jsonDecode(entry.stickersJson!)))
+          .map((m) => StickerModel.fromJson(m))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  List<DiaryImage> _parseImages(DiaryEntryModel entry) {
+    try {
+      if (entry.imagesJson == null || entry.imagesJson!.isEmpty) return [];
+      return (List<Map<String, dynamic>>.from(jsonDecode(entry.imagesJson!)))
+          .map((m) => DiaryImage.fromJson(m))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  // ── Root ───────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      onPopInvokedWithResult: (didPop, result) =>
+      onPopInvokedWithResult: (_, __) =>
           context.read<DiaryBloc>().add(LoadDiaryEntries()),
       child: Scaffold(
         body: BlocBuilder<DiaryBloc, DiaryState>(
-          buildWhen: (previous, current) {
-            return current.entries.any((e) => e.id == widget.entryId) ||
-                previous.isLoading != current.isLoading ||
-                previous.errorMessage != current.errorMessage;
-          },
+          buildWhen: (p, c) =>
+              c.entries.any((e) => e.id == widget.entryId) ||
+              p.isLoading != c.isLoading ||
+              p.errorMessage != c.errorMessage,
           builder: (context, state) {
             if (state.isLoading) {
               return const Center(child: CircularProgressIndicator());
             }
-
             if (state.errorMessage != null) {
               return Center(
                 child: Text(
-                  "Please try again later",
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                  'Please try again later',
+                  style:
+                      TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
               );
             }
-
             try {
-              final entry = state.entries.firstWhere(
-                (e) => e.id == widget.entryId,
-              );
+              final entry =
+                  state.entries.firstWhere((e) => e.id == widget.entryId);
               return _buildBackground(context, entry);
-            } catch (e) {
+            } catch (_) {
               return Center(
                 child: Text(
-                  "Diary entry not found",
+                  'Diary entry not found',
                   style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
+                      color: Theme.of(context).colorScheme.onSurface),
                 ),
               );
             }
@@ -108,461 +127,282 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
     );
   }
 
+  // ── Background — identical structure to entry screen ──────────────────────
+
   Widget _buildBackground(BuildContext context, DiaryEntryModel entry) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
-    final Color? parsedColor = _parseColorFromString(entry.bgColor);
-    final Color backgroundColor = parsedColor ?? theme.scaffoldBackgroundColor;
+    final backgroundColor =
+        parseDiaryColor(entry.bgColor) ?? theme.scaffoldBackgroundColor;
 
-    ImageProvider? localImage;
-    String? networkUrl;
+    ImageProvider? backgroundImage;
 
     if (entry.bgGalleryImagePath != null &&
         entry.bgGalleryImagePath!.isNotEmpty) {
       final file = File(entry.bgGalleryImagePath!);
-      if (file.existsSync()) {
-        localImage = FileImage(file);
-      }
+      if (file.existsSync()) backgroundImage = FileImage(file);
     } else if (entry.bgLocalPath != null && entry.bgLocalPath!.isNotEmpty) {
       final file = File(entry.bgLocalPath!);
       if (file.existsSync()) {
-        localImage = FileImage(file);
-      } else {
-        if (entry.bgImagePath != null && entry.bgImagePath!.isNotEmpty) {
-          if (entry.bgImagePath!.startsWith('http')) {
-            networkUrl = entry.bgImagePath;
-          } else {
-            localImage = AssetImage(entry.bgImagePath!);
-          }
-        }
+        backgroundImage = FileImage(file);
+      } else if (entry.bgImagePath != null && entry.bgImagePath!.isNotEmpty) {
+        backgroundImage = entry.bgImagePath!.startsWith('http')
+            ? NetworkImage(entry.bgImagePath!)
+            : AssetImage(entry.bgImagePath!) as ImageProvider;
       }
     } else if (entry.bgImagePath != null && entry.bgImagePath!.isNotEmpty) {
-      if (entry.bgImagePath!.startsWith('http')) {
-        networkUrl = entry.bgImagePath;
-      } else {
-        localImage = AssetImage(entry.bgImagePath!);
-      }
+      backgroundImage = entry.bgImagePath!.startsWith('http')
+          ? NetworkImage(entry.bgImagePath!)
+          : AssetImage(entry.bgImagePath!) as ImageProvider;
     }
 
     return Container(
-      color: backgroundColor,
-      child: Stack(
-        children: [
-          if (localImage != null)
-            Positioned.fill(
-              child: Image(
-                image: localImage,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) =>
-                    Container(color: backgroundColor),
-              ),
-            )
-          else if (networkUrl != null)
-            Positioned.fill(
-              child: CachedNetworkImage(
-                imageUrl: networkUrl,
-                fit: BoxFit.cover,
-                placeholder: (context, url) =>
-                    Container(color: backgroundColor),
-                errorWidget: (context, url, error) =>
-                    Container(color: backgroundColor),
-              ),
-            ),
-
-          if (localImage != null || networkUrl != null)
-            Positioned.fill(
-              child: Container(
-                color: isDark
-                    ? Colors.black.withValues(alpha: 0.4)
-                    : Colors.white.withValues(alpha: 0.4),
-              ),
-            ),
-
-          SafeArea(child: _buildContent(context, entry)),
-        ],
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        image: backgroundImage != null
+            ? DecorationImage(image: backgroundImage, fit: BoxFit.cover)
+            : null,
+      ),
+      child: SafeArea(
+        child: Stack(
+          children: [
+            Container(
+                color: theme.colorScheme.surface.withValues(alpha: 0.4)),
+            _buildContent(context, entry),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildContent(BuildContext context, DiaryEntryModel entry) {
-    final theme = Theme.of(context);
+  // ── Content ────────────────────────────────────────────────────────────────
+  // Stickers/images are NOT spread here — they live inside _buildDescriptionSection
+  // so they render at the correct description-local coordinates and scroll
+  // with the content, mirroring the entry screen architecture exactly.
 
-    return Column(
+  Widget _buildContent(BuildContext context, DiaryEntryModel entry) {
+    return Stack(
       children: [
-        AppBar(
-          leading: IconButton(
-            onPressed: () {
-              Navigator.pop(context);
-              context.read<DiaryBloc>().add(LoadDiaryEntries());
-            },
-            icon: Icon(CupertinoIcons.back),
-          ),
-          title: null,
-          backgroundColor: Colors.transparent,
-          foregroundColor: theme.colorScheme.onSurface,
-          forceMaterialTransparency: true,
-          automaticallyImplyLeading: true,
-          elevation: 0,
-          actions: [
-            IconButton(
-              onPressed: () async {
-                await Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => DiaryEntryScreen(entry: entry),
-                  ),
-                );
-                if (context.mounted) {
-                  Future.delayed(const Duration(milliseconds: 100), () {
-                    if (context.mounted) {
-                      context.read<DiaryBloc>().add(FetchEntryById(entry.id));
-                    }
-                  });
-                }
-              },
-              icon: Icon(Icons.edit),
-              tooltip: 'Edit Entry',
-            ),
-            IconButton(
-              onPressed: () => _showDeleteConfirmation(context, entry),
-              icon: Icon(CupertinoIcons.delete),
-              tooltip: 'Delete Entry',
-            ),
-          ],
-        ),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: CustomScrollView(
-              controller: _scrollController,
-              slivers: [
-                SliverToBoxAdapter(child: _buildDateOnlyHeader(context, entry)),
-                SliverToBoxAdapter(child: _buildMoodAndTitle(context, entry)),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 20),
-                    child: _buildDescriptionSection(context, entry),
+        Column(
+          children: [
+            _buildAppBar(context, entry),
+            Expanded(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {},
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: CustomScrollView(
+                    controller: _scrollController,
+                    physics: const BouncingScrollPhysics(),
+                    slivers: [
+                      SliverToBoxAdapter(
+                          child: _buildHeaderSection(context, entry)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                      SliverToBoxAdapter(
+                          child: _buildTitleField(context, entry)),
+                      SliverToBoxAdapter(
+                          child: _buildDescriptionSection(context, entry)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                    ],
                   ),
                 ),
-                const SliverToBoxAdapter(child: SizedBox(height: 20)),
-              ],
+              ),
             ),
-          ),
+            // Matches the height of _buildActionButtons in the entry screen
+            // so the scrollable viewport has the exact same height.
+            const SafeArea(child: SizedBox(height: 80)),
+          ],
         ),
-        const SizedBox(height: 20),
       ],
     );
   }
 
-  Widget _buildMoodAndTitle(BuildContext context, DiaryEntryModel entry) {
+  // ── AppBar ─────────────────────────────────────────────────────────────────
+
+  AppBar _buildAppBar(BuildContext context, DiaryEntryModel entry) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12.0),
-      child: Row(
-        children: [
-          Container(
-            margin: const EdgeInsets.only(right: 12),
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Hero(
-              tag: 'moodTag${entry.id}',
-              child: Text(
-                entry.mood.isEmpty ? '😊' : entry.mood,
-                style: const TextStyle(fontSize: 24),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              entry.title.isEmpty ? "Untitled Entry" : entry.title,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: theme.colorScheme.onSurface,
-                fontFamily: entry.fontFamily,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
+
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      foregroundColor: theme.colorScheme.onSurface,
+      forceMaterialTransparency: true,
+      leading: IconButton(
+        onPressed: () {
+          Navigator.pop(context);
+          context.read<DiaryBloc>().add(LoadDiaryEntries());
+        },
+        icon: const Icon(CupertinoIcons.back),
       ),
+      actions: [
+        IconButton(
+          onPressed: () async {
+            await Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => DiaryEntryScreen(entry: entry),
+              ),
+            );
+            if (context.mounted) {
+              Future.delayed(const Duration(milliseconds: 100), () {
+                if (context.mounted) {
+                  context.read<DiaryBloc>().add(FetchEntryById(entry.id));
+                }
+              });
+            }
+          },
+          icon: const Icon(Icons.edit),
+          tooltip: 'Edit Entry',
+        ),
+        IconButton(
+          onPressed: () => showDeleteEntryDialog(context, entry),
+          icon: const Icon(CupertinoIcons.delete),
+          tooltip: 'Delete Entry',
+        ),
+      ],
     );
   }
 
-  Widget _buildDateOnlyHeader(BuildContext context, DiaryEntryModel entry) {
+  // ── Header — pixel-perfect copy of entry screen header ────────────────────
+
+  Widget _buildHeaderSection(BuildContext context, DiaryEntryModel entry) {
+    final theme = Theme.of(context);
     final date = entry.date.isNotEmpty
         ? DateTime.tryParse(entry.date) ?? DateTime.now()
         : DateTime.now();
 
     return Row(
-      spacing: 10,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Text(
-          intl.DateFormat('dd').format(date),
-          style: Theme.of(context).textTheme.headlineLarge!.copyWith(
-            fontWeight: FontWeight.w900,
-            color: Theme.of(context).colorScheme.onSurface,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                intl.DateFormat('dd').format(date),
+                style: theme.textTheme.headlineLarge!.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+              Row(
+                children: [
+                  Text(
+                    intl.DateFormat('EE').format(date),
+                    style: theme.textTheme.titleMedium!.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    intl.DateFormat('MMMM yyyy').format(date),
+                    style: theme.textTheme.titleMedium!.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color:
+                          theme.colorScheme.primary.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  // Invisible icon — same size as entry screen dropdown arrow
+                  // so this Row renders at the exact same height.
+                  const Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: Colors.transparent,
+                  ),
+                ],
+              ),
+              Container(
+                height: 10,
+                width: 150,
+                color: theme.colorScheme.primary.withValues(alpha: 0.5),
+              ),
+            ],
           ),
         ),
-        Text(
-          intl.DateFormat('MMM').format(date),
-          style: Theme.of(context).textTheme.titleLarge!.copyWith(
-            fontWeight: FontWeight.w700,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-        ),
-        Text(
-          intl.DateFormat('yyyy').format(date),
-          style: Theme.of(context).textTheme.titleLarge!.copyWith(
-            fontWeight: FontWeight.w900,
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+        CircleAvatar(
+          backgroundColor:
+              theme.colorScheme.primary.withValues(alpha: 0.1),
+          radius: 25,
+          child: Hero(
+            tag: 'moodTag${entry.id}',
+            child: Text(
+              entry.mood.isEmpty ? '😊' : entry.mood,
+              style: const TextStyle(fontSize: 24),
+            ),
           ),
         ),
       ],
     );
   }
 
-  Future<void> _showDeleteConfirmation(
-    BuildContext context,
-    DiaryEntryModel entry,
-  ) async {
+  // ── Title — identical TextFormField to entry screen ───────────────────────
+
+  Widget _buildTitleField(BuildContext context, DiaryEntryModel entry) {
     final theme = Theme.of(context);
-
-    return showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: theme.colorScheme.surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+    return IgnorePointer(
+      child: TextFormField(
+        initialValue: entry.title,
+        maxLines: null,
+        maxLength: 50,
+        decoration: InputDecoration(
+          hintText: 'Title',
+          hintStyle: theme.textTheme.bodyLarge?.copyWith(
+            fontWeight: FontWeight.w900,
+            fontSize: 24,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+            fontFamily: entry.fontFamily,
           ),
-          title: Text(
-            'Delete Entry',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+          border: InputBorder.none,
+          counterStyle: TextStyle(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
           ),
-          content: Text(
-            'Are you sure you want to delete this diary entry? This action cannot be undone.',
-            style: theme.textTheme.bodyMedium,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              style: TextButton.styleFrom(
-                foregroundColor: theme.colorScheme.onSurface.withValues(
-                  alpha: 0.6,
-                ),
-              ),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                context.read<DiaryBloc>().add(DeleteDiaryEntry(entry.id));
-                Navigator.pop(context, true);
-              },
-              style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.white,
-                backgroundColor: Colors.redAccent,
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text('Delete'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildDescriptionSection(BuildContext context, DiaryEntryModel entry) {
-    final theme = Theme.of(context);
-
-    List<StickerModel> stickers = [];
-    List<DiaryImage> images = [];
-
-    try {
-      stickers = (entry.stickersJson != null)
-          ? (List<Map<String, dynamic>>.from(
-              jsonDecode(entry.stickersJson ?? '[]'),
-            )).map((m) => StickerModel.fromJson(m)).toList()
-          : [];
-    } catch (_) {}
-
-    try {
-      images = (entry.imagesJson != null)
-          ? (List<Map<String, dynamic>>.from(
-              jsonDecode(entry.imagesJson ?? '[]'),
-            )).map((m) => DiaryImage.fromJson(m)).toList()
-          : [];
-    } catch (_) {}
-
-    return Container(
-      key: _descriptionKey,
-      constraints: const BoxConstraints(minHeight: 400),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // Text content
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: SelectableText(
-              entry.content.isEmpty ? "What's on your mind?" : entry.content,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurface,
-                height: 1.5,
-                fontFamily: entry.fontFamily,
-              ),
-            ),
-          ),
-
-          // Stickers – with proper size, scale, rotation
-          // Stickers – load from local file first (WEBP/PNG/JPG)
-...stickers.map((sticker) {
-  Widget stickerWidget;
-
-  // 1️⃣ Try loading local file
-  if (sticker.localPath != null && sticker.localPath!.isNotEmpty) {
-    final file = File(sticker.localPath!);
-    if (file.existsSync()) {
-      stickerWidget = Image.file(
-        file,
-        fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) =>
-            const Icon(Icons.broken_image, size: 40),
-      );
-    } else {
-      stickerWidget = const Icon(Icons.broken_image, size: 40);
-    }
-  }
-
-  // 2️⃣ Else fallback to network (if exists)
-  else if (sticker.url.isNotEmpty) {
-    stickerWidget = Image.network(
-      sticker.url,
-      fit: BoxFit.contain,
-      errorBuilder: (_, __, ___) =>
-          const Icon(Icons.broken_image, size: 40),
-      loadingBuilder: (context, child, loadingProgress) {
-        if (loadingProgress == null) return child;
-        return Container(
-          color: Colors.grey.shade300,
-        );
-      },
-    );
-  }
-
-  // 3️⃣ Absolute fallback
-  else {
-    stickerWidget = const Icon(Icons.broken_image, size: 40);
-  }
-
-  // Wrap correctly with height/scale/rotation
-  final sizedSticker = SizedBox(
-    width: _stickerBaseSize * sticker.size,
-    height: _stickerBaseSize * sticker.size,
-    child: FittedBox(
-      fit: BoxFit.contain,
-      child: stickerWidget,
-    ),
-  );
-
-  return Positioned(
-    left: sticker.x,
-    top: sticker.y,
-    child: Transform.rotate(
-      angle: sticker.rotation,
-      child: sizedSticker,
-    ),
-  );
-}),
-
-          // Images – with width/height * scale, rotation
-          ...images.map((image) {
-            return Positioned(
-              left: image.x,
-              top: image.y,
-              child: Transform.rotate(
-                angle: image.rotation,
-                child: SizedBox(
-                  width: image.width * image.scale,
-                  height: image.height * image.scale,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.file(
-                      File(image.imagePath),
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: Colors.grey,
-                          child: const Icon(Icons.broken_image, color: Colors.white),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }),
-        ],
+        ),
+        style: theme.textTheme.bodyLarge?.copyWith(
+          fontWeight: FontWeight.w900,
+          fontSize: 24,
+          color: theme.colorScheme.onSurface,
+          fontFamily: entry.fontFamily,
+        ),
       ),
     );
   }
 
-  Color? _parseColorFromString(String? input) {
-    if (input == null || input.isEmpty) return null;
-    final String s = input.trim();
+  // ── Description — overlays rendered inside the Stack ──────────────────────
+  // Mirrors the entry screen _buildDescriptionSection exactly:
+  //   • images rendered first (lower Z)
+  //   • stickers rendered last (upper Z, always on top of images)
+  // Coordinates are description-local so they align with the editor positions.
 
-    if (RegExp(r'^[0-9a-fA-F]{8}$').hasMatch(s)) {
-      return Color(int.parse(s, radix: 16));
-    }
+  Widget _buildDescriptionSection(
+      BuildContext context, DiaryEntryModel entry) {
+    final stickers = _parseStickers(entry);
+    final images = _parseImages(entry);
 
-    final colorRegex = RegExp(r'^Color\(0x([0-9a-fA-F]{8})\)$');
-    final match = colorRegex.firstMatch(s);
-    if (match != null) {
-      final hex = match.group(1);
-      if (hex != null) {
-        return Color(int.parse(hex, radix: 16));
-      }
-    }
+    return Container(
+      constraints: const BoxConstraints(minHeight: 400),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // ── TextField (bottom) ──────────────────────────────────────────
+          IgnorePointer(
+            child: TextFormField(
+              initialValue: entry.content,
+              maxLines: null,
+              decoration: const InputDecoration(
+                hintText: "What's on your mind?",
+                border: InputBorder.none,
+              ),
+              style: TextStyle(fontFamily: entry.fontFamily),
+            ),
+          ),
 
-    final customRegex = RegExp(
-      r'red:\s*([0-9.]+),\s*green:\s*([0-9.]+),\s*blue:\s*([0-9.]+),\s*alpha:\s*([0-9.]+)',
+          // ── Images (middle) ─────────────────────────────────────────────
+          ...images.map((i) => ImageOverlay(image: i)),
+
+          // ── Stickers (top) ──────────────────────────────────────────────
+          ...stickers.map((s) => StickerOverlay(sticker: s)),
+        ],
+      ),
     );
-    final customMatch = customRegex.firstMatch(s);
-    if (customMatch != null) {
-      try {
-        final r = double.parse(customMatch.group(1)!);
-        final g = double.parse(customMatch.group(2)!);
-        final b = double.parse(customMatch.group(3)!);
-        final a = double.parse(customMatch.group(4)!);
-        return Color.fromRGBO(
-          (r * 255).round(),
-          (g * 255).round(),
-          (b * 255).round(),
-          a,
-        );
-      } catch (_) {}
-    }
-
-    String hex = s;
-    if (hex.startsWith('#')) hex = hex.substring(1);
-    if (hex.startsWith('0x')) hex = hex.substring(2);
-    if (hex.length == 6) hex = 'FF$hex';
-    if (hex.length == 8) {
-      try {
-        return Color(int.parse(hex, radix: 16));
-      } catch (_) {}
-    }
-
-    return null;
   }
 }
-

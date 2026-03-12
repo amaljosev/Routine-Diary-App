@@ -1,207 +1,29 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
+
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:routine/features/diary/data/models/diary_entry_model.dart';
-import 'package:routine/features/diary/domain/entities/sticker_model.dart';
-import 'package:routine/features/diary/presentation/blocs/diary/diary_bloc.dart';
-import 'package:routine/features/diary/presentation/blocs/diary_entry/diary_entry_bloc.dart';
-import 'package:routine/features/diary/presentation/widgets/diary_ui_helpers.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart' as intl;
 
-// ============================================================
-// ================== TRANSFORMABLE ITEM WIDGET ===============
-// ============================================================
-
-typedef ItemTransformUpdate =
-    void Function({
-      required String id,
-      required double x,
-      required double y,
-      required double scale,
-      required double rotation,
-    });
-
-class _TransformableItem extends StatefulWidget {
-  final String id;
-  final Widget child;
-  final Offset initialPosition;
-  final double initialScale;
-  final double initialRotation;
-  final bool isSelected;
-  final ItemTransformUpdate onUpdate;
-  final VoidCallback onRemove;
-  final VoidCallback onSelect;
-  final double? baseWidth;
-  final double? baseHeight;
-
-  const _TransformableItem({
-    Key? key,
-    required this.id,
-    required this.child,
-    required this.initialPosition,
-    required this.initialScale,
-    required this.initialRotation,
-    required this.isSelected,
-    required this.onUpdate,
-    required this.onRemove,
-    required this.onSelect,
-    this.baseWidth,
-    this.baseHeight,
-  }) : super(key: key);
-
-  @override
-  __TransformableItemState createState() => __TransformableItemState();
-}
-
-class __TransformableItemState extends State<_TransformableItem> {
-  late Offset _position;
-  late double _scale;
-  late double _rotation;
-
-  Offset? _lastFocalPoint;
-  double _initialScaleOnGesture = 1.0;
-  double _initialRotationOnGesture = 0.0;
-
-  static const double _handlePadding = 20.0;
-  static const double _stickerBaseSize = 100.0;
-
-  @override
-  void initState() {
-    super.initState();
-    _position = widget.initialPosition;
-    _scale = widget.initialScale;
-    _rotation = widget.initialRotation;
-  }
-
-  void _updateTransform() {
-    widget.onUpdate(
-      id: widget.id,
-      x: _position.dx,
-      y: _position.dy,
-      scale: _scale,
-      rotation: _rotation,
-    );
-  }
-
-  void _onScaleStart(ScaleStartDetails details) {
-    _lastFocalPoint = details.focalPoint;
-    _initialScaleOnGesture = _scale;
-    _initialRotationOnGesture = _rotation;
-  }
-
-  void _onScaleUpdate(ScaleUpdateDetails details) {
-    if (details.pointerCount == 1) {
-      final delta = details.focalPoint - _lastFocalPoint!;
-      setState(() {
-        _position += delta;
-        _lastFocalPoint = details.focalPoint;
-      });
-    } else {
-      final newScale = (_initialScaleOnGesture * details.scale).clamp(0.3, 5.0);
-      final newRotation = _initialRotationOnGesture + details.rotation;
-
-      setState(() {
-        _scale = newScale;
-        _rotation = newRotation;
-        final delta = details.focalPoint - _lastFocalPoint!;
-        _position += delta;
-        _lastFocalPoint = details.focalPoint;
-      });
-    }
-  }
-
-  void _onScaleEnd(ScaleEndDetails details) {
-    _updateTransform();
-  }
-
-  void _onTap() => widget.onSelect();
-
-  void _onRemoveTap() => widget.onRemove();
-
-  @override
-  Widget build(BuildContext context) {
-    Widget content;
-
-    if (widget.baseWidth != null && widget.baseHeight != null) {
-      final width = widget.baseWidth! * _scale;
-      final height = widget.baseHeight! * _scale;
-
-      content = SizedBox(width: width, height: height, child: widget.child);
-    } else {
-      content = Container(
-        width: _stickerBaseSize * _scale,
-        height: _stickerBaseSize * _scale,
-        alignment: Alignment.center,
-        child: FittedBox(fit: BoxFit.scaleDown, child: widget.child),
-      );
-    }
-
-    content = Transform.rotate(angle: _rotation, child: content);
-
-    final paddedChild = Padding(
-      padding: const EdgeInsets.all(_handlePadding),
-      child: content,
-    );
-
-    Widget displayChild = paddedChild;
-
-    if (widget.isSelected) {
-      // Add dashed border around the padded child
-      displayChild = CustomPaint(
-        painter: DashedBorderPainter(
-          color: Theme.of(context).colorScheme.primary,
-          strokeWidth: 2,
-          gap: 4,
-        ),
-        child: paddedChild,
-      );
-    }
-
-    final List<Widget> stackChildren = [displayChild];
-
-    if (widget.isSelected) {
-      // Keep only the remove button (no rotate button, no corner handles)
-      stackChildren.addAll([
-        Positioned(
-          top: 0,
-          left: 0,
-          child: GestureDetector(
-            onTap: _onRemoveTap,
-            child: const CircleAvatar(
-              radius: 12,
-              backgroundColor: Colors.red,
-              child: Icon(Icons.close, size: 14, color: Colors.white),
-            ),
-          ),
-        ),
-      ]);
-    }
-
-    return Positioned(
-      left: _position.dx - _handlePadding,
-      top: _position.dy - _handlePadding,
-      child: GestureDetector(
-        onTap: _onTap,
-        onScaleStart: _onScaleStart,
-        onScaleUpdate: _onScaleUpdate,
-        onScaleEnd: _onScaleEnd,
-        child: Stack(clipBehavior: Clip.none, children: stackChildren),
-      ),
-    );
-  }
-}
+import 'package:routine/features/diary/data/models/diary_entry_model.dart';
+import 'package:routine/features/diary/domain/entities/sticker_model.dart';
+import 'package:routine/features/diary/presentation/blocs/diary/diary_bloc.dart';
+import 'package:routine/features/diary/presentation/blocs/diary_entry/diary_entry_bloc.dart';
+import 'package:routine/features/diary/presentation/widgets/font_picker_sheet.dart';
+import 'package:routine/features/diary/presentation/widgets/transformable_item.dart';
+import 'package:routine/features/diary/presentation/widgets/diary_ui_helpers.dart';
 
 // ============================================================
-// ================== MAIN SCREEN =============================
+// ================== ENTRY POINT =============================
 // ============================================================
 
 class DiaryEntryScreen extends StatelessWidget {
   const DiaryEntryScreen({super.key, required this.entry});
+
   final DiaryEntryModel? entry;
 
   @override
@@ -213,8 +35,13 @@ class DiaryEntryScreen extends StatelessWidget {
   }
 }
 
+// ============================================================
+// ================== FORM ====================================
+// ============================================================
+
 class DiaryEntryForm extends StatefulWidget {
   const DiaryEntryForm({super.key, required this.entry});
+
   final DiaryEntryModel? entry;
 
   @override
@@ -225,35 +52,39 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+
+  /// Key on the description Container — used to:
+  ///   1. Measure bounds for clamping overlay movement.
+  ///   2. Compute free placement positions.
   final GlobalKey _descriptionKey = GlobalKey();
-  late DiaryEntryBloc _bloc;
 
   final FocusNode _titleFocusNode = FocusNode();
   final FocusNode _descriptionFocusNode = FocusNode();
+
+  late DiaryEntryBloc _bloc;
+
   String _previousDescriptionText = '';
   bool _isAutoInsertingBullet = false;
-
-  // make mutable so you can toggle when dragging overlays
   final bool _isDraggingOverlay = false;
+
+  // ── Lifecycle ──────────────────────────────────────────────────────────────
 
   @override
   void initState() {
     super.initState();
     _bloc = context.read<DiaryEntryBloc>();
 
-    _titleController.addListener(() {
-      _bloc.add(TitleChanged(_titleController.text));
-    });
+    _titleController.addListener(
+      () => _bloc.add(TitleChanged(_titleController.text)),
+    );
     _descriptionController.addListener(_handleDescriptionChange);
-    _descriptionController.addListener(() {
-      _bloc.add(DescriptionChanged(_descriptionController.text));
-    });
+    _descriptionController.addListener(
+      () => _bloc.add(DescriptionChanged(_descriptionController.text)),
+    );
 
     if (widget.entry != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _bloc.add(InitializeDiaryEntry(widget.entry));
-        }
+        if (mounted) _bloc.add(InitializeDiaryEntry(widget.entry));
       });
     }
   }
@@ -269,17 +100,29 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     super.dispose();
   }
 
+  // ── Bounds helper ──────────────────────────────────────────────────────────
+
+  /// Returns the current description container size as a bounding [Rect]
+  /// in description-local coordinates.  Used by [TransformableItem] to clamp
+  /// drag movement so overlays can never leave the description area.
+  Rect? _getDescriptionBounds() {
+    final box =
+        _descriptionKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null) return null;
+    return Rect.fromLTWH(0, 0, box.size.width, box.size.height);
+  }
+
+  // ── Build ──────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<DiaryEntryBloc, DiaryEntryState>(
-      listenWhen: (previous, current) =>
-          previous.title != current.title ||
-          previous.description != current.description ||
-          previous.errorMessage != current.errorMessage,
+      listenWhen: (p, c) =>
+          p.title != c.title ||
+          p.description != c.description ||
+          p.errorMessage != c.errorMessage,
       listener: (context, state) {
-        // Safely update controllers (only when different)
         if (_titleController.text != state.title) {
-          // move cursor to end after update
           _titleController.value = TextEditingValue(
             text: state.title,
             selection: TextSelection.collapsed(offset: state.title.length),
@@ -294,29 +137,26 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
           );
         }
         if (state.errorMessage != null && state.errorMessage!.isNotEmpty) {
-          // prefer debugPrint/log
           debugPrint(state.errorMessage.toString());
         }
       },
       child: BlocBuilder<DiaryEntryBloc, DiaryEntryState>(
-        buildWhen: (previous, current) {
+        buildWhen: (p, c) {
           if (_isDraggingOverlay) {
-            return current.errorMessage != previous.errorMessage ||
-                current.title != previous.title ||
-                current.description != previous.description;
+            return c.errorMessage != p.errorMessage ||
+                c.title != p.title ||
+                c.description != p.description;
           }
           return true;
         },
-        builder: (context, state) {
-          return Scaffold(body: _buildBackground(state, context));
-        },
+        builder: (context, state) =>
+            Scaffold(body: _buildBackground(state, context)),
       ),
     );
   }
 
-  // ============================================================
-  // ================== UPDATED BACKGROUND METHOD ===============
-  // ============================================================
+  // ── Background ─────────────────────────────────────────────────────────────
+
   Widget _buildBackground(DiaryEntryState state, BuildContext context) {
     final theme = Theme.of(context);
     ImageProvider? backgroundImage;
@@ -334,18 +174,17 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       final file = File(state.bgLocalPath!);
       if (file.existsSync()) {
         backgroundImage = FileImage(file);
-      } else {
-        if (state.bgImage.isNotEmpty) {
-          backgroundImage = state.bgImage.startsWith('http')
-              ? NetworkImage(state.bgImage)
-              : AssetImage(state.bgImage) as ImageProvider;
-        }
+      } else if (state.bgImage.isNotEmpty) {
+        backgroundImage = state.bgImage.startsWith('http')
+            ? NetworkImage(state.bgImage)
+            : AssetImage(state.bgImage) as ImageProvider;
       }
     } else if (state.bgImage.isNotEmpty) {
       backgroundImage = state.bgImage.startsWith('http')
           ? NetworkImage(state.bgImage)
           : AssetImage(state.bgImage) as ImageProvider;
     }
+
     return Container(
       decoration: BoxDecoration(
         color: state.bgColor ?? theme.scaffoldBackgroundColor,
@@ -364,103 +203,89 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     );
   }
 
+  // ── Content ────────────────────────────────────────────────────────────────
+  // NOTE: Stickers and images are NO LONGER spread here.
+  // They live inside _buildDescriptionSection so they:
+  //   • scroll with the description content
+  //   • are bounded to the description area
+  //   • are guaranteed to be above the TextField but below nothing else
+
   Widget _buildContent(DiaryEntryState state, BuildContext context) {
-    return Column(
+    return Stack(
       children: [
-        AppBar(
-          backgroundColor: Colors.transparent,
-          foregroundColor: Theme.of(context).colorScheme.onSurface,
-          forceMaterialTransparency: true,
-          leading: IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(CupertinoIcons.back),
-          ),
-          actions: [_buildAppBarSaveButton(context, state)],
-        ),
-        Expanded(
-          child: GestureDetector(
-            onTap: () => _bloc.add(const DeselectAll()),
-            behavior: HitTestBehavior.opaque,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: _buildCustomScrollView(state, context),
+        Column(
+          children: [
+            _buildAppBar(context, state),
+            Expanded(
+              child: GestureDetector(
+                onTap: () => _bloc.add(const DeselectAll()),
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: _buildScrollView(state, context),
+                ),
+              ),
             ),
-          ),
+            _buildActionButtons(context, state),
+          ],
         ),
-        _buildActionButtons(context, state),
       ],
     );
   }
 
-  Widget _buildAppBarSaveButton(BuildContext context, DiaryEntryState state) {
+  // ── AppBar ─────────────────────────────────────────────────────────────────
+
+  AppBar _buildAppBar(BuildContext context, DiaryEntryState state) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isValid = state.title.isNotEmpty || state.description.isNotEmpty;
 
-    return Padding(
-      padding: const EdgeInsets.only(right: 8.0),
-      child: ElevatedButton(
-        onPressed: isValid ? () => _saveEntry(context, state) : null,
-        style: ElevatedButton.styleFrom(
-          foregroundColor: theme.colorScheme.onPrimary,
-          backgroundColor: theme.colorScheme.primary,
-          disabledForegroundColor: theme.colorScheme.onSurface.withValues(
-            alpha: 0.3,
-          ),
-          disabledBackgroundColor: isDark
-              ? theme.colorScheme.surface.withValues(alpha: 0.5)
-              : Colors.grey.withValues(alpha: 0.2),
-          elevation: isValid ? 2 : 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          minimumSize: const Size(70, 36),
-        ),
-        child: Text(
-          widget.entry != null ? 'UPDATE' : 'SAVE',
-          style: theme.textTheme.labelMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            fontSize: 12,
-            letterSpacing: 0.5,
-          ),
-        ),
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      foregroundColor: theme.colorScheme.onSurface,
+      forceMaterialTransparency: true,
+      leading: IconButton(
+        onPressed: () => Navigator.pop(context),
+        icon: const Icon(CupertinoIcons.back),
       ),
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: 8.0),
+          child: ElevatedButton(
+            onPressed: isValid ? () => _saveEntry(context, state) : null,
+            style: ElevatedButton.styleFrom(
+              foregroundColor: theme.colorScheme.onPrimary,
+              backgroundColor: theme.colorScheme.primary,
+              disabledForegroundColor: theme.colorScheme.onSurface.withValues(
+                alpha: 0.3,
+              ),
+              disabledBackgroundColor: isDark
+                  ? theme.colorScheme.surface.withValues(alpha: 0.5)
+                  : Colors.grey.withValues(alpha: 0.2),
+              elevation: isValid ? 2 : 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              minimumSize: const Size(70, 36),
+            ),
+            child: Text(
+              widget.entry != null ? 'UPDATE' : 'SAVE',
+              style: theme.textTheme.labelMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
-  void _saveEntry(BuildContext context, DiaryEntryState state) {
-    final entry = DiaryEntryModel(
-      id: widget.entry == null
-          ? DateTime.now().toIso8601String()
-          : widget.entry!.id,
-      title: state.title,
-      date: state.date.toIso8601String(),
-      preview: state.description,
-      mood: state.mood,
-      content: state.description,
-      createdAt: widget.entry == null
-          ? DateTime.now().toIso8601String()
-          : widget.entry!.createdAt,
-      updatedAt: DateTime.now().toIso8601String(),
-      bgColor: state.bgColor?.toARGB32().toRadixString(16).padLeft(8, '0'),
-      stickersJson: jsonEncode(state.stickers.map((s) => s.toJson()).toList()),
-      imagesJson: jsonEncode(state.images.map((i) => i.toJson()).toList()),
-      bgImagePath: state.bgImage.isNotEmpty ? state.bgImage : null,
-      bgLocalPath: state.bgLocalPath,
-      bgGalleryImagePath: state.bgGalleryImage,
-      fontFamily: state.fontFamily,
-    );
+  // ── Scroll view ────────────────────────────────────────────────────────────
 
-    if (widget.entry != null) {
-      context.read<DiaryBloc>().add(UpdateDiaryEntry(entry));
-    } else {
-      context.read<DiaryBloc>().add(AddDiaryEntry(entry));
-    }
-    Navigator.pop(context, widget.entry != null ? widget.entry!.id : true);
-  }
-
-  Widget _buildCustomScrollView(DiaryEntryState state, BuildContext context) {
+  Widget _buildScrollView(DiaryEntryState state, BuildContext context) {
     return CustomScrollView(
       controller: _scrollController,
       physics: _isDraggingOverlay
@@ -476,6 +301,8 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     );
   }
 
+  // ── Header ─────────────────────────────────────────────────────────────────
+
   Widget _buildHeaderSection(DiaryEntryState state, BuildContext context) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -487,48 +314,51 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   }
 
   Widget _buildDateContent(DiaryEntryState state, BuildContext context) {
+    final theme = Theme.of(context);
     return GestureDetector(
-      onTap: () => _selectDate(context, state),
+      onTap: () => DiaryUIHelpers.showDatePicker(
+        context,
+        state.date,
+        (val) => _bloc.add(DateChanged(val)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             intl.DateFormat('dd').format(state.date),
-            style: Theme.of(context).textTheme.headlineLarge!.copyWith(
+            style: theme.textTheme.headlineLarge!.copyWith(
               fontWeight: FontWeight.w900,
-              color: Theme.of(context).colorScheme.onSurface,
+              color: theme.colorScheme.onSurface,
             ),
           ),
           Row(
             children: [
               Text(
                 intl.DateFormat('EE').format(state.date),
-                style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                style: theme.textTheme.titleMedium!.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: Theme.of(context).colorScheme.primary,
+                  color: theme.colorScheme.primary,
                 ),
               ),
               const SizedBox(width: 8),
               Text(
                 intl.DateFormat('MMMM yyyy').format(state.date),
-                style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                style: theme.textTheme.titleMedium!.copyWith(
                   fontWeight: FontWeight.w900,
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.primary.withValues(alpha: 0.5),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.5),
                 ),
               ),
               const SizedBox(width: 6),
               Icon(
                 Icons.keyboard_arrow_down_rounded,
-                color: Theme.of(context).colorScheme.primary,
+                color: theme.colorScheme.primary,
               ),
             ],
           ),
           Container(
             height: 10,
             width: 150,
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+            color: theme.colorScheme.primary.withValues(alpha: 0.5),
           ),
         ],
       ),
@@ -537,7 +367,10 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
 
   Widget _buildMoodSelector(DiaryEntryState state, BuildContext context) {
     return GestureDetector(
-      onTap: () => _selectMood(context),
+      onTap: () => DiaryUIHelpers.openEmojiPicker(
+        context,
+        (emoji) => _bloc.add(MoodChanged(emoji)),
+      ),
       child: CircleAvatar(
         backgroundColor: Theme.of(
           context,
@@ -547,6 +380,8 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       ),
     );
   }
+
+  // ── Title ──────────────────────────────────────────────────────────────────
 
   Widget _buildTitleField(BuildContext context, DiaryEntryState state) {
     final theme = Theme.of(context);
@@ -579,14 +414,25 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     );
   }
 
+  // ── Description ────────────────────────────────────────────────────────────
+  // Stickers and images live HERE in a Stack so they:
+  //   1. Scroll with the description text (stuck to description).
+  //   2. Are bounded to the description container (can't drift into title/header).
+  //   3. Images render below stickers (Z-order: images first, stickers on top).
+
   Widget _buildDescriptionSection(DiaryEntryState state, BuildContext context) {
     return Container(
       key: _descriptionKey,
       constraints: const BoxConstraints(minHeight: 400),
       child: Stack(
+        // clipBehavior: Clip.none allows the remove-button handle to poke
+        // slightly outside the container edge without being cut off.
         clipBehavior: Clip.none,
         children: [
+          // ── TextField (bottom layer) ──────────────────────────────────────
           IgnorePointer(
+            // When any overlay is selected, block the TextField so drags go
+            // to the overlay rather than moving the text cursor.
             ignoring:
                 state.selectedStickerId != null ||
                 state.selectedImageId != null,
@@ -601,30 +447,32 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
               style: TextStyle(fontFamily: state.fontFamily),
             ),
           ),
-          // stickers & images on top
-          ...state.stickers.map((s) => _buildSticker(s, state)),
+
+          // ── Images (middle layer — rendered before stickers) ──────────────
+          // Images are below stickers in Z-order so a newly added sticker
+          // is always visible on top of any existing image.
           ...state.images.map((i) => _buildImage(i, state)),
+
+          // ── Stickers (top layer) ──────────────────────────────────────────
+          ...state.stickers.map((s) => _buildSticker(s, state)),
         ],
       ),
     );
   }
 
-  // ============================================================
-  // ======================= STICKER =============================
-  // ============================================================
+  // ── Sticker overlay ────────────────────────────────────────────────────────
 
   Widget _buildSticker(StickerModel sticker, DiaryEntryState state) {
     final isSelected = state.selectedStickerId == sticker.id;
 
     Widget content;
-
     if (sticker.localPath != null && File(sticker.localPath!).existsSync()) {
       content = Image.file(File(sticker.localPath!), fit: BoxFit.contain);
     } else if (sticker.url.isNotEmpty && sticker.url.startsWith('http')) {
       content = CachedNetworkImage(
         imageUrl: sticker.url,
         fit: BoxFit.contain,
-        placeholder: (context, url) => Container(
+        placeholder: (_, __) => Container(
           color: Colors.grey.shade200,
           child: const Center(
             child: SizedBox(
@@ -634,21 +482,21 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
             ),
           ),
         ),
-        errorWidget: (context, url, error) => const Icon(Icons.broken_image),
+        errorWidget: (_, __, ___) => const Icon(Icons.broken_image),
       );
     } else if (sticker.url.isNotEmpty) {
-      // asset path
       content = Image.asset(sticker.url, fit: BoxFit.contain);
     } else {
       content = const SizedBox();
     }
 
-    return _TransformableItem(
+    return TransformableItem(
       id: sticker.id,
       initialPosition: Offset(sticker.x, sticker.y),
       initialScale: sticker.size,
       initialRotation: sticker.rotation,
       isSelected: isSelected,
+      getBounds: _getDescriptionBounds,
       onSelect: () => _bloc.add(SelectSticker(sticker.id)),
       onUpdate:
           ({
@@ -657,25 +505,20 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
             required y,
             required scale,
             required rotation,
-          }) {
-            _bloc.add(UpdateStickerTransform(id, x, y, scale, rotation));
-          },
+          }) => _bloc.add(UpdateStickerTransform(id, x, y, scale, rotation)),
       onRemove: () => _bloc.add(RemoveSticker(sticker.id)),
       child: content,
     );
   }
 
-  // ============================================================
-  // ======================== IMAGE ==============================
-  // ============================================================
+  // ── Image overlay ──────────────────────────────────────────────────────────
 
   Widget _buildImage(DiaryImage image, DiaryEntryState state) {
     final isSelected = state.selectedImageId == image.id;
+    final safeWidth = image.width.isFinite ? image.width : 120.0;
+    final safeHeight = image.height.isFinite ? image.height : 120.0;
 
-    final double safeWidth = image.width.isFinite ? image.width : 120;
-    final double safeHeight = image.height.isFinite ? image.height : 120;
-
-    return _TransformableItem(
+    return TransformableItem(
       id: image.id,
       initialPosition: Offset(image.x, image.y),
       initialScale: image.scale,
@@ -683,6 +526,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       isSelected: isSelected,
       baseWidth: safeWidth,
       baseHeight: safeHeight,
+      getBounds: _getDescriptionBounds,
       onSelect: () => _bloc.add(SelectImage(image.id)),
       onUpdate:
           ({
@@ -691,9 +535,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
             required y,
             required scale,
             required rotation,
-          }) {
-            _bloc.add(UpdateImageTransform(id, x, y, scale, rotation));
-          },
+          }) => _bloc.add(UpdateImageTransform(id, x, y, scale, rotation)),
       onRemove: () => _bloc.add(RemoveImage(image.id)),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
@@ -702,9 +544,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     );
   }
 
-  // ============================================================
-  // ================== ACTION BUTTONS ==========================
-  // ============================================================
+  // ── Action buttons ─────────────────────────────────────────────────────────
 
   Widget _buildActionButtons(BuildContext context, DiaryEntryState state) {
     final theme = Theme.of(context);
@@ -732,50 +572,50 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
                   ),
                   child: Row(
                     children: [
-                      _buildActionButton(
-                        icon: Icons.layers_outlined,
-                        label: 'Change Background',
-                        onPressed: _onBgImagePressed,
-                        context: context,
+                      _actionButton(
+                        Icons.layers_outlined,
+                        'Change Background',
+                        _onBgImagePressed,
+                        context,
                       ),
-                      _buildActionButton(
-                        icon: Icons.text_fields_rounded,
-                        label: 'Change Font',
-                        onPressed: _onFontPressed,
-                        context: context,
+                      _actionButton(
+                        Icons.text_fields_rounded,
+                        'Change Font',
+                        _onFontPressed,
+                        context,
                       ),
-                      _buildActionButton(
-                        icon: Icons.palette_outlined,
-                        label: 'Background Color',
-                        onPressed: _onBgColorPressed,
-                        context: context,
+                      _actionButton(
+                        Icons.palette_outlined,
+                        'Background Color',
+                        _onBgColorPressed,
+                        context,
                       ),
-                      _buildActionButton(
-                        icon: Icons.photo_outlined,
-                        label: 'Add Sticker photo',
-                        onPressed: _onPhotoPressed,
-                        context: context,
+                      _actionButton(
+                        Icons.photo_outlined,
+                        'Add Photo',
+                        _onPhotoPressed,
+                        context,
                       ),
                       if (state.bgGalleryImage != null ||
                           state.bgImage.isNotEmpty ||
                           state.bgColor != null)
-                        _buildActionButton(
-                          icon: Icons.close,
-                          label: 'Clear Background',
-                          onPressed: () => _bloc.add(const ClearBackground()),
-                          context: context,
+                        _actionButton(
+                          Icons.close,
+                          'Clear Background',
+                          () => _bloc.add(const ClearBackground()),
+                          context,
                         ),
-                      _buildActionButton(
-                        icon: Icons.format_list_bulleted,
-                        label: 'Add Bullet',
-                        onPressed: _onBulletPressed,
-                        context: context,
+                      _actionButton(
+                        Icons.format_list_bulleted,
+                        'Add Bullet',
+                        _onBulletPressed,
+                        context,
                       ),
-                      _buildActionButton(
-                        icon: Icons.auto_awesome_outlined,
-                        label: 'Add Sticker',
-                        onPressed: _onStickerPressed,
-                        context: context,
+                      _actionButton(
+                        Icons.auto_awesome_outlined,
+                        'Add Sticker',
+                        _onStickerPressed,
+                        context,
                       ),
                     ],
                   ),
@@ -788,12 +628,12 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     );
   }
 
-  Widget _buildActionButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onPressed,
-    required BuildContext context,
-  }) {
+  Widget _actionButton(
+    IconData icon,
+    String label,
+    VoidCallback onPressed,
+    BuildContext context,
+  ) {
     final theme = Theme.of(context);
     return GestureDetector(
       onTap: onPressed,
@@ -814,43 +654,56 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     );
   }
 
-  void _selectDate(BuildContext context, DiaryEntryState state) {
-    DiaryUIHelpers.showDatePicker(
-      context,
-      state.date,
-      (val) => _bloc.add(DateChanged(val)),
+  // ── Save ───────────────────────────────────────────────────────────────────
+
+  void _saveEntry(BuildContext context, DiaryEntryState state) {
+    final entry = DiaryEntryModel(
+      id: widget.entry == null
+          ? DateTime.now().toIso8601String()
+          : widget.entry!.id,
+      title: state.title,
+      date: state.date.toIso8601String(),
+      preview: state.description,
+      mood: state.mood,
+      content: state.description,
+      createdAt: widget.entry == null
+          ? DateTime.now().toIso8601String()
+          : widget.entry!.createdAt,
+      updatedAt: DateTime.now().toIso8601String(),
+      bgColor: state.bgColor?.toARGB32().toRadixString(16).padLeft(8, '0'),
+      stickersJson: jsonEncode(state.stickers.map((s) => s.toJson()).toList()),
+      imagesJson: jsonEncode(state.images.map((i) => i.toJson()).toList()),
+      bgImagePath: state.bgImage.isNotEmpty ? state.bgImage : null,
+      bgLocalPath: state.bgLocalPath,
+      bgGalleryImagePath: state.bgGalleryImage,
+      fontFamily: state.fontFamily,
     );
+
+    if (widget.entry != null) {
+      context.read<DiaryBloc>().add(UpdateDiaryEntry(entry));
+    } else {
+      context.read<DiaryBloc>().add(AddDiaryEntry(entry));
+    }
+    Navigator.pop(context, widget.entry != null ? widget.entry!.id : true);
   }
 
-  void _selectMood(BuildContext context) {
-    DiaryUIHelpers.openEmojiPicker(
-      context,
-      (emoji) => _bloc.add(MoodChanged(emoji)),
-    );
-  }
+  // ── Toolbar action handlers ────────────────────────────────────────────────
 
   Future<void> _onPhotoPressed() async {
-    final currentState = _bloc.state;
-    if (currentState.images.length >= 5) {
-      _showLimitSnackbar('You can only add up to 5 images.');
+    if (_bloc.state.images.length >= 10) {
+      _showLimitSnackbar('You can only add up to 10 images.');
       return;
     }
-
     try {
-      final ImagePicker picker = ImagePicker();
-      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      final XFile? image = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+      );
       if (image != null && mounted) {
-        // Double‑check in case something changed while picking
-        final newState = _bloc.state;
-        if (newState.images.length >= 5) {
-          _showLimitSnackbar('You can only add up to 5 images.');
+        if (_bloc.state.images.length >= 10) {
+          _showLimitSnackbar('You can only add up to 10 images.');
           return;
         }
-        const double defaultImageSize = 100.0;
-        final position = _findFreePositionForNewItem(
-          defaultImageSize,
-          defaultImageSize,
-        );
+        final position = _findFreePositionForNewItem(100.0, 100.0);
         _bloc.add(ImageAdded(image.path, position.dx, position.dy));
       }
     } catch (e) {
@@ -859,55 +712,47 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   }
 
   void _onStickerPressed() {
-    final currentState = _bloc.state;
-    if (currentState.stickers.length >= 10) {
-      _showLimitSnackbar('You can only add up to 10 stickers.');
+    if (_bloc.state.stickers.length >= 20) {
+      _showLimitSnackbar('You can only add up to 20 stickers.');
       return;
     }
-
     DiaryUIHelpers.openStickerPicker(
       context,
       onStickerSelected: (url, x, y) {
-        // Re‑check the count after the picker is closed
-        final newState = _bloc.state;
-        if (newState.stickers.length >= 10) {
-          _showLimitSnackbar('You can only add up to 10 stickers.');
+        if (_bloc.state.stickers.length >= 20) {
+          _showLimitSnackbar('You can only add up to 20 stickers.');
           return;
         }
-        const double stickerSize = 100.0;
-        final position = _findFreePositionForNewItem(stickerSize, stickerSize);
+        final position = _findFreePositionForNewItem(
+          TransformableItem.stickerBaseSize,
+          TransformableItem.stickerBaseSize,
+        );
         _bloc.add(SelectSupabaseSticker(url, position.dx, position.dy));
       },
     );
   }
 
-  void _onBgColorPressed() {
-    DiaryUIHelpers.openColorPicker(
-      context,
-      (color) => _bloc.add(BgColorChanged(color)),
-    );
-  }
+  void _onBgColorPressed() => DiaryUIHelpers.openColorPicker(
+    context,
+    (color) => _bloc.add(BgColorChanged(color)),
+  );
 
-  void _onBgImagePressed() {
-    DiaryUIHelpers.openBgImagePicker(
-      context,
-      onPresetSelected: (imageUrl) =>
-          _bloc.add(SelectSupabaseBackground(imageUrl)),
-      onGallerySelected: (filePath) =>
-          _bloc.add(CropAndSetBackgroundImage(filePath)),
-      onClear: () => _bloc.add(const ClearBackground()),
-    );
-  }
+  void _onBgImagePressed() => DiaryUIHelpers.openBgImagePicker(
+    context,
+    onPresetSelected: (url) => _bloc.add(SelectSupabaseBackground(url)),
+    onGallerySelected: (path) => _bloc.add(CropAndSetBackgroundImage(path)),
+    onClear: () => _bloc.add(const ClearBackground()),
+  );
 
   void _onFontPressed() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _FontPickerSheet(
+      builder: (_) => FontPickerSheet(
         currentFont: _bloc.state.fontFamily ?? 'Quicksand',
-        onFontSelected: (fontFamily) {
-          _bloc.add(FontChanged(fontFamily));
+        onFontSelected: (family) {
+          _bloc.add(FontChanged(family));
           Navigator.pop(context);
         },
       ),
@@ -917,31 +762,30 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   void _onBulletPressed() {
     final text = _descriptionController.text;
     final selection = _descriptionController.selection;
-
-    int insertPos;
-    if (selection.isValid &&
-        selection.baseOffset >= 0 &&
-        selection.baseOffset <= text.length) {
-      insertPos = selection.baseOffset;
-    } else {
-      insertPos = text.length;
-    }
+    final insertPos =
+        (selection.isValid &&
+            selection.baseOffset >= 0 &&
+            selection.baseOffset <= text.length)
+        ? selection.baseOffset
+        : text.length;
     final newText =
         '${text.substring(0, insertPos)}\n• ${text.substring(insertPos)}';
-    final newCursorPos = insertPos + 3;
     _descriptionController.value = TextEditingValue(
       text: newText,
-      selection: TextSelection.collapsed(offset: newCursorPos),
+      selection: TextSelection.collapsed(offset: insertPos + 3),
     );
   }
+
+  // ── Auto-bullet ────────────────────────────────────────────────────────────
 
   void _handleDescriptionChange() {
     if (_isAutoInsertingBullet) return;
     final newText = _descriptionController.text;
     final oldText = _previousDescriptionText;
+
     if (newText.length == oldText.length + 1 &&
         newText.endsWith('\n') &&
-        !oldText.endsWith('\n')) {     
+        !oldText.endsWith('\n')) {
       int lineStart = oldText.length - 1;
       while (lineStart > 0 && oldText[lineStart - 1] != '\n') {
         lineStart--;
@@ -953,13 +797,10 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
           previousLine.startsWith('* ') ||
           previousLine.startsWith('\u2022 ')) {
         _isAutoInsertingBullet = true;
-
         final updatedText = '$newText• ';
-        final newCursorPos = updatedText.length;
-
         _descriptionController.value = TextEditingValue(
           text: updatedText,
-          selection: TextSelection.collapsed(offset: newCursorPos),
+          selection: TextSelection.collapsed(offset: updatedText.length),
         );
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (_descriptionFocusNode.hasFocus) {
@@ -970,117 +811,99 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
             );
           }
         });
-
         _isAutoInsertingBullet = false;
       }
     }
-
-    // Update the stored previous text after handling
     _previousDescriptionText = _descriptionController.text;
   }
+
+  // ── Free-position finder ───────────────────────────────────────────────────
+  //
+  // Returns the top-left Offset (description-local) for a new item so it
+  // does not overlap any existing sticker or image.
+  //
+  // FIX: existing rects now use Rect.fromLTWH (x,y = top-left) instead of
+  // Rect.fromCenter, matching how _position is stored and rendered.
 
   Offset _findFreePositionForNewItem(double width, double height) {
     final renderBox =
         _descriptionKey.currentContext?.findRenderObject() as RenderBox?;
-    if (renderBox == null) return const Offset(150, 150); // fallback
+    if (renderBox == null) return const Offset(50, 50);
 
-    final containerSize = renderBox.size;
-    final double containerW = containerSize.width;
-    final double containerH = containerSize.height;
-
-    // Collect existing item rects from current state
+    final size = renderBox.size;
     final state = _bloc.state;
-    final List<Rect> existingRects = [];
 
-    for (final sticker in state.stickers) {
-      final double w = 100.0 * sticker.size;
-      final double h = 100.0 * sticker.size;
-      existingRects.add(
-        Rect.fromCenter(
-          center: Offset(sticker.x, sticker.y),
-          width: w,
-          height: h,
+    // Build existing occupied rects — all in description-local coordinates,
+    // top-left origin (matching how x,y are stored via onUpdate).
+    final existing = <Rect>[
+      for (final s in state.stickers)
+        Rect.fromLTWH(
+          s.x,
+          s.y,
+          TransformableItem.stickerBaseSize * s.size,
+          TransformableItem.stickerBaseSize * s.size,
         ),
-      );
-    }
+      for (final i in state.images)
+        Rect.fromLTWH(
+          i.x,
+          i.y,
+          (i.width.isFinite ? i.width : 120.0) * i.scale,
+          (i.height.isFinite ? i.height : 120.0) * i.scale,
+        ),
+    ];
 
-    for (final image in state.images) {
-      final double w = image.width * image.scale;
-      final double h = image.height * image.scale;
-      existingRects.add(
-        Rect.fromCenter(center: Offset(image.x, image.y), width: w, height: h),
-      );
-    }
-
-    // Start at center
-    Offset center = Offset(containerW / 2, containerH / 2);
-    Rect candidateRect = Rect.fromCenter(
-      center: center,
-      width: width,
-      height: height,
+    // Try to place centered in the description first.
+    final startTL = Offset(
+      ((size.width - width) / 2).clamp(0.0, size.width - width),
+      ((size.height - height) / 2).clamp(0.0, size.height - height),
     );
-
     if (_isPositionValid(
-      candidateRect,
-      existingRects,
-      containerW,
-      containerH,
+      Rect.fromLTWH(startTL.dx, startTL.dy, width, height),
+      existing,
+      size.width,
+      size.height,
     )) {
-      return center;
+      return startTL;
     }
 
-    // Try spiral pattern
-    const step = 20.0;
-    const maxRadius = 500.0;
-    for (double r = step; r <= maxRadius; r += step) {
-      for (int direction = 0; direction < 8; direction++) {
-        double angle = direction * math.pi / 4; // 45° increments
-        Offset offset = Offset(r * math.cos(angle), r * math.sin(angle));
-        Offset candidate = center + offset;
-        candidateRect = Rect.fromCenter(
-          center: candidate,
-          width: width,
-          height: height,
+    // Spiral outward from the description center.
+    final searchCenter = Offset(size.width / 2, size.height / 2);
+    for (double r = 20.0; r <= 500.0; r += 20.0) {
+      for (int d = 0; d < 8; d++) {
+        final angle = d * math.pi / 4;
+        final candidateCenter =
+            searchCenter + Offset(r * math.cos(angle), r * math.sin(angle));
+        // Convert candidate center to top-left.
+        final tl = Offset(
+          candidateCenter.dx - width / 2,
+          candidateCenter.dy - height / 2,
         );
         if (_isPositionValid(
-          candidateRect,
-          existingRects,
-          containerW,
-          containerH,
+          Rect.fromLTWH(tl.dx, tl.dy, width, height),
+          existing,
+          size.width,
+          size.height,
         )) {
-          return candidate;
+          return tl;
         }
       }
     }
-
-    // Fallback
-    return center;
+    return startTL; // fallback: center of description
   }
 
-  bool _isPositionValid(
-    Rect rect,
-    List<Rect> existing,
-    double containerW,
-    double containerH,
-  ) {
-    // Must be completely inside container
-    if (rect.left < 0 ||
-        rect.top < 0 ||
-        rect.right > containerW ||
-        rect.bottom > containerH) {
+  bool _isPositionValid(Rect rect, List<Rect> existing, double w, double h) {
+    if (rect.left < 0 || rect.top < 0 || rect.right > w || rect.bottom > h) {
       return false;
     }
-    // Must not overlap any existing item
-    for (final r in existing) {
-      if (rect.overlaps(r)) return false;
-    }
-    return true;
+    return existing.every((r) => !rect.overlaps(r));
   }
+
+  // ── Snackbar ───────────────────────────────────────────────────────────────
 
   void _showLimitSnackbar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        duration: Duration(seconds: 1),
+        duration: const Duration(seconds: 1),
         content: Text(
           message,
           maxLines: 2,
@@ -1093,566 +916,5 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
         backgroundColor: Theme.of(context).colorScheme.primary,
       ),
     );
-  }
-}
-
-// ============================================================
-// =================== SIZE ADJUSTER WIDGETS ==================
-// ============================================================
-
-class _StickerSizeAdjuster extends StatefulWidget {
-  final StickerModel sticker;
-  final RenderBox descriptionRenderBox;
-
-  const _StickerSizeAdjuster({
-    required this.sticker,
-    required this.descriptionRenderBox,
-  });
-
-  @override
-  State<_StickerSizeAdjuster> createState() => __StickerSizeAdjusterState();
-}
-
-class __StickerSizeAdjusterState extends State<_StickerSizeAdjuster> {
-  late double _currentScale;
-  static const double minScale = 0.3;
-  static const double maxScale = 3.0;
-  static const double scaleStep = 0.1;
-
-  @override
-  void initState() {
-    super.initState();
-    _currentScale = widget.sticker.size;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final bloc = context.read<DiaryEntryBloc>();
-    const double kBaseStickerPreviewSize = 80.0;
-
-    Widget preview;
-    if (widget.sticker.localPath != null &&
-        File(widget.sticker.localPath!).existsSync()) {
-      preview = Image.file(
-        File(widget.sticker.localPath!),
-        width: kBaseStickerPreviewSize,
-        height: kBaseStickerPreviewSize,
-        fit: BoxFit.contain,
-      );
-    } else if (widget.sticker.url.isNotEmpty &&
-        widget.sticker.url.startsWith('http')) {
-      preview = CachedNetworkImage(
-        imageUrl: widget.sticker.url,
-        width: kBaseStickerPreviewSize,
-        height: kBaseStickerPreviewSize,
-        fit: BoxFit.contain,
-        placeholder: (_, __) => SizedBox(
-          width: kBaseStickerPreviewSize,
-          height: kBaseStickerPreviewSize,
-        ),
-        errorWidget: (_, __, ___) => const Icon(Icons.broken_image),
-      );
-    } else if (widget.sticker.url.isNotEmpty) {
-      preview = Image.asset(
-        widget.sticker.url,
-        width: kBaseStickerPreviewSize,
-        height: kBaseStickerPreviewSize,
-        fit: BoxFit.contain,
-      );
-    } else {
-      preview = const SizedBox(
-        width: kBaseStickerPreviewSize,
-        height: kBaseStickerPreviewSize,
-      );
-    }
-
-    return SafeArea(
-      child: Container(
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-          top: 16,
-          left: 16,
-          right: 16,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Transform.scale(scale: _currentScale, child: preview),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'Scale: ${(_currentScale * 100).round()}%',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Slider(
-              value: _currentScale,
-              min: minScale,
-              max: maxScale,
-              divisions: ((maxScale - minScale) / scaleStep).round(),
-              label: '${(_currentScale * 100).round()}%',
-              onChanged: (value) {
-                setState(() => _currentScale = value);
-                bloc.add(UpdateStickerSize(widget.sticker.id, value));
-              },
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildSizeButton(
-                  icon: Icons.remove,
-                  onPressed: () {
-                    final newScale = (_currentScale - scaleStep).clamp(
-                      minScale,
-                      maxScale,
-                    );
-                    setState(() => _currentScale = newScale);
-                    bloc.add(UpdateStickerSize(widget.sticker.id, newScale));
-                  },
-                ),
-                _buildSizeButton(
-                  icon: Icons.add,
-                  onPressed: () {
-                    final newScale = (_currentScale + scaleStep).clamp(
-                      minScale,
-                      maxScale,
-                    );
-                    setState(() => _currentScale = newScale);
-                    bloc.add(UpdateStickerSize(widget.sticker.id, newScale));
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            ListTile(
-              leading: Icon(
-                Icons.delete,
-                color: theme.brightness == Brightness.dark
-                    ? Colors.white
-                    : theme.colorScheme.error,
-              ),
-              title: Text(
-                'Remove Sticker',
-                style: TextStyle(
-                  color: theme.brightness == Brightness.dark
-                      ? Colors.white
-                      : theme.colorScheme.error,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              onTap: () {
-                bloc.add(RemoveSticker(widget.sticker.id));
-                Navigator.pop(context);
-              },
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSizeButton({
-    required IconData icon,
-    required VoidCallback onPressed,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-      ),
-      child: IconButton(
-        icon: Icon(icon),
-        onPressed: onPressed,
-        color: Theme.of(context).colorScheme.primary,
-      ),
-    );
-  }
-}
-
-class _ImageSizeAdjuster extends StatefulWidget {
-  final DiaryImage image;
-  final RenderBox descriptionRenderBox;
-
-  const _ImageSizeAdjuster({
-    required this.image,
-    required this.descriptionRenderBox,
-  });
-
-  @override
-  State<_ImageSizeAdjuster> createState() => __ImageSizeAdjusterState();
-}
-
-class __ImageSizeAdjusterState extends State<_ImageSizeAdjuster> {
-  late double _currentScale;
-  static const double minScale = 0.5;
-  static const double maxScale = 3.0;
-
-  @override
-  void initState() {
-    super.initState();
-    _currentScale = widget.image.scale;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final bloc = context.read<DiaryEntryBloc>();
-
-    return SafeArea(
-      child: Container(
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-          top: 16,
-          left: 16,
-          right: 16,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.file(
-                  File(widget.image.imagePath),
-                  width: 100,
-                  height: 100,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      width: 100,
-                      height: 100,
-                      color: Colors.grey,
-                      child: const Icon(Icons.broken_image),
-                    );
-                  },
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'Scale: ${(_currentScale * 100).round()}%',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Slider(
-              value: _currentScale,
-              min: minScale,
-              max: maxScale,
-              divisions: 25,
-              label: '${(_currentScale * 100).round()}%',
-              onChanged: (value) {
-                setState(() => _currentScale = value);
-                bloc.add(UpdateImageSize(widget.image.id, value));
-              },
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildSizeButton(
-                  icon: Icons.remove,
-                  onPressed: () {
-                    final newScale = (_currentScale - 0.2).clamp(
-                      minScale,
-                      maxScale,
-                    );
-                    setState(() => _currentScale = newScale);
-                    bloc.add(UpdateImageSize(widget.image.id, newScale));
-                  },
-                ),
-                _buildSizeButton(
-                  icon: Icons.add,
-                  onPressed: () {
-                    final newScale = (_currentScale + 0.2).clamp(
-                      minScale,
-                      maxScale,
-                    );
-                    setState(() => _currentScale = newScale);
-                    bloc.add(UpdateImageSize(widget.image.id, newScale));
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            ListTile(
-              leading: Icon(
-                Icons.delete,
-                color: isDark ? Colors.white : theme.colorScheme.error,
-              ),
-              title: Text(
-                'Remove Image',
-                style: TextStyle(
-                  color: isDark ? Colors.white : theme.colorScheme.error,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              onTap: () {
-                bloc.add(RemoveImage(widget.image.id));
-                Navigator.pop(context);
-              },
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSizeButton({
-    required IconData icon,
-    required VoidCallback onPressed,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-      ),
-      child: IconButton(
-        icon: Icon(icon),
-        onPressed: onPressed,
-        color: Theme.of(context).colorScheme.primary,
-      ),
-    );
-  }
-}
-
-const List<Map<String, String>> availableFonts = [
-  {'display': 'Quicksand', 'family': 'Quicksand'},
-  {'display': 'Caveat', 'family': 'Caveat'},
-  {'display': 'Cormorant Garamond', 'family': 'CormorantGaramond'},
-  {'display': 'Dancing Script', 'family': 'DancingScript'},
-  {'display': 'Playfair Display', 'family': 'PlayfairDisplay'},
-
-  {'display': 'AmaticSC', 'family': 'AmaticSC'},
-  {'display': 'GoldmanGoldman', 'family': 'Goldman'},
-  {'display': 'ShadowsIntoLight', 'family': 'ShadowsIntoLight'},
-];
-
-class _FontPickerSheet extends StatelessWidget {
-  final String currentFont;
-  final ValueChanged<String> onFontSelected;
-
-  const _FontPickerSheet({
-    required this.currentFont,
-    required this.onFontSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Handle
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Title
-            Text(
-              'Choose Font',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Grid of fonts
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  childAspectRatio: 2.0,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                ),
-                itemCount: availableFonts.length,
-                itemBuilder: (context, index) {
-                  final font = availableFonts[index];
-                  final isSelected = font['family'] == currentFont;
-                  return GestureDetector(
-                    onTap: () => onFontSelected(font['family']!),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: theme.scaffoldBackgroundColor,
-                        borderRadius: BorderRadius.circular(16),
-                        border: isSelected
-                            ? Border.all(
-                                color: theme.colorScheme.primary,
-                                width: 2,
-                              )
-                            : null,
-                      ),
-                      padding: const EdgeInsets.all(8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              font['display']!,
-                              style: Theme.of(context).textTheme.bodyMedium!
-                                  .copyWith(fontFamily: font['family']),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class DashedBorderPainter extends CustomPainter {
-  final Color color;
-  final double strokeWidth;
-  final double gap;
-
-  DashedBorderPainter({
-    required this.color,
-    required this.strokeWidth,
-    required this.gap,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth;
-
-    const dashWidth = 5.0; // length of each dash
-    final space = gap; // space between dashes
-
-    // Top border
-    _drawDashedLine(
-      canvas,
-      Offset(0, 0),
-      Offset(size.width, 0),
-      dashWidth,
-      space,
-      paint,
-    );
-    // Right border
-    _drawDashedLine(
-      canvas,
-      Offset(size.width, 0),
-      Offset(size.width, size.height),
-      dashWidth,
-      space,
-      paint,
-    );
-    // Bottom border
-    _drawDashedLine(
-      canvas,
-      Offset(size.width, size.height),
-      Offset(0, size.height),
-      dashWidth,
-      space,
-      paint,
-    );
-    // Left border
-    _drawDashedLine(
-      canvas,
-      Offset(0, size.height),
-      Offset(0, 0),
-      dashWidth,
-      space,
-      paint,
-    );
-  }
-
-  void _drawDashedLine(
-    Canvas canvas,
-    Offset start,
-    Offset end,
-    double dashWidth,
-    double dashSpace,
-    Paint paint,
-  ) {
-    final distance = (end - start).distance;
-    if (distance <= 0) return;
-    final dashCount = (distance / (dashWidth + dashSpace)).floor();
-    for (int i = 0; i <= dashCount; i++) {
-      final tStart = i * (dashWidth + dashSpace) / distance;
-      final tEnd = (i * (dashWidth + dashSpace) + dashWidth) / distance;
-      if (tStart > 1.0) break;
-      final p1 = Offset.lerp(start, end, tStart)!;
-      final p2 = Offset.lerp(start, end, tEnd.clamp(0.0, 1.0))!;
-      canvas.drawLine(p1, p2, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant DashedBorderPainter oldDelegate) {
-    return oldDelegate.color != color ||
-        oldDelegate.strokeWidth != strokeWidth ||
-        oldDelegate.gap != gap;
   }
 }

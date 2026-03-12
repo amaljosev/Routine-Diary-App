@@ -46,12 +46,21 @@ android {
         }
     }
 
+    
     buildTypes {
-        release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+        getByName("release") {
+            // Essential for AGP 9.x Kotlin DSL
+            isMinifyEnabled = true
+            isShrinkResources = true
+        
+            // Use the 'optimize' version of the ProGuard file for 2026 R8 improvements
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"), 
+                "proguard-rules.pro"
+            )
+        
+            // Modern signing config reference
             signingConfig = signingConfigs.getByName("release")
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 }
