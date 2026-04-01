@@ -1,9 +1,7 @@
 import 'dart:developer';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:routine/core/constants/app_constants.dart';
-import 'package:routine/core/utils/feedback_util.dart';
 import 'package:routine/core/utils/share_util.dart';
 import 'package:routine/core/version/app_version.dart';
 import 'package:routine/features/app_lock/presentation/pages/app_lock_settings_page.dart';
@@ -55,7 +53,12 @@ class SettingsScreen extends StatelessWidget {
             SliverList(
               delegate: SliverChildListDelegate([
                 CupertinoListSection.insetGrouped(
-                  header: const Text('Settings'),
+                  header: Text(
+                    'Settings',
+                    style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                   children: [
                     ListTile(
@@ -91,7 +94,12 @@ class SettingsScreen extends StatelessWidget {
 
                 /// APP INFORMATION
                 CupertinoListSection.insetGrouped(
-                  header: const Text('App'),
+                  header: Text(
+                    'App',
+                    style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                   children: [
                     ListTile(
@@ -145,7 +153,12 @@ class SettingsScreen extends StatelessWidget {
                 // ENGAGEMENT
                 CupertinoListSection.insetGrouped(
                   backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                  header: const Text('Engagement'),
+                  header: Text(
+                    'Engagement',
+                    style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   children: [
                     ListTile(
                       leading: Icon(
@@ -167,14 +180,20 @@ class SettingsScreen extends StatelessWidget {
                       title: const Text('Rate app'),
                       titleTextStyle: Theme.of(context).textTheme.titleSmall,
                       trailing: const CupertinoListTileChevron(),
-                      onTap: ()  async=> await _rateApp(context),
+                      onTap: () async =>
+                          await openUrl(context, AppConstants.playStoreUrl),
                     ),
                   ],
                 ),
 
                 /// SUPPORT
                 CupertinoListSection.insetGrouped(
-                  header: const Text('Support'),
+                  header: Text(
+                    'Support',
+                    style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                   children: [
                     ListTile(
@@ -186,6 +205,31 @@ class SettingsScreen extends StatelessWidget {
                       titleTextStyle: Theme.of(context).textTheme.titleSmall,
                       trailing: const CupertinoListTileChevron(),
                       onTap: () async => showModernSupportSheet(context),
+                    ),
+                  ],
+                ),
+
+                /// APPS
+                CupertinoListSection.insetGrouped(
+                  header: Text(
+                    'Try our new app',
+                    style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                  children: [
+                    ListTile(
+                      leading: Card(
+                        child: Image.asset('assets/icons/pursuit_icon.png'),
+                      ),
+                      title: const Text('Pursuit: Habit tracker'),
+                      titleTextStyle: Theme.of(context).textTheme.titleMedium,
+                      subtitle: const Text('Your daily growth partner'),
+                      subtitleTextStyle: Theme.of(context).textTheme.titleSmall,
+                      trailing: const CupertinoListTileChevron(),
+                      onTap: () async =>
+                          openUrl(context, AppConstants.pursuitUrl),
                     ),
                   ],
                 ),
@@ -245,8 +289,8 @@ Write daily. Reflect deeply. Grow consistently.
     }
   }
 
-  Future<void> _rateApp(BuildContext context) async {
-    final Uri url = Uri.parse(AppConstants.playStoreUrl);
+  Future<void> openUrl(BuildContext context, String uri) async {
+    final Uri url = Uri.parse(uri);
     if (!await launchUrl(url, mode: LaunchMode.platformDefault) &&
         context.mounted) {
       ScaffoldMessenger.of(
