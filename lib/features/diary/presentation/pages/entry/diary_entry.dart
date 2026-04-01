@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart' as intl;
+import 'package:routine/core/utils/feedback_util.dart';
 
 import 'package:routine/features/diary/data/models/diary_entry_model.dart';
 import 'package:routine/features/diary/domain/entities/sticker_model.dart';
@@ -678,13 +679,19 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       bgGalleryImagePath: state.bgGalleryImage,
       fontFamily: state.fontFamily,
     );
+    final isNewEntry = widget.entry == null;
 
     if (widget.entry != null) {
       context.read<DiaryBloc>().add(UpdateDiaryEntry(entry));
     } else {
       context.read<DiaryBloc>().add(AddDiaryEntry(entry));
     }
+
     Navigator.pop(context, widget.entry != null ? widget.entry!.id : true);
+
+    if (isNewEntry) {
+      FeedbackUtil.askFeedbackIfFirstEntry();
+    }
   }
 
   // ── Toolbar action handlers ────────────────────────────────────────────────

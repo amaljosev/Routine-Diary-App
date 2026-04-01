@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -39,11 +40,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
     final theme = Theme.of(context);
     return GestureDetector(
       onTap: () => _onItemTapped(index),
-      child: Icon(
-        icon,
-        size: 25,
-        color:theme.colorScheme.primary,
-      ),
+      child: Icon(icon, size: 25, color: theme.colorScheme.primary),
     );
   }
 
@@ -134,13 +131,30 @@ class _DiaryScreenState extends State<DiaryScreen> {
                   }
 
                   if (state.errorMessage != null) {
+                    log(state.errorMessage.toString());
                     return SliverFillRemaining(
                       child: Center(
-                        child: Text(
-                          "Error: ${state.errorMessage}",
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.error,
-                          ),
+                        child: Column(
+                          mainAxisAlignment: .center,
+                          crossAxisAlignment: .center,
+                          spacing: 20,
+                          children: [
+                            Text(
+                              "Sorry there is a technical glitch at the moment, please try again later",
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.error,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            OutlinedButton(
+                              onPressed: () => Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => SettingsScreen(),
+                                ),
+                              ),
+                              child: Text('Contact us'),
+                            ),
+                          ],
                         ),
                       ),
                     );
@@ -229,57 +243,58 @@ class _DiaryScreenState extends State<DiaryScreen> {
             ],
           ),
           SafeArea(
-        child: Container(
-          margin: const EdgeInsets.fromLTRB(10, 0, 10, 16),
-          padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(40),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
-                blurRadius: 20,             
-                offset: const Offset(0, 8),
+            child: Container(
+              margin: const EdgeInsets.fromLTRB(10, 0, 10, 16),
+              padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                borderRadius: BorderRadius.circular(40),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              // _buildNavItem(icon: Icons.book_outlined, index: 0),
-              _buildNavItem(icon: CupertinoIcons.calendar, index: 1),
-              GestureDetector(
-                onTap: () async {
-                  final result = await Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const DiaryEntryScreen(entry: null),
-                    ),
-                  );
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  // _buildNavItem(icon: Icons.book_outlined, index: 0),
+                  _buildNavItem(icon: CupertinoIcons.calendar, index: 1),
+                  GestureDetector(
+                    onTap: () async {
+                      final result = await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const DiaryEntryScreen(entry: null),
+                        ),
+                      );
 
-                  if (result == true && context.mounted) {
-                    context.read<DiaryBloc>().add(LoadDiaryEntries());
-                  }
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: theme.colorScheme.primary,
+                      if (result == true && context.mounted) {
+                        context.read<DiaryBloc>().add(LoadDiaryEntries());
+                      }
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: theme.colorScheme.primary,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Icon(
+                          Icons.add,
+                          color: theme.colorScheme.onPrimary,
+                        ),
+                      ),
+                    ),
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Icon(Icons.add, color: theme.colorScheme.onPrimary),
-                  ),
-                ),
+                  _buildNavItem(icon: Icons.settings_rounded, index: 2),
+                ],
               ),
-              _buildNavItem(icon: Icons.settings_rounded, index: 2),
-              
-            ],
+            ),
           ),
-        ),
-      )
         ],
       ),
-
     );
   }
 }

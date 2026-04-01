@@ -281,7 +281,10 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
     }
   }
 
-  void _onClearBackground(ClearBackground event, Emitter<DiaryEntryState> emit) {
+  void _onClearBackground(
+    ClearBackground event,
+    Emitter<DiaryEntryState> emit,
+  ) {
     emit(
       state.copyWith(
         bgImage: '',
@@ -352,7 +355,9 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
   }
 
   void _onRemoveSticker(RemoveSticker event, Emitter<DiaryEntryState> emit) {
-    final updatedStickers = state.stickers.where((s) => s.id != event.id).toList();
+    final updatedStickers = state.stickers
+        .where((s) => s.id != event.id)
+        .toList();
     emit(state.copyWith(stickers: updatedStickers, selectedStickerId: null));
   }
 
@@ -421,7 +426,9 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
   }
 
   void _onRemoveImage(RemoveImage event, Emitter<DiaryEntryState> emit) {
-    final updatedImages = state.images.where((image) => image.id != event.imageId).toList();
+    final updatedImages = state.images
+        .where((image) => image.id != event.imageId)
+        .toList();
     emit(state.copyWith(images: updatedImages, selectedImageId: null));
   }
 
@@ -439,7 +446,10 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
     }
   }
 
-  void _onBackgroundsLoaded(BackgroundsLoaded event, Emitter<DiaryEntryState> emit) {
+  void _onBackgroundsLoaded(
+    BackgroundsLoaded event,
+    Emitter<DiaryEntryState> emit,
+  ) {
     emit(
       state.copyWith(
         availableBackgrounds: event.urls,
@@ -484,12 +494,11 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
         ),
       );
     } catch (e) {
+      // Don't touch bgImage or bgLocalPath — leave background unchanged
       emit(
         state.copyWith(
           isDownloadingBackground: false,
-          downloadError: e.toString(),
-          bgImage: event.url,
-          bgLocalPath: null,
+          downloadError: 'Background unavailable. Please try again later.',
         ),
       );
     }
@@ -497,35 +506,33 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
 
   // Sticker Supabase methods
   Future<void> _onLoadStickers(
-  LoadStickers event,
-  Emitter<DiaryEntryState> emit,
-) async {
-  emit(state.copyWith(isLoadingStickers: true, stickersError: null));
-  try {
-    final map = await _stickerRepo.getStickersByCategory();
-    add(StickersByCategoryLoaded(map));
-  } catch (e) {
-    add(StickersLoadFailed(e.toString()));
+    LoadStickers event,
+    Emitter<DiaryEntryState> emit,
+  ) async {
+    emit(state.copyWith(isLoadingStickers: true, stickersError: null));
+    try {
+      final map = await _stickerRepo.getStickersByCategory();
+      add(StickersByCategoryLoaded(map));
+    } catch (e) {
+      add(StickersLoadFailed(e.toString()));
+    }
   }
-}
-void _onStickersByCategoryLoaded(
-  StickersByCategoryLoaded event,
-  Emitter<DiaryEntryState> emit,
-) {
-  emit(
-    state.copyWith(
-      stickersByCategory: event.stickersByCategory,
-      isLoadingStickers: false,
-    ),
-  );
-}
+
+  void _onStickersByCategoryLoaded(
+    StickersByCategoryLoaded event,
+    Emitter<DiaryEntryState> emit,
+  ) {
+    emit(
+      state.copyWith(
+        stickersByCategory: event.stickersByCategory,
+        isLoadingStickers: false,
+      ),
+    );
+  }
 
   void _onStickersLoaded(StickersLoaded event, Emitter<DiaryEntryState> emit) {
     emit(
-      state.copyWith(
-        availableStickers: event.urls,
-        isLoadingStickers: false,
-      ),
+      state.copyWith(availableStickers: event.urls, isLoadingStickers: false),
     );
   }
 
@@ -533,19 +540,16 @@ void _onStickersByCategoryLoaded(
     StickersLoadFailed event,
     Emitter<DiaryEntryState> emit,
   ) {
-    emit(
-      state.copyWith(
-        isLoadingStickers: false,
-        stickersError: event.error,
-      ),
-    );
+    emit(state.copyWith(isLoadingStickers: false, stickersError: event.error));
   }
 
   Future<void> _onSelectSupabaseSticker(
     SelectSupabaseSticker event,
     Emitter<DiaryEntryState> emit,
   ) async {
-    emit(state.copyWith(isDownloadingSticker: true, stickerDownloadError: null));
+    emit(
+      state.copyWith(isDownloadingSticker: true, stickerDownloadError: null),
+    );
     try {
       final localPath = await _stickerRepo.downloadSticker(event.stickerUrl);
       final newSticker = StickerModel(
@@ -556,17 +560,21 @@ void _onStickersByCategoryLoaded(
         y: event.y,
         size: 1.0,
       );
-      emit(state.copyWith(
-        stickers: [...state.stickers, newSticker],
-        isDownloadingSticker: false,
-        selectedStickerId: null,
-        selectedImageId: null,
-      ));
+      emit(
+        state.copyWith(
+          stickers: [...state.stickers, newSticker],
+          isDownloadingSticker: false,
+          selectedStickerId: null,
+          selectedImageId: null,
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(
-        isDownloadingSticker: false,
-        stickerDownloadError: e.toString(),
-      ));
+      emit(
+        state.copyWith(
+          isDownloadingSticker: false,
+          stickerDownloadError: e.toString(),
+        ),
+      );
       add(SetError('Failed to download sticker: $e'));
     }
   }
@@ -575,7 +583,9 @@ void _onStickersByCategoryLoaded(
     DownloadSticker event,
     Emitter<DiaryEntryState> emit,
   ) async {
-    emit(state.copyWith(isDownloadingSticker: true, stickerDownloadError: null));
+    emit(
+      state.copyWith(isDownloadingSticker: true, stickerDownloadError: null),
+    );
     try {
       final localPath = await _stickerRepo.downloadSticker(event.url);
       add(StickerDownloadCompleted(event.url, localPath));

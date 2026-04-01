@@ -2,6 +2,9 @@ import 'dart:developer';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:routine/core/constants/app_constants.dart';
+import 'package:routine/core/utils/feedback_util.dart';
+import 'package:routine/core/utils/share_util.dart';
 import 'package:routine/core/version/app_version.dart';
 import 'package:routine/features/app_lock/presentation/pages/app_lock_settings_page.dart';
 import 'package:routine/features/settings/presentation/pages/contact_us.dart';
@@ -139,28 +142,35 @@ class SettingsScreen extends StatelessWidget {
                   ],
                 ),
 
-                /// ENGAGEMENT
-                // CupertinoListSection.insetGrouped(
-                //   header: const Text('Engagement'),
-                //   children: [
-                //     ListTile(
-                //       leading: const Icon(Icons.share_outlined),
-                //       title: const Text('Share'),
-                //       titleTextStyle: Theme.of(context).textTheme.titleSmall,
-                //       trailing: const CupertinoListTileChevron(),
-                //       onTap: () async {
-                //         await ShareUtils.shareApp();
-                //       },
-                //     ),
-                //     ListTile(
-                //       leading: const Icon(Icons.star_border),
-                //       title: const Text('Rate app'),
-                //       titleTextStyle: Theme.of(context).textTheme.titleSmall,
-                //       trailing: const CupertinoListTileChevron(),
-                //       onTap: () async => await _rateApp(context),
-                //     ),
-                //   ],
-                // ),
+                // ENGAGEMENT
+                CupertinoListSection.insetGrouped(
+                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                  header: const Text('Engagement'),
+                  children: [
+                    ListTile(
+                      leading: Icon(
+                        Icons.share_outlined,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                      title: const Text('Share'),
+                      titleTextStyle: Theme.of(context).textTheme.titleSmall,
+                      trailing: const CupertinoListTileChevron(),
+                      onTap: () async {
+                        await ShareUtils.shareApp();
+                      },
+                    ),
+                    ListTile(
+                      leading: Icon(
+                        Icons.star_border,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                      title: const Text('Rate app'),
+                      titleTextStyle: Theme.of(context).textTheme.titleSmall,
+                      trailing: const CupertinoListTileChevron(),
+                      onTap: ()  async=> await _rateApp(context),
+                    ),
+                  ],
+                ),
 
                 /// SUPPORT
                 CupertinoListSection.insetGrouped(
@@ -235,14 +245,15 @@ Write daily. Reflect deeply. Grow consistently.
     }
   }
 
-  // Future<void> _rateApp(BuildContext context) async {
-  //   final Uri _url = Uri.parse(AppConstants.playStoreUrl);
-  //   if (!await launchUrl(_url, mode: LaunchMode.platformDefault)) {
-  //     ScaffoldMessenger.of(
-  //       context,
-  //     ).showSnackBar(SnackBar(content: Text('Sorry we are facing an issue')));
-  //   }
-  // }
+  Future<void> _rateApp(BuildContext context) async {
+    final Uri url = Uri.parse(AppConstants.playStoreUrl);
+    if (!await launchUrl(url, mode: LaunchMode.platformDefault) &&
+        context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Sorry we are facing an issue')));
+    }
+  }
 
   void showModernSupportSheet(BuildContext context) {
     showModalBottomSheet(
