@@ -68,12 +68,55 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   bool _isAutoInsertingBullet = false;
   final bool _isDraggingOverlay = false;
 
+  // ── CHANGE TRACKING: snapshot of the entry when the screen opened ──────────
+  // For new entries every field starts empty/default, so any user input
+  // immediately counts as a change. For edits we capture the original values
+  // from widget.entry so we can diff them later.
+
+  String _originalTitle = '';
+  String _originalDescription = '';
+  String _originalMood = '😊';
+  DateTime? _originalDate;
+  String? _originalBgImage;
+  String? _originalBgLocalPath;
+  String? _originalBgGalleryImage;
+  Color? _originalBgColor;
+  String? _originalFontFamily;
+  int _originalStickerCount = 0;
+  int _originalImageCount = 0;
+
   // ── Lifecycle ──────────────────────────────────────────────────────────────
 
   @override
   void initState() {
     super.initState();
     _bloc = context.read<DiaryEntryBloc>();
+
+    // Capture original values BEFORE any bloc events mutate state.
+    if (widget.entry != null) {
+      final e = widget.entry!;
+      _originalTitle = e.title;
+      _originalDescription = e.content ?? e.preview ?? '';
+      _originalMood = e.mood ?? '😊';
+      _originalDate = DateTime.tryParse(e.date);
+      _originalBgImage = e.bgImagePath;
+      _originalBgLocalPath = e.bgLocalPath;
+      _originalBgGalleryImage = e.bgGalleryImagePath;
+      _originalFontFamily = e.fontFamily;
+      _originalStickerCount =
+          (e.stickersJson != null && e.stickersJson!.isNotEmpty)
+              ? (jsonDecode(e.stickersJson!) as List).length
+              : 0;
+      _originalImageCount =
+          (e.imagesJson != null && e.imagesJson!.isNotEmpty)
+              ? (jsonDecode(e.imagesJson!) as List).length
+              : 0;
+      // Decode stored bgColor hex → Color for comparison.
+      if (e.bgColor != null && e.bgColor!.isNotEmpty) {
+        final hex = int.tryParse(e.bgColor!, radix: 16);
+        if (hex != null) _originalBgColor = Color(hex);
+      }
+    }
 
     _titleController.addListener(
       () => _bloc.add(TitleChanged(_titleController.text)),
@@ -101,11 +144,125 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     super.dispose();
   }
 
+  // ── Change detection ───────────────────────────────────────────────────────
+
+  /// Returns true if the user has made any edits since the screen opened.
+  /// For *new* entries, any non-empty/non-default value counts as a change.
+  bool _hasChanges() {
+    final s = _bloc.state;
+
+    // For new entries: any content at all counts as a change.
+    if (widget.entry == null) {
+      return s.title.isNotEmpty ||
+          s.description.isNotEmpty ||
+          s.stickers.isNotEmpty ||
+          s.images.isNotEmpty ||
+          s.bgColor != null ||
+          s.bgImage.isNotEmpty ||
+          s.bgLocalPath != null ||
+          s.bgGalleryImage != null ||
+          (s.fontFamily != null && s.fontFamily != 'Quicksand');
+    }
+
+    // For existing entries: compare against the snapshot taken at initState.
+    if (s.title != _originalTitle) return true;
+    if (s.description != _originalDescription) return true;
+    if (s.mood != _originalMood) return true;
+    if (_originalDate != null && s.date != _originalDate) return true;
+    if (s.bgImage != (_originalBgImage ?? '')) return true;
+    if (s.bgLocalPath != _originalBgLocalPath) return true;
+    if (s.bgGalleryImage != _originalBgGalleryImage) return true;
+    if (s.bgColor != _originalBgColor) return true;
+    if (s.fontFamily != _originalFontFamily) return true;
+    if (s.stickers.length != _originalStickerCount) return true;
+    if (s.images.length != _originalImageCount) return true;
+
+    return false;
+  }
+
+  // ── Back navigation ────────────────────────────────────────────────────────
+
+  /// Called when the user taps the system/hardware back or the leading icon.
+  Future<void> _onBackPressed() async {
+    if (!_hasChanges()) {
+      Navigator.pop(context);
+      return;
+    }
+    await _showUnsavedChangesDialog();
+  }
+
+  /// Shows a dialog with three choices: Cancel (stay), Discard, Save.
+  Future<void> _showUnsavedChangesDialog() async {
+    final theme = Theme.of(context);
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(Icons.edit_note_rounded, color: theme.colorScheme.primary),
+            const SizedBox(width: 8),
+            const Text('Unsaved Changes'),
+          ],
+        ),
+        content: Text(
+          widget.entry != null
+              ? 'You have unsaved changes to this entry. What would you like to do?'
+              : 'Your new entry has not been saved yet. What would you like to do?',
+          style: theme.textTheme.bodyMedium,
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        actionsAlignment: MainAxisAlignment.spaceBetween,
+        actions: [
+          // ── Cancel: stay on screen ─────────────────────────────────────
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: theme.colorScheme.onSurface),
+            ),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ── Discard: leave without saving ─────────────────────────
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext); // close dialog
+                  Navigator.pop(context);       // leave screen
+                },
+                child: Text(
+                  'Discard',
+                  style: TextStyle(color: theme.colorScheme.error),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // ── Save: persist and leave ────────────────────────────────
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext); // close dialog
+                  _saveEntry(context, _bloc.state);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+                child: const Text('Save'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   // ── Bounds helper ──────────────────────────────────────────────────────────
 
-  /// Returns the current description container size as a bounding [Rect]
-  /// in description-local coordinates.  Used by [TransformableItem] to clamp
-  /// drag movement so overlays can never leave the description area.
   Rect? _getDescriptionBounds() {
     final box =
         _descriptionKey.currentContext?.findRenderObject() as RenderBox?;
@@ -141,17 +298,27 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
           debugPrint(state.errorMessage.toString());
         }
       },
-      child: BlocBuilder<DiaryEntryBloc, DiaryEntryState>(
-        buildWhen: (p, c) {
-          if (_isDraggingOverlay) {
-            return c.errorMessage != p.errorMessage ||
-                c.title != p.title ||
-                c.description != p.description;
-          }
-          return true;
+      // ── PopScope intercepts Android back-gesture / back button ────────────
+      // canPop: false means Flutter always calls onPopInvokedWithResult first,
+      // letting us decide whether to allow the pop or show the dialog.
+      child: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) async {
+          if (didPop) return; // already popped — nothing to do
+          await _onBackPressed();
         },
-        builder: (context, state) =>
-            Scaffold(body: _buildBackground(state, context)),
+        child: BlocBuilder<DiaryEntryBloc, DiaryEntryState>(
+          buildWhen: (p, c) {
+            if (_isDraggingOverlay) {
+              return c.errorMessage != p.errorMessage ||
+                  c.title != p.title ||
+                  c.description != p.description;
+            }
+            return true;
+          },
+          builder: (context, state) =>
+              Scaffold(body: _buildBackground(state, context)),
+        ),
       ),
     );
   }
@@ -205,11 +372,6 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   }
 
   // ── Content ────────────────────────────────────────────────────────────────
-  // NOTE: Stickers and images are NO LONGER spread here.
-  // They live inside _buildDescriptionSection so they:
-  //   • scroll with the description content
-  //   • are bounded to the description area
-  //   • are guaranteed to be above the TextField but below nothing else
 
   Widget _buildContent(DiaryEntryState state, BuildContext context) {
     return Stack(
@@ -235,6 +397,8 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   }
 
   // ── AppBar ─────────────────────────────────────────────────────────────────
+  // CHANGE: leading back button now calls _onBackPressed() instead of
+  // Navigator.pop() directly, so the unsaved-changes check is triggered.
 
   AppBar _buildAppBar(BuildContext context, DiaryEntryState state) {
     final theme = Theme.of(context);
@@ -245,8 +409,9 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       backgroundColor: Colors.transparent,
       foregroundColor: theme.colorScheme.onSurface,
       forceMaterialTransparency: true,
+      // Intercept the leading back button via _onBackPressed.
       leading: IconButton(
-        onPressed: () => Navigator.pop(context),
+        onPressed: _onBackPressed,
         icon: const Icon(CupertinoIcons.back),
       ),
       actions: [
@@ -416,24 +581,15 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   }
 
   // ── Description ────────────────────────────────────────────────────────────
-  // Stickers and images live HERE in a Stack so they:
-  //   1. Scroll with the description text (stuck to description).
-  //   2. Are bounded to the description container (can't drift into title/header).
-  //   3. Images render below stickers (Z-order: images first, stickers on top).
 
   Widget _buildDescriptionSection(DiaryEntryState state, BuildContext context) {
     return Container(
       key: _descriptionKey,
       constraints: const BoxConstraints(minHeight: 400),
       child: Stack(
-        // clipBehavior: Clip.none allows the remove-button handle to poke
-        // slightly outside the container edge without being cut off.
         clipBehavior: Clip.none,
         children: [
-          // ── TextField (bottom layer) ──────────────────────────────────────
           IgnorePointer(
-            // When any overlay is selected, block the TextField so drags go
-            // to the overlay rather than moving the text cursor.
             ignoring:
                 state.selectedStickerId != null ||
                 state.selectedImageId != null,
@@ -448,13 +604,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
               style: TextStyle(fontFamily: state.fontFamily),
             ),
           ),
-
-          // ── Images (middle layer — rendered before stickers) ──────────────
-          // Images are below stickers in Z-order so a newly added sticker
-          // is always visible on top of any existing image.
           ...state.images.map((i) => _buildImage(i, state)),
-
-          // ── Stickers (top layer) ──────────────────────────────────────────
           ...state.stickers.map((s) => _buildSticker(s, state)),
         ],
       ),
@@ -825,12 +975,6 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   }
 
   // ── Free-position finder ───────────────────────────────────────────────────
-  //
-  // Returns the top-left Offset (description-local) for a new item so it
-  // does not overlap any existing sticker or image.
-  //
-  // FIX: existing rects now use Rect.fromLTWH (x,y = top-left) instead of
-  // Rect.fromCenter, matching how _position is stored and rendered.
 
   Offset _findFreePositionForNewItem(double width, double height) {
     final renderBox =
@@ -840,8 +984,6 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     final size = renderBox.size;
     final state = _bloc.state;
 
-    // Build existing occupied rects — all in description-local coordinates,
-    // top-left origin (matching how x,y are stored via onUpdate).
     final existing = <Rect>[
       for (final s in state.stickers)
         Rect.fromLTWH(
@@ -859,7 +1001,6 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
         ),
     ];
 
-    // Try to place centered in the description first.
     final startTL = Offset(
       ((size.width - width) / 2).clamp(0.0, size.width - width),
       ((size.height - height) / 2).clamp(0.0, size.height - height),
@@ -873,14 +1014,12 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       return startTL;
     }
 
-    // Spiral outward from the description center.
     final searchCenter = Offset(size.width / 2, size.height / 2);
     for (double r = 20.0; r <= 500.0; r += 20.0) {
       for (int d = 0; d < 8; d++) {
         final angle = d * math.pi / 4;
         final candidateCenter =
             searchCenter + Offset(r * math.cos(angle), r * math.sin(angle));
-        // Convert candidate center to top-left.
         final tl = Offset(
           candidateCenter.dx - width / 2,
           candidateCenter.dy - height / 2,
@@ -895,7 +1034,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
         }
       }
     }
-    return startTL; // fallback: center of description
+    return startTL;
   }
 
   bool _isPositionValid(Rect rect, List<Rect> existing, double w, double h) {
