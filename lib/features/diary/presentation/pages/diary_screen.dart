@@ -1,5 +1,4 @@
 import 'dart:developer';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:routine/core/theme/theme_extenstions.dart';
@@ -7,42 +6,12 @@ import 'package:routine/features/diary/data/models/diary_entry_model.dart';
 import 'package:routine/features/diary/presentation/blocs/diary/diary_bloc.dart';
 import 'package:routine/features/diary/presentation/pages/entry/diary_entry.dart';
 import 'package:routine/features/diary/presentation/pages/history/history_screen.dart';
+import 'package:routine/features/diary/presentation/widgets/bottom_nav_bar.dart';
 import 'package:routine/features/settings/presentation/pages/settings_screen.dart';
 import 'package:routine/features/diary/presentation/widgets/entry_card_widget.dart';
 
-class DiaryScreen extends StatefulWidget {
+class DiaryScreen extends StatelessWidget {
   const DiaryScreen({super.key});
-
-  @override
-  State<DiaryScreen> createState() => _DiaryScreenState();
-}
-
-class _DiaryScreenState extends State<DiaryScreen> {
-  int selectedIndex = 0;
-
-  void _onItemTapped(int index) {
-    if (selectedIndex == index) return;
-
-    if (index == 1) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const DiaryCalendarScreen()),
-      );
-    } else if (index == 2) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const SettingsScreen()),
-      );
-    }
-  }
-
-  Widget _buildNavItem({required IconData icon, required int index}) {
-    final theme = Theme.of(context);
-    return GestureDetector(
-      onTap: () => _onItemTapped(index),
-      child: Icon(icon, size: 25, color: theme.colorScheme.primary),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +21,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
       body: Stack(
         alignment: AlignmentGeometry.bottomCenter,
         children: [
+          // Background SliverAppBar layer
           CustomScrollView(
             physics: const NeverScrollableScrollPhysics(),
             slivers: [
@@ -65,9 +35,9 @@ class _DiaryScreenState extends State<DiaryScreen> {
                     fit: StackFit.expand,
                     children: [
                       Image.asset(
-                        Theme.of(
-                              context,
-                            ).extension<BackgroundImageTheme>()?.imagePath ??
+                        Theme.of(context)
+                                .extension<BackgroundImageTheme>()
+                                ?.imagePath ??
                             'assets/img/themes/theme_1.png',
                         fit: BoxFit.cover,
                       ),
@@ -78,6 +48,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
             ],
           ),
 
+          // Scrollable content layer
           CustomScrollView(
             slivers: [
               const SliverToBoxAdapter(child: SizedBox(height: 170)),
@@ -104,9 +75,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
                           color: theme.colorScheme.surface,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: theme.colorScheme.primary.withValues(
-                              alpha: 0.2,
-                            ),
+                            color: theme.colorScheme.primary.withValues(alpha: 0.2),
                           ),
                         ),
                         child: Text(
@@ -135,9 +104,8 @@ class _DiaryScreenState extends State<DiaryScreen> {
                     return SliverFillRemaining(
                       child: Center(
                         child: Column(
-                          mainAxisAlignment: .center,
-                          crossAxisAlignment: .center,
-                          spacing: 20,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Text(
                               "Sorry there is a technical glitch at the moment, please try again later",
@@ -146,13 +114,14 @@ class _DiaryScreenState extends State<DiaryScreen> {
                               ),
                               textAlign: TextAlign.center,
                             ),
+                            const SizedBox(height: 20),
                             OutlinedButton(
                               onPressed: () => Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (context) => SettingsScreen(),
+                                  builder: (context) => const SettingsScreen(),
                                 ),
                               ),
-                              child: Text('Contact us'),
+                              child: const Text('Contact us'),
                             ),
                           ],
                         ),
@@ -160,19 +129,15 @@ class _DiaryScreenState extends State<DiaryScreen> {
                     );
                   }
 
-                  // Sort all entries by date descending
                   final allEntries = List<DiaryEntryModel>.from(state.entries);
                   allEntries.sort((a, b) {
-                    final dateA =
-                        DateTime.tryParse(a.date) ??
+                    final dateA = DateTime.tryParse(a.date) ??
                         DateTime.fromMillisecondsSinceEpoch(0);
-                    final dateB =
-                        DateTime.tryParse(b.date) ??
+                    final dateB = DateTime.tryParse(b.date) ??
                         DateTime.fromMillisecondsSinceEpoch(0);
                     return dateB.compareTo(dateA);
                   });
 
-                  // Take latest 30 for display
                   final latestEntries = allEntries.take(30).toList();
 
                   if (latestEntries.isEmpty) {
@@ -186,7 +151,6 @@ class _DiaryScreenState extends State<DiaryScreen> {
                     );
                   }
 
-                  // Build the list of entries
                   return SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) =>
@@ -233,64 +197,43 @@ class _DiaryScreenState extends State<DiaryScreen> {
                         ),
                       ),
                     );
-                  } else {
-                    return const SliverToBoxAdapter(child: SizedBox.shrink());
                   }
+                  return const SliverToBoxAdapter(child: SizedBox.shrink());
                 },
               ),
 
-              const SliverToBoxAdapter(child: SizedBox(height: 100)),
+              const SliverToBoxAdapter(child: SizedBox(height: 120)),
             ],
           ),
-          SafeArea(
-            child: Container(
-              margin: const EdgeInsets.fromLTRB(10, 0, 10, 16),
-              padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface,
-                borderRadius: BorderRadius.circular(40),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  // _buildNavItem(icon: Icons.book_outlined, index: 0),
-                  _buildNavItem(icon: CupertinoIcons.calendar, index: 1),
-                  GestureDetector(
-                    onTap: () async {
-                      final result = await Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const DiaryEntryScreen(entry: null),
-                        ),
-                      );
 
-                      if (result == true && context.mounted) {
-                        context.read<DiaryBloc>().add(LoadDiaryEntries());
-                      }
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: theme.colorScheme.primary,
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: Icon(
-                          Icons.add,
-                          color: theme.colorScheme.onPrimary,
-                        ),
-                      ),
-                    ),
-                  ),
-                  _buildNavItem(icon: Icons.settings_rounded, index: 2),
-                ],
+          // Custom bottom nav with wired callbacks
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: CustomBottomNav(
+              onCalendarTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const DiaryCalendarScreen(),
+                ),
               ),
+              onSettingsTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const SettingsScreen(),
+                ),
+              ),
+              onFabTap: () async {
+                final result = await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const DiaryEntryScreen(entry: null),
+                  ),
+                );
+                if (result == true && context.mounted) {
+                  context.read<DiaryBloc>().add(LoadDiaryEntries());
+                }
+              },
             ),
           ),
         ],
