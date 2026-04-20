@@ -157,8 +157,8 @@ class DiaryExportService {
   static void _addEntryPage(pw.Document pdf, DiaryEntryModel entry) {
     final date = DateTime.tryParse(entry.date) ?? DateTime.now();
     final formattedDate = DateFormat('EEEE, MMMM dd yyyy').format(date);
-    final content = (entry.content?.isNotEmpty == true)
-        ? entry.content!
+    final content = (entry.content.isNotEmpty == true)
+        ? entry.content
         : (entry.preview.isNotEmpty ? entry.preview : '');
 
     pdf.addPage(

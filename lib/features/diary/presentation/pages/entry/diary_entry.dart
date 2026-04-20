@@ -96,8 +96,8 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     if (widget.entry != null) {
       final e = widget.entry!;
       _originalTitle = e.title;
-      _originalDescription = e.content ?? e.preview ?? '';
-      _originalMood = e.mood ?? '😊';
+      _originalDescription = e.content;
+      _originalMood = e.mood;
       _originalDate = DateTime.tryParse(e.date);
       _originalBgImage = e.bgImagePath;
       _originalBgLocalPath = e.bgLocalPath;
