@@ -1,4 +1,5 @@
 import 'package:routine/core/config/secrets.dart';
+import 'package:routine/core/services/showcase_prefs_service.dart';
 import 'package:routine/core/theme/app_theme.dart';
 import 'package:routine/features/app_lock/data/datasources/biometric_local_auth_datasource.dart';
 import 'package:routine/features/app_lock/data/datasources/shared_preferences_datasource.dart';
@@ -35,7 +36,7 @@ Future<void> main() async {
     url: Secrets.supabaseUrl,
     anonKey: Secrets.supabaseAnonKey,
   );
-
+await ShowcasePrefsService.init();
   runApp(
     MyApp(
       onboardingRepository: onboardingRepository,

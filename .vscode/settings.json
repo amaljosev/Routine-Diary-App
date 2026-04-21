@@ -16,6 +16,7 @@
         "okio",
         "Playfair",
         "prefs",
+        "showcaseview",
         "sqflite",
         "stati",
         "supabase",

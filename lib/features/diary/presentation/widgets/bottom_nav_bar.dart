@@ -1,4 +1,12 @@
+// lib/features/diary/presentation/widgets/bottom_nav_bar.dart
+//
+// Identical to your original except:
+//  • Three optional GlobalKey params added (fabKey, calendarKey, settingsKey)
+//  • _maybeShowcase() helper wraps items only when a key is supplied
+//  • All painter / layout code is pixel-for-pixel the same as your original
+
 import 'package:flutter/material.dart';
+import 'package:showcaseview/showcaseview.dart';
 
 class CustomBottomNav extends StatelessWidget {
   const CustomBottomNav({
@@ -6,11 +14,18 @@ class CustomBottomNav extends StatelessWidget {
     required this.onCalendarTap,
     required this.onSettingsTap,
     required this.onFabTap,
+    this.calendarKey,
+    this.fabKey,
+    this.settingsKey,
   });
 
   final VoidCallback onCalendarTap;
   final VoidCallback onSettingsTap;
   final VoidCallback onFabTap;
+
+  final GlobalKey? calendarKey;
+  final GlobalKey? fabKey;
+  final GlobalKey? settingsKey;
 
   static const double _fabSize = 70;
   static const double _barHeight = 64;
@@ -19,7 +34,8 @@ class CustomBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final Color barColor = isDark ? const Color(0xFF1E1E1E) : Colors.grey.shade50;
+    final Color barColor =
+        isDark ? const Color(0xFF1E1E1E) : Colors.grey.shade50;
     final Color inactiveColor = isDark
         ? Colors.white38
         : Theme.of(context).primaryColor.withValues(alpha: 0.5);
@@ -31,7 +47,7 @@ class CustomBottomNav extends StatelessWidget {
           alignment: Alignment.bottomCenter,
           clipBehavior: Clip.none,
           children: [
-            /// NAV BAR
+            // ── NAV BAR ────────────────────────────────────────────────────
             Positioned(
               bottom: 12,
               left: 20,
@@ -47,18 +63,30 @@ class CustomBottomNav extends StatelessWidget {
                   child: Row(
                     children: [
                       Expanded(
-                        child: _NavItem(
-                          icon: Icons.calendar_month,
-                          color: inactiveColor,
-                          onTap: onCalendarTap,
+                        child: _maybeShowcase(
+                          globalKey: calendarKey,
+                          title: 'View History',
+                          description:
+                              'Browse all your past diary entries by date.',
+                          child: _NavItem(
+                            icon: Icons.calendar_month,
+                            color: inactiveColor,
+                            onTap: onCalendarTap,
+                          ),
                         ),
                       ),
                       const SizedBox(width: _fabSize + 16),
                       Expanded(
-                        child: _NavItem(
-                          icon: Icons.settings,
-                          color: inactiveColor,
-                          onTap: onSettingsTap,
+                        child: _maybeShowcase(
+                          globalKey: settingsKey,
+                          title: 'Settings',
+                          description:
+                              'Customize themes, security, and more.',
+                          child: _NavItem(
+                            icon: Icons.settings,
+                            color: inactiveColor,
+                            onTap: onSettingsTap,
+                          ),
                         ),
                       ),
                     ],
@@ -67,32 +95,69 @@ class CustomBottomNav extends StatelessWidget {
               ),
             ),
 
-            /// FAB BUTTON
+            // ── FAB ────────────────────────────────────────────────────────
             Positioned(
               bottom: 30,
-              child: GestureDetector(
-                onTap: onFabTap,
-                child: Container(
-                  width: _fabSize,
-                  height: _fabSize,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.35),
-                        blurRadius: 16,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
+              child: _maybeShowcase(
+                globalKey: fabKey,
+                title: 'New Entry',
+                description: 'Tap here to write a new diary entry.',
+                child: GestureDetector(
+                  onTap: onFabTap,
+                  child: Container(
+                    width: _fabSize,
+                    height: _fabSize,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withValues(alpha: 0.35),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child:
+                        const Icon(Icons.add, color: Colors.white, size: 28),
                   ),
-                  child: const Icon(Icons.add, color: Colors.white, size: 28),
                 ),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  /// Returns [child] wrapped in [Showcase] when [globalKey] is non-null,
+  /// otherwise returns [child] as-is — fully backward-compatible.
+  Widget _maybeShowcase({
+    required GlobalKey? globalKey,
+    required String title,
+    required String description,
+    required Widget child,
+  }) {
+    if (globalKey == null) return child;
+
+    return Showcase(
+      key: globalKey,
+      title: title,
+      description: description,
+      tooltipBackgroundColor: Colors.white,
+      titleTextStyle: const TextStyle(
+        fontWeight: FontWeight.w700,
+        fontSize: 15,
+        color: Colors.black,
+      ),
+      descTextStyle: const TextStyle(
+        fontSize: 13,
+        color: Colors.black87,
+      ),
+      child: child,
     );
   }
 }
@@ -123,7 +188,7 @@ class _NavItem extends StatelessWidget {
   }
 }
 
-// ─── CustomPainter: floating pill with smooth concave notch ───────────────────
+// ─── CustomPainter: floating pill with smooth concave notch ──────────────────
 
 class _NotchedPillPainter extends CustomPainter {
   const _NotchedPillPainter({
@@ -184,7 +249,9 @@ class _NotchedPillPainter extends CustomPainter {
 
     canvas.drawShadow(
       path,
-      isDark ? Colors.black.withValues(alpha: 0.6) : Colors.black.withValues(alpha: 0.12),
+      isDark
+          ? Colors.black.withValues(alpha: 0.6)
+          : Colors.black.withValues(alpha: 0.12),
       12,
       false,
     );
