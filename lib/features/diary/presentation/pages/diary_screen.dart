@@ -1,12 +1,3 @@
-// lib/features/diary/presentation/pages/diary_screen.dart
-//
-// Changes vs your original:
-//  • DiaryScreen → StatefulWidget (needs GlobalKeys + lifecycle hooks)
-//  • ShowcaseView.register(scope:) called in initState  [v5 API]
-//  • ShowcaseView.get().startShowCase([...]) triggered via BlocListener
-//  • ShowcaseCubit provided locally — no DI needed
-//  • Three GlobalKeys forwarded to CustomBottomNav
-
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
@@ -65,13 +56,13 @@ class _DiaryBodyState extends State<_DiaryBody> {
       scope: _scope,
       onFinish: () {
         // Persist "seen" via the cubit so it never shows again.
-        if (mounted) context.read<ShowcaseCubit>().markSeen();
+        if (mounted) context.read<ShowcaseCubit>().markHomeSeen();
       },
     );
 
     // Check SharedPrefs after first frame and emit shouldShow.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) context.read<ShowcaseCubit>().checkIfShouldShow();
+      if (mounted) context.read<ShowcaseCubit>().checkIfShouldShowHome();
     });
   }
 

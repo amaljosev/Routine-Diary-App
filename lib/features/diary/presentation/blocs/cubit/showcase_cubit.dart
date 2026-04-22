@@ -8,16 +8,29 @@ part 'showcase_state.dart';
 class ShowcaseCubit extends Cubit<ShowcaseState> {
   ShowcaseCubit() : super(const ShowcaseState());
 
-  /// Check SharedPrefs and emit whether the showcase should run.
-  void checkIfShouldShow() {
+  // ── Home screen ────────────────────────────────────────────────────────────
+
+  void checkIfShouldShowHome() {
     emit(ShowcaseState(
-      shouldShow: !ShowcasePrefsService.instance.hasSeenShowcase,
+      shouldShow: !ShowcasePrefsService.instance.hasSeenHomeShowcase,
     ));
   }
 
-  /// Persist "seen" and emit done state.
-  Future<void> markSeen() async {
-    await ShowcasePrefsService.instance.markShowcaseSeen();
+  Future<void> markHomeSeen() async {
+    await ShowcasePrefsService.instance.markHomeShowcaseSeen();
+    emit(const ShowcaseState(shouldShow: false));
+  }
+
+  // ── Entry screen ───────────────────────────────────────────────────────────
+
+  void checkIfShouldShowEntry() {
+    emit(ShowcaseState(
+      shouldShow: !ShowcasePrefsService.instance.hasSeenEntryShowcase,
+    ));
+  }
+
+  Future<void> markEntrySeen() async {
+    await ShowcasePrefsService.instance.markEntryShowcaseSeen();
     emit(const ShowcaseState(shouldShow: false));
   }
 }

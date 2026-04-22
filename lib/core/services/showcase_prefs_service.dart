@@ -1,6 +1,4 @@
 // lib/core/services/showcase_prefs_service.dart
-//
-// No DI framework needed. Call ShowcasePrefsService.instance after init().
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -9,7 +7,7 @@ class ShowcasePrefsService {
 
   static ShowcasePrefsService? _instance;
 
-  // Call once in main() before runApp — after SharedPreferences.getInstance().
+  /// Call once in main() before runApp().
   static Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     _instance = ShowcasePrefsService._internal(prefs);
@@ -18,16 +16,22 @@ class ShowcasePrefsService {
   static ShowcasePrefsService get instance {
     assert(
       _instance != null,
-      'ShowcasePrefsService.init() must be called before accessing instance.',
+      'Call ShowcasePrefsService.init() before accessing instance.',
     );
     return _instance!;
   }
 
   final SharedPreferences _prefs;
 
-  static const _kKey = 'diary_showcase_seen';
+  // ── Keys ───────────────────────────────────────────────────────────────────
+  static const _kHomeKey  = 'diary_showcase_seen';        // home nav bar
+  static const _kEntryKey = 'diary_entry_showcase_seen';  // entry toolbar
 
-  bool get hasSeenShowcase => _prefs.getBool(_kKey) ?? false;
+  // ── Home screen ────────────────────────────────────────────────────────────
+  bool get hasSeenHomeShowcase  => _prefs.getBool(_kHomeKey)  ?? false;
+  Future<void> markHomeShowcaseSeen()  => _prefs.setBool(_kHomeKey,  true);
 
-  Future<void> markShowcaseSeen() => _prefs.setBool(_kKey, true);
+  // ── Entry screen ───────────────────────────────────────────────────────────
+  bool get hasSeenEntryShowcase => _prefs.getBool(_kEntryKey) ?? false;
+  Future<void> markEntryShowcaseSeen() => _prefs.setBool(_kEntryKey, true);
 }
