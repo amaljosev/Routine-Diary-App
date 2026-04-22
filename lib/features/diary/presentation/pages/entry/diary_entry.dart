@@ -169,7 +169,6 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   void _onShowcaseFinished() {
     if (!mounted) return;
     setState(() => _showcaseDone = true);
-    // Only auto-focus for new entries, matching your original behaviour.
     if (widget.entry == null) {
       Future.delayed(const Duration(milliseconds: 150), () {
         if (mounted) _titleFocusNode.requestFocus();
@@ -249,7 +248,10 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
           children: [
             Icon(Icons.edit_note_rounded, color: theme.colorScheme.primary),
             const SizedBox(width: 8),
-            const Text('Unsaved Changes'),
+             Text('Unsaved Changes',
+          style: theme.textTheme.titleMedium!.copyWith(
+            fontWeight: FontWeight.bold
+          )),
           ],
         ),
         content: Text(
@@ -771,7 +773,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
                         globalKey: _showcaseBgKey,
                         title: 'Change Background',
                         description:
-                            'Pick a preset, gallery photo, or colour as your entry background.',
+                            'Pick a preset image or gallery photo as your entry background.',
                         child: _actionButton(Icons.layers_outlined,
                             'Change Background', _onBgImagePressed, context),
                       ),
@@ -785,9 +787,9 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
                       ),
                       _showcaseWrap(
                         globalKey: _showcaseColorKey,
-                        title: 'Background Colour',
+                        title: 'Background Color',
                         description:
-                            'Set a solid colour as the background for this entry.',
+                            'Set a solid color as the background for this entry.',
                         child: _actionButton(Icons.palette_outlined,
                             'Background Color', _onBgColorPressed, context),
                       ),
@@ -1103,7 +1105,9 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   bool _isPositionValid(
       Rect rect, List<Rect> existing, double w, double h) {
     if (rect.left < 0 || rect.top < 0 ||
-        rect.right > w || rect.bottom > h) return false;
+        rect.right > w || rect.bottom > h) {
+      return false;
+    }
     return existing.every((r) => !rect.overlaps(r));
   }
 
