@@ -17,14 +17,13 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
   bool _isLoading = true;
 
   final List<String> _themes = [
-    
-    'assets/img/themes/theme_2.jpg',
-    'assets/img/themes/theme_1.png',
-    'assets/img/themes/theme_3.png',
-    'assets/img/themes/theme_7.png',
-    'assets/img/themes/theme_4.jpg',
-    'assets/img/themes/theme_5.jpg',
-    'assets/img/themes/theme_6.jpg',
+    'assets/img/themes/theme_2.webp', // ← updated
+    'assets/img/themes/theme_1.webp', // ← updated
+    'assets/img/themes/theme_3.webp', // ← updated
+    'assets/img/themes/theme_7.webp', // ← updated
+    'assets/img/themes/theme_4.webp', // ← updated
+    'assets/img/themes/theme_5.webp', // ← updated
+    'assets/img/themes/theme_6.webp', // ← updated
   ];
 
   @override
@@ -40,7 +39,6 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
     super.dispose();
   }
 
-  // Theme color helpers (unchanged, keep as before)
   Color _getPreviewBackgroundColor(int index) {
     switch (index) {
       case 0:
@@ -149,7 +147,6 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
   }
 
   Widget _buildPreviewItem(BuildContext context, int themeIndex) {
-    // (unchanged, same as before)
     final isDarkPreview = _isPreviewDark(themeIndex);
     final surfaceColor = _getThemeSurfaceColor(themeIndex);
     final primaryColor = _getThemePrimaryColor(themeIndex);
@@ -304,11 +301,9 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
       builder: (context, state) {
         final selectedThemeIndex = state.themeIndex;
 
-        // Handle initial scroll to saved theme
         if (!_initialScrollDone && selectedThemeIndex != -1 && mounted) {
-          // Set loading to false once we have the theme
           _isLoading = false;
-          
+
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted && _pageController.hasClients) {
               _pageController.jumpToPage(selectedThemeIndex);
@@ -317,7 +312,6 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                 _initialScrollDone = true;
               });
             } else if (mounted) {
-              // If controller doesn't have clients yet, try again in the next frame
               Future.delayed(const Duration(milliseconds: 50), () {
                 if (mounted && _pageController.hasClients) {
                   _pageController.jumpToPage(selectedThemeIndex);
@@ -331,17 +325,16 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
           });
         }
 
-        // Show loading until we have the theme and have scrolled
         if (_isLoading || selectedThemeIndex == -1) {
           return Scaffold(
-            backgroundColor: selectedThemeIndex != -1 
+            backgroundColor: selectedThemeIndex != -1
                 ? _getPreviewBackgroundColor(selectedThemeIndex)
                 : AppColors.light1Background,
             appBar: AppBar(
               title: const Text('Choose Your Diary Theme'),
               centerTitle: true,
               backgroundColor: Colors.transparent,
-              foregroundColor: selectedThemeIndex != -1 
+              foregroundColor: selectedThemeIndex != -1
                   ? _getThemePrimaryColor(selectedThemeIndex)
                   : AppColors.light1Primary,
               elevation: 0,
@@ -349,7 +342,7 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
             body: Center(
               child: CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(
-                  selectedThemeIndex != -1 
+                  selectedThemeIndex != -1
                       ? _getThemePrimaryColor(selectedThemeIndex)
                       : AppColors.light1Primary,
                 ),
@@ -396,7 +389,7 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                           },
                           itemBuilder: (context, index) {
                             final isDarkPreview = _isPreviewDark(index);
-                            
+
                             return AnimatedContainer(
                               duration: const Duration(milliseconds: 300),
                               curve: Curves.easeOutCubic,
@@ -414,13 +407,13 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                                       context.read<ThemeBloc>().add(
                                         ChangeTheme(index),
                                       );
-                                      
+
                                       _pageController.animateToPage(
                                         index,
                                         duration: const Duration(milliseconds: 400),
                                         curve: Curves.easeInOutCubic,
                                       );
-                                      
+
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
                                           content: Text(
@@ -555,7 +548,7 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                             ),
                           ),
                         ElevatedButton(
-                          onPressed: isCurrentThemeSelected 
+                          onPressed: isCurrentThemeSelected
                               ? null
                               : () {
                                   context.read<ThemeBloc>().add(

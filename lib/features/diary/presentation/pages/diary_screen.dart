@@ -51,11 +51,9 @@ class _DiaryBodyState extends State<_DiaryBody> {
     super.initState();
 
     // ── v5 API: register this screen's showcase scope ──────────────────────
-    // onFinish / onStart callbacks are optional but handy for analytics.
     ShowcaseView.register(
       scope: _scope,
       onFinish: () {
-        // Persist "seen" via the cubit so it never shows again.
         if (mounted) context.read<ShowcaseCubit>().markHomeSeen();
       },
     );
@@ -83,7 +81,6 @@ class _DiaryBodyState extends State<_DiaryBody> {
     return BlocListener<ShowcaseCubit, ShowcaseState>(
       listener: (_, state) {
         if (state.shouldShow == true) {
-          // Small delay so every widget is fully laid out before the overlay.
           Future.delayed(
             const Duration(milliseconds: 400),
             _startShowcase,
@@ -111,8 +108,9 @@ class _DiaryBodyState extends State<_DiaryBody> {
                           Theme.of(context)
                                   .extension<BackgroundImageTheme>()
                                   ?.imagePath ??
-                              'assets/img/themes/theme_1.png',
+                              'assets/img/themes/theme_1.webp', // ← updated fallback
                           fit: BoxFit.cover,
+                          filterQuality:  FilterQuality.high,
                         ),
                       ],
                     ),

@@ -25,7 +25,6 @@ final ThemeData lightTheme2 = ThemeData.light().copyWith(
   ),
 
   textTheme: const TextTheme(
-    // Display
     displayLarge: TextStyle(
       fontFamily: 'Quicksand',
       fontWeight: FontWeight.w700,
@@ -41,8 +40,6 @@ final ThemeData lightTheme2 = ThemeData.light().copyWith(
       fontWeight: FontWeight.w600,
       color: AppColors.light1OnBackground,
     ),
-
-    // Headline
     headlineLarge: TextStyle(
       fontFamily: 'Quicksand',
       fontWeight: FontWeight.w600,
@@ -58,8 +55,6 @@ final ThemeData lightTheme2 = ThemeData.light().copyWith(
       fontWeight: FontWeight.w500,
       color: AppColors.light1OnBackground,
     ),
-
-    // Titles
     titleLarge: TextStyle(
       fontFamily: 'Quicksand',
       fontWeight: FontWeight.w500,
@@ -75,8 +70,6 @@ final ThemeData lightTheme2 = ThemeData.light().copyWith(
       fontWeight: FontWeight.w400,
       color: AppColors.light1OnBackground,
     ),
-
-    // Body (Nunito)
     bodyLarge: TextStyle(
       fontFamily: 'Nunito',
       fontWeight: FontWeight.w700,
@@ -92,8 +85,6 @@ final ThemeData lightTheme2 = ThemeData.light().copyWith(
       fontWeight: FontWeight.w400,
       color: AppColors.light1OnBackground,
     ),
-
-    // Labels & Buttons (Nunito)
     labelLarge: TextStyle(
       fontFamily: 'Nunito',
       fontWeight: FontWeight.w700,
@@ -134,9 +125,8 @@ final ThemeData lightTheme2 = ThemeData.light().copyWith(
     error: AppColors.light1Error,
   ),
 
-  // Add background image
   extensions: [
-    const BackgroundImageTheme(imagePath: 'assets/img/themes/theme_2.jpg'),
+    const BackgroundImageTheme(imagePath: 'assets/img/themes/theme_2.webp'), // ← updated
   ],
 );
 
@@ -164,7 +154,6 @@ final ThemeData lightTheme1 = ThemeData.light().copyWith(
   ),
 
   textTheme: const TextTheme(
-    // Display
     displayLarge: TextStyle(
       fontFamily: 'Quicksand',
       fontWeight: FontWeight.w700,
@@ -180,8 +169,6 @@ final ThemeData lightTheme1 = ThemeData.light().copyWith(
       fontWeight: FontWeight.w600,
       color: AppColors.light2OnBackground,
     ),
-
-    // Headline
     headlineLarge: TextStyle(
       fontFamily: 'Quicksand',
       fontWeight: FontWeight.w600,
@@ -197,8 +184,6 @@ final ThemeData lightTheme1 = ThemeData.light().copyWith(
       fontWeight: FontWeight.w500,
       color: AppColors.light2OnBackground,
     ),
-
-    // Titles
     titleLarge: TextStyle(
       fontFamily: 'Quicksand',
       fontWeight: FontWeight.w500,
@@ -214,8 +199,6 @@ final ThemeData lightTheme1 = ThemeData.light().copyWith(
       fontWeight: FontWeight.w400,
       color: AppColors.light2OnBackground,
     ),
-
-    // Body (Nunito)
     bodyLarge: TextStyle(
       fontFamily: 'Nunito',
       fontWeight: FontWeight.w700,
@@ -231,8 +214,6 @@ final ThemeData lightTheme1 = ThemeData.light().copyWith(
       fontWeight: FontWeight.w400,
       color: AppColors.light2OnBackground,
     ),
-
-    // Labels & Buttons (Nunito)
     labelLarge: TextStyle(
       fontFamily: 'Nunito',
       fontWeight: FontWeight.w700,
@@ -274,7 +255,7 @@ final ThemeData lightTheme1 = ThemeData.light().copyWith(
   ),
 
   extensions: [
-    const BackgroundImageTheme(imagePath: 'assets/img/themes/theme_1.png'),
+    const BackgroundImageTheme(imagePath: 'assets/img/themes/theme_1.webp'), // ← updated
   ],
 );
 
@@ -302,7 +283,6 @@ final ThemeData lightTheme3 = ThemeData.light().copyWith(
   ),
 
   textTheme: const TextTheme(
-    // Display
     displayLarge: TextStyle(
       fontFamily: 'Quicksand',
       fontWeight: FontWeight.w700,
@@ -318,8 +298,6 @@ final ThemeData lightTheme3 = ThemeData.light().copyWith(
       fontWeight: FontWeight.w600,
       color: AppColors.light3OnBackground,
     ),
-
-    // Headline
     headlineLarge: TextStyle(
       fontFamily: 'Quicksand',
       fontWeight: FontWeight.w600,
@@ -335,8 +313,6 @@ final ThemeData lightTheme3 = ThemeData.light().copyWith(
       fontWeight: FontWeight.w500,
       color: AppColors.light3OnBackground,
     ),
-
-    // Titles
     titleLarge: TextStyle(
       fontFamily: 'Quicksand',
       fontWeight: FontWeight.w500,
@@ -352,8 +328,6 @@ final ThemeData lightTheme3 = ThemeData.light().copyWith(
       fontWeight: FontWeight.w400,
       color: AppColors.light3OnBackground,
     ),
-
-    // Body (Nunito)
     bodyLarge: TextStyle(
       fontFamily: 'Nunito',
       fontWeight: FontWeight.w700,
@@ -369,8 +343,6 @@ final ThemeData lightTheme3 = ThemeData.light().copyWith(
       fontWeight: FontWeight.w400,
       color: AppColors.light3OnBackground,
     ),
-
-    // Labels & Buttons (Nunito)
     labelLarge: TextStyle(
       fontFamily: 'Nunito',
       fontWeight: FontWeight.w700,
@@ -412,9 +384,10 @@ final ThemeData lightTheme3 = ThemeData.light().copyWith(
   ),
 
   extensions: [
-    const BackgroundImageTheme(imagePath: 'assets/img/themes/theme_3.png'),
+    const BackgroundImageTheme(imagePath: 'assets/img/themes/theme_3.webp'), // ← updated
   ],
 );
+
 // ----- LIGHT THEME 4: Orange (Vibrant) -----
 final ThemeData lightTheme4 = ThemeData.light().copyWith(
   primaryColor: AppColors.light4Primary,
@@ -540,7 +513,7 @@ final ThemeData lightTheme4 = ThemeData.light().copyWith(
   ),
 
   extensions: [
-    const BackgroundImageTheme(imagePath: 'assets/img/themes/theme_7.png'),
+    const BackgroundImageTheme(imagePath: 'assets/img/themes/theme_7.webp'), // ← updated
   ],
 );
 
@@ -568,7 +541,6 @@ final ThemeData darkTheme1 = ThemeData.dark().copyWith(
   ),
 
   textTheme: const TextTheme(
-    // Display
     displayLarge: TextStyle(
       fontFamily: 'Quicksand',
       fontWeight: FontWeight.w700,
@@ -584,8 +556,6 @@ final ThemeData darkTheme1 = ThemeData.dark().copyWith(
       fontWeight: FontWeight.w600,
       color: AppColors.dark1OnBackground,
     ),
-
-    // Headline
     headlineLarge: TextStyle(
       fontFamily: 'Quicksand',
       fontWeight: FontWeight.w600,
@@ -601,8 +571,6 @@ final ThemeData darkTheme1 = ThemeData.dark().copyWith(
       fontWeight: FontWeight.w500,
       color: AppColors.dark1OnBackground,
     ),
-
-    // Titles
     titleLarge: TextStyle(
       fontFamily: 'Quicksand',
       fontWeight: FontWeight.w500,
@@ -618,8 +586,6 @@ final ThemeData darkTheme1 = ThemeData.dark().copyWith(
       fontWeight: FontWeight.w400,
       color: AppColors.dark1OnBackground,
     ),
-
-    // Body (Nunito)
     bodyLarge: TextStyle(
       fontFamily: 'Nunito',
       fontWeight: FontWeight.w700,
@@ -635,8 +601,6 @@ final ThemeData darkTheme1 = ThemeData.dark().copyWith(
       fontWeight: FontWeight.w400,
       color: AppColors.dark1OnBackground,
     ),
-
-    // Labels & Buttons (Nunito)
     labelLarge: TextStyle(
       fontFamily: 'Nunito',
       fontWeight: FontWeight.w700,
@@ -678,7 +642,7 @@ final ThemeData darkTheme1 = ThemeData.dark().copyWith(
   ),
 
   extensions: [
-    const BackgroundImageTheme(imagePath: 'assets/img/themes/theme_4.jpg'),
+    const BackgroundImageTheme(imagePath: 'assets/img/themes/theme_4.webp'), // ← updated
   ],
 );
 
@@ -706,7 +670,6 @@ final ThemeData darkTheme2 = ThemeData.dark().copyWith(
   ),
 
   textTheme: const TextTheme(
-    // Display
     displayLarge: TextStyle(
       fontFamily: 'Quicksand',
       fontWeight: FontWeight.w700,
@@ -722,8 +685,6 @@ final ThemeData darkTheme2 = ThemeData.dark().copyWith(
       fontWeight: FontWeight.w600,
       color: AppColors.dark2OnBackground,
     ),
-
-    // Headline
     headlineLarge: TextStyle(
       fontFamily: 'Quicksand',
       fontWeight: FontWeight.w600,
@@ -739,8 +700,6 @@ final ThemeData darkTheme2 = ThemeData.dark().copyWith(
       fontWeight: FontWeight.w500,
       color: AppColors.dark2OnBackground,
     ),
-
-    // Titles
     titleLarge: TextStyle(
       fontFamily: 'Quicksand',
       fontWeight: FontWeight.w500,
@@ -756,8 +715,6 @@ final ThemeData darkTheme2 = ThemeData.dark().copyWith(
       fontWeight: FontWeight.w400,
       color: AppColors.dark2OnBackground,
     ),
-
-    // Body (Nunito)
     bodyLarge: TextStyle(
       fontFamily: 'Nunito',
       fontWeight: FontWeight.w700,
@@ -773,8 +730,6 @@ final ThemeData darkTheme2 = ThemeData.dark().copyWith(
       fontWeight: FontWeight.w400,
       color: AppColors.dark2OnBackground,
     ),
-
-    // Labels & Buttons (Nunito)
     labelLarge: TextStyle(
       fontFamily: 'Nunito',
       fontWeight: FontWeight.w700,
@@ -816,7 +771,7 @@ final ThemeData darkTheme2 = ThemeData.dark().copyWith(
   ),
 
   extensions: [
-    const BackgroundImageTheme(imagePath: 'assets/img/themes/theme_5.jpg'),
+    const BackgroundImageTheme(imagePath: 'assets/img/themes/theme_5.webp'), // ← updated
   ],
 );
 
@@ -844,7 +799,6 @@ final ThemeData darkTheme3 = ThemeData.dark().copyWith(
   ),
 
   textTheme: const TextTheme(
-    // Display
     displayLarge: TextStyle(
       fontFamily: 'Quicksand',
       fontWeight: FontWeight.w700,
@@ -860,8 +814,6 @@ final ThemeData darkTheme3 = ThemeData.dark().copyWith(
       fontWeight: FontWeight.w600,
       color: AppColors.dark3OnBackground,
     ),
-
-    // Headline
     headlineLarge: TextStyle(
       fontFamily: 'Quicksand',
       fontWeight: FontWeight.w600,
@@ -877,8 +829,6 @@ final ThemeData darkTheme3 = ThemeData.dark().copyWith(
       fontWeight: FontWeight.w500,
       color: AppColors.dark3OnBackground,
     ),
-
-    // Titles
     titleLarge: TextStyle(
       fontFamily: 'Quicksand',
       fontWeight: FontWeight.w500,
@@ -894,8 +844,6 @@ final ThemeData darkTheme3 = ThemeData.dark().copyWith(
       fontWeight: FontWeight.w400,
       color: AppColors.dark3OnBackground,
     ),
-
-    // Body (Nunito)
     bodyLarge: TextStyle(
       fontFamily: 'Nunito',
       fontWeight: FontWeight.w700,
@@ -911,8 +859,6 @@ final ThemeData darkTheme3 = ThemeData.dark().copyWith(
       fontWeight: FontWeight.w400,
       color: AppColors.dark3OnBackground,
     ),
-
-    // Labels & Buttons (Nunito)
     labelLarge: TextStyle(
       fontFamily: 'Nunito',
       fontWeight: FontWeight.w700,
@@ -954,9 +900,10 @@ final ThemeData darkTheme3 = ThemeData.dark().copyWith(
   ),
 
   extensions: [
-    const BackgroundImageTheme(imagePath: 'assets/img/themes/theme_6.jpg'),
+    const BackgroundImageTheme(imagePath: 'assets/img/themes/theme_6.webp'), // ← updated
   ],
 );
+
 final List<ThemeData> allThemes = [
   lightTheme2, // 0 - Purple/Teal (Light)
   lightTheme1, // 1 - Blue/Orange (Light)
