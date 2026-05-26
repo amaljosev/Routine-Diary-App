@@ -10,8 +10,7 @@ class ImageOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double safeWidth = image.width.isFinite ? image.width : 120;
-    final double safeHeight = image.height.isFinite ? image.height : 120;
+    
 
     return Positioned(
       left: image.x,
@@ -27,8 +26,8 @@ class ImageOverlay extends StatelessWidget {
           );
         },
           child: SizedBox(
-            width: safeWidth * image.scale,
-            height: safeHeight * image.scale,
+            width: 100,
+            height: 100,
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.file(

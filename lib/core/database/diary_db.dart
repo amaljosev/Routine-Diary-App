@@ -19,35 +19,48 @@ class DiaryDatabase {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,           // ← bumped from 1 → 2
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade, // ← new
     );
   }
 
   Future<void> _onCreate(Database db, int version) async {
     await db.execute('''
-    CREATE TABLE diary_entries(
-      id TEXT PRIMARY KEY,
-      title TEXT,
-      date TEXT,               
-      content TEXT,
-      preview TEXT,
-      mood TEXT,
-      image_path TEXT,
-      bg_color TEXT,
-      bg_image_path TEXT,
-      bg_gallery_image_path TEXT,
-      bg_local_path TEXT,
-      stickers TEXT,
-      images TEXT,
-      created_at TEXT,          
-      updated_at TEXT,
-      font_family TEXT
-    );
-  ''');
+      CREATE TABLE diary_entries(
+        id                    TEXT PRIMARY KEY,
+        title                 TEXT,
+        date                  TEXT,
+        content               TEXT,
+        preview               TEXT,
+        mood                  TEXT,
+        image_path            TEXT,
+        bg_color              TEXT,
+        bg_image_path         TEXT,
+        bg_gallery_image_path TEXT,
+        bg_local_path         TEXT,
+        stickers              TEXT,
+        images                TEXT,
+        created_at            TEXT,
+        updated_at            TEXT,
+        font_family           TEXT,
+        is_favorite           INTEGER NOT NULL DEFAULT 0
+      );
+    ''');
   }
 
-  
+  // Runs only when an existing install upgrades from an older version.
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // Safe to run even if the column somehow already exists — 
+      // SQLite will just throw which we swallow gracefully.
+      try {
+        await db.execute(
+          'ALTER TABLE diary_entries ADD COLUMN is_favorite INTEGER NOT NULL DEFAULT 0',
+        );
+      } catch (_) {}
+    }
+  }
 
   Future<void> close() async {
     final db = _database;

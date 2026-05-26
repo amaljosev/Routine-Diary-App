@@ -9,25 +9,24 @@ class DiaryRepositoryImpl implements DiaryRepository {
   DiaryRepositoryImpl(this.localDataSource);
 
   @override
-Future<void> addEntry(DiaryEntryModel entry) async {
-  try {
-    await localDataSource.insertEntry(entry); 
-  } catch (e, st) {
-    log('addEntry error: $e', stackTrace: st);
-    rethrow;
+  Future<void> addEntry(DiaryEntryModel entry) async {
+    try {
+      await localDataSource.insertEntry(entry);
+    } catch (e, st) {
+      log('addEntry error: $e', stackTrace: st);
+      rethrow;
+    }
   }
-}
 
-@override
-Future<void> updateEntry(DiaryEntryModel entry) async {
-  try {
-    await localDataSource.updateEntry(entry); 
-  } catch (e, st) {
-    log('updateEntry error: $e', stackTrace: st);
-    rethrow;
+  @override
+  Future<void> updateEntry(DiaryEntryModel entry) async {
+    try {
+      await localDataSource.updateEntry(entry);
+    } catch (e, st) {
+      log('updateEntry error: $e', stackTrace: st);
+      rethrow;
+    }
   }
-}
-
 
   @override
   Future<void> deleteEntry(String id) async {
@@ -40,36 +39,55 @@ Future<void> updateEntry(DiaryEntryModel entry) async {
   }
 
   @override
-Future<List<DiaryEntryModel>> getAllEntries() async {
-  try {
-    final models = await localDataSource.getAllEntries();
-    return models; // ✅ return models directly
-  } catch (e, st) {
-    log('getAllEntries error: $e', stackTrace: st);
-    return [];
+  Future<List<DiaryEntryModel>> getAllEntries() async {
+    try {
+      final models = await localDataSource.getAllEntries();
+      return models; // ✅ return models directly
+    } catch (e, st) {
+      log('getAllEntries error: $e', stackTrace: st);
+      return [];
+    }
   }
-}
 
-@override
-Future<DiaryEntryModel?> getEntryById(String id) async {
-  try {
-    final model = await localDataSource.getEntryById(id);
-    return model; // ✅ no .toEntity()
-  } catch (e, st) {
-    log('getEntryById error: $e', stackTrace: st);
-    return null;
+  @override
+  Future<DiaryEntryModel?> getEntryById(String id) async {
+    try {
+      final model = await localDataSource.getEntryById(id);
+      return model; // ✅ no .toEntity()
+    } catch (e, st) {
+      log('getEntryById error: $e', stackTrace: st);
+      return null;
+    }
   }
-}
 
-@override
-Future<List<DiaryEntryModel>> searchEntries(String query) async {
-  try {
-    final models = await localDataSource.search(query);
-    return models; // ✅ no .toEntity()
-  } catch (e, st) {
-    log('searchEntries error: $e', stackTrace: st);
-    return [];
+  @override
+  Future<List<DiaryEntryModel>> searchEntries(String query) async {
+    try {
+      final models = await localDataSource.search(query);
+      return models; // ✅ no .toEntity()
+    } catch (e, st) {
+      log('searchEntries error: $e', stackTrace: st);
+      return [];
+    }
   }
-}
 
+  @override
+  Future<void> toggleFavorite(String id, bool isFavorite) async {
+    try {
+      await localDataSource.toggleFavorite(id, isFavorite);
+    } catch (e, st) {
+      log('toggleFavorite error: $e', stackTrace: st);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<DiaryEntryModel>> getFavoriteEntries() async {
+    try {
+      return await localDataSource.getFavoriteEntries();
+    } catch (e, st) {
+      log('getFavoriteEntries error: $e', stackTrace: st);
+      return [];
+    }
+  }
 }

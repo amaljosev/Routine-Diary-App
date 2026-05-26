@@ -14,9 +14,10 @@ class DiaryEntry extends Equatable {
   final String? bgLocalPath;
   final String? stickersJson;
   final String? imagesJson;
-  final String? fontFamily; 
+  final String? fontFamily;
   final String createdAt;
   final String updatedAt;
+  final bool isFavorite;
 
   const DiaryEntry({
     required this.id,
@@ -32,28 +33,18 @@ class DiaryEntry extends Equatable {
     this.bgLocalPath,
     this.stickersJson,
     this.imagesJson,
-    this.fontFamily, 
+    this.fontFamily,
     required this.createdAt,
     required this.updatedAt,
+    this.isFavorite = false, // ← NEW
   });
 
   @override
   List<Object?> get props => [
-    id,
-    title,
-    date,
-    preview,
-    mood,
-    content,
-    imagePath,
-    bgColor,
-    bgImagePath,
-    bgGalleryImagePath,
-    bgLocalPath,
-    stickersJson,
-    imagesJson,
-    fontFamily, 
-    createdAt,
-    updatedAt,
+    id, title, date, preview, mood, content,
+    imagePath, bgColor, bgImagePath, bgGalleryImagePath,
+    bgLocalPath, stickersJson, imagesJson, fontFamily,
+    createdAt, updatedAt,
+    isFavorite, 
   ];
 }

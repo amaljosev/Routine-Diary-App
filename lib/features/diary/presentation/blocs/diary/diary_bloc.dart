@@ -27,6 +27,10 @@ class DiaryBloc extends Bloc<DiaryEvent, DiaryState> {
     on<UpdateDiaryEntry>(_onUpdateEntry);
     on<DeleteDiaryEntry>(_onDeleteEntry);
     on<SearchDiaryEntries>(_onSearchEntries);
+
+    //Fav
+    on<ToggleFavorite>(_onToggleFavorite);
+    on<FetchFavoriteEntries>(_onFetchFavoriteEntries);
   }
 
   // --------------------------------------------------------------------------
@@ -39,10 +43,23 @@ class DiaryBloc extends Bloc<DiaryEvent, DiaryState> {
     emit(state.copyWith(isLoading: true, errorMessage: null));
     try {
       final entries = await repository.getAllEntries();
-      emit(state.copyWith(entries: entries, isLoading: false));
+      final favs = await repository.getFavoriteEntries();
+      emit(
+        state.copyWith(
+          entries: entries,
+          favoriteEntries: favs,
+          isLoading: false,
+        ),
+      );
     } catch (e, st) {
       log('LoadDiaryEntries error: $e', stackTrace: st);
-      emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
+      emit(
+        state.copyWith(
+          isLoading: false,
+          favoriteEntries: [],
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
@@ -121,10 +138,23 @@ class DiaryBloc extends Bloc<DiaryEvent, DiaryState> {
     emit(state.copyWith(isLoading: true));
     try {
       final entries = await repository.getAllEntries();
-      emit(state.copyWith(entries: entries, isLoading: false));
+      final favs = await repository.getFavoriteEntries();
+      emit(
+        state.copyWith(
+          entries: entries,
+          favoriteEntries: favs,
+          isLoading: false,
+        ),
+      );
     } catch (e, st) {
       log('FetchAllEntries error: $e', stackTrace: st);
-      emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
+      emit(
+        state.copyWith(
+          isLoading: false,
+          favoriteEntries: [],
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
@@ -198,6 +228,42 @@ class DiaryBloc extends Bloc<DiaryEvent, DiaryState> {
       emit(state.copyWith(entries: entries, isLoading: false));
     } catch (e, st) {
       log('SearchDiaryEntries error: $e', stackTrace: st);
+      emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
+    }
+  }
+
+  Future<void> _onToggleFavorite(
+    ToggleFavorite event,
+    Emitter<DiaryState> emit,
+  ) async {
+    // Optimistic update — UI reacts instantly
+    final updated = state.entries.map((e) {
+      return e.id == event.id ? e.copyWith(isFavorite: event.isFavorite) : e;
+    }).toList();
+    emit(state.copyWith(entries: updated));
+
+    try {
+      await repository.toggleFavorite(event.id, event.isFavorite);
+      // Refresh favorites list
+      final favs = await repository.getFavoriteEntries();
+      emit(state.copyWith(favoriteEntries: favs));
+    } catch (e, st) {
+      log('ToggleFavorite error: $e', stackTrace: st);
+      // Revert optimistic update on failure
+      add(FetchAllEntries());
+    }
+  }
+
+  Future<void> _onFetchFavoriteEntries(
+    FetchFavoriteEntries event,
+    Emitter<DiaryState> emit,
+  ) async {
+    emit(state.copyWith(isLoading: true));
+    try {
+      final favs = await repository.getFavoriteEntries();
+      emit(state.copyWith(favoriteEntries: favs, isLoading: false));
+    } catch (e, st) {
+      log('FetchFavoriteEntries error: $e', stackTrace: st);
       emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
     }
   }

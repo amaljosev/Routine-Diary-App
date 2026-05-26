@@ -12,12 +12,13 @@ class DiaryEntryModel extends DiaryEntry {
     super.bgColor,
     super.bgImagePath,
     super.bgGalleryImagePath,
-    super.bgLocalPath,                  
+    super.bgLocalPath,
     super.stickersJson,
     super.imagesJson,
-    super.fontFamily, 
+    super.fontFamily,
     required super.createdAt,
     required super.updatedAt,
+    super.isFavorite = false, 
   });
 
   factory DiaryEntryModel.fromMap(Map<String, dynamic> map) {
@@ -32,12 +33,13 @@ class DiaryEntryModel extends DiaryEntry {
       bgColor: map['bg_color'] as String?,
       bgImagePath: map['bg_image_path'] as String?,
       bgGalleryImagePath: map['bg_gallery_image_path'] as String?,
-      bgLocalPath: map['bg_local_path'] as String?,         
+      bgLocalPath: map['bg_local_path'] as String?,
       stickersJson: map['stickers'] as String?,
       imagesJson: map['images'] as String?,
-      fontFamily: map['font_family'] as String?, 
+      fontFamily: map['font_family'] as String?,
       createdAt: map['created_at'] as String? ?? '',
       updatedAt: map['updated_at'] as String? ?? '',
+      isFavorite: (map['is_favorite'] as int? ?? 0) == 1, 
     );
   }
 
@@ -53,12 +55,13 @@ class DiaryEntryModel extends DiaryEntry {
       'bg_color': bgColor,
       'bg_image_path': bgImagePath,
       'bg_gallery_image_path': bgGalleryImagePath,
-      'bg_local_path': bgLocalPath,                         
+      'bg_local_path': bgLocalPath,
       'stickers': stickersJson,
       'images': imagesJson,
-      'font_family': fontFamily, 
+      'font_family': fontFamily,
       'created_at': createdAt,
       'updated_at': updatedAt,
+      'is_favorite': isFavorite ? 1 : 0, 
     };
   }
 
@@ -74,33 +77,26 @@ class DiaryEntryModel extends DiaryEntry {
       bgColor: entry.bgColor,
       bgImagePath: entry.bgImagePath,
       bgGalleryImagePath: entry.bgGalleryImagePath,
-      bgLocalPath: entry.bgLocalPath,                       
+      bgLocalPath: entry.bgLocalPath,
       stickersJson: entry.stickersJson,
       imagesJson: entry.imagesJson,
-      fontFamily: entry.fontFamily, 
+      fontFamily: entry.fontFamily,
       createdAt: entry.createdAt,
       updatedAt: entry.updatedAt,
+      isFavorite: entry.isFavorite, 
     );
   }
 
-  DiaryEntry toEntity() {
-    return DiaryEntry(
-      id: id,
-      title: title,
-      date: date,
-      preview: preview,
-      mood: mood,
-      content: content,
-      imagePath: imagePath,
-      bgColor: bgColor,
-      bgImagePath: bgImagePath,
-      bgGalleryImagePath: bgGalleryImagePath,
-      bgLocalPath: bgLocalPath,                             
-      stickersJson: stickersJson,
-      imagesJson: imagesJson,
-      fontFamily: fontFamily, 
-      createdAt: createdAt,
-      updatedAt: updatedAt,
+  // copyWith — handy for toggling in BLoC without a DB round-trip
+  DiaryEntryModel copyWith({bool? isFavorite}) {
+    return DiaryEntryModel(
+      id: id, title: title, date: date, preview: preview,
+      mood: mood, content: content, imagePath: imagePath,
+      bgColor: bgColor, bgImagePath: bgImagePath,
+      bgGalleryImagePath: bgGalleryImagePath, bgLocalPath: bgLocalPath,
+      stickersJson: stickersJson, imagesJson: imagesJson,
+      fontFamily: fontFamily, createdAt: createdAt, updatedAt: updatedAt,
+      isFavorite: isFavorite ?? this.isFavorite,
     );
   }
 }

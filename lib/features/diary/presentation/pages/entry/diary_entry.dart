@@ -700,8 +700,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
 
   Widget _buildImage(DiaryImage image, DiaryEntryState state) {
     final isSelected = state.selectedImageId == image.id;
-    final safeWidth  = image.width.isFinite  ? image.width  : 120.0;
-    final safeHeight = image.height.isFinite ? image.height : 120.0;
+   
 
     return TransformableItem(
       id:              image.id,
@@ -709,8 +708,8 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       initialScale:    image.scale,
       initialRotation: image.rotation,
       isSelected:      isSelected,
-      baseWidth:       safeWidth,
-      baseHeight:      safeHeight,
+      baseWidth:       100,
+      baseHeight:      100,
       getBounds:       _getDescriptionBounds,
       // ← imagePath enables double-tap fullscreen + expand button
       onSelect:  () => _bloc.add(SelectImage(image.id)),
@@ -927,6 +926,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       bgLocalPath:        state.bgLocalPath,
       bgGalleryImagePath: state.bgGalleryImage,
       fontFamily:         state.fontFamily,
+      isFavorite: widget.entry?.isFavorite ?? false, 
     );
 
     final isNewEntry = widget.entry == null;

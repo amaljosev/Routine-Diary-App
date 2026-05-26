@@ -1,7 +1,8 @@
 part of 'diary_bloc.dart';
 
 class DiaryState extends Equatable {
-  final List<DiaryEntryModel> entries; 
+  final List<DiaryEntryModel> entries;
+  final List<DiaryEntryModel> favoriteEntries; 
   final bool isLoading;
   final String? errorMessage;
   final double scrollOffset;
@@ -9,6 +10,7 @@ class DiaryState extends Equatable {
 
   const DiaryState({
     this.entries = const [],
+    this.favoriteEntries = const [], 
     this.isLoading = false,
     this.errorMessage,
     this.scrollOffset = 0.0,
@@ -17,6 +19,7 @@ class DiaryState extends Equatable {
 
   DiaryState copyWith({
     List<DiaryEntryModel>? entries,
+    List<DiaryEntryModel>? favoriteEntries, 
     bool? isLoading,
     String? errorMessage,
     double? scrollOffset,
@@ -24,6 +27,7 @@ class DiaryState extends Equatable {
   }) {
     return DiaryState(
       entries: entries ?? this.entries,
+      favoriteEntries: favoriteEntries ?? this.favoriteEntries, 
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage ?? this.errorMessage,
       scrollOffset: scrollOffset ?? this.scrollOffset,
@@ -33,5 +37,5 @@ class DiaryState extends Equatable {
 
   @override
   List<Object?> get props =>
-      [entries, isLoading, errorMessage, scrollOffset, dominantColor];
+      [entries, favoriteEntries, isLoading, errorMessage, scrollOffset, dominantColor];
 }

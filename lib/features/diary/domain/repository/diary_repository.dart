@@ -7,4 +7,6 @@ abstract class DiaryRepository {
   Future<void> updateEntry(DiaryEntryModel entry);
   Future<void> deleteEntry(String id);
   Future<List<DiaryEntryModel>> searchEntries(String query);
+  Future<void> toggleFavorite(String id, bool isFavorite); 
+  Future<List<DiaryEntryModel>> getFavoriteEntries();      
 }

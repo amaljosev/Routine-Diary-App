@@ -63,9 +63,9 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
   List<StickerModel> _parseStickers(DiaryEntryModel entry) {
     try {
       if (entry.stickersJson == null || entry.stickersJson!.isEmpty) return [];
-      return (List<Map<String, dynamic>>.from(jsonDecode(entry.stickersJson!)))
-          .map((m) => StickerModel.fromJson(m))
-          .toList();
+      return (List<Map<String, dynamic>>.from(
+        jsonDecode(entry.stickersJson!),
+      )).map((m) => StickerModel.fromJson(m)).toList();
     } catch (_) {
       return [];
     }
@@ -74,9 +74,9 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
   List<DiaryImage> _parseImages(DiaryEntryModel entry) {
     try {
       if (entry.imagesJson == null || entry.imagesJson!.isEmpty) return [];
-      return (List<Map<String, dynamic>>.from(jsonDecode(entry.imagesJson!)))
-          .map((m) => DiaryImage.fromJson(m))
-          .toList();
+      return (List<Map<String, dynamic>>.from(
+        jsonDecode(entry.imagesJson!),
+      )).map((m) => DiaryImage.fromJson(m)).toList();
     } catch (_) {
       return [];
     }
@@ -103,21 +103,22 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
               return Center(
                 child: Text(
                   'Please try again later',
-                  style:
-                      TextStyle(color: Theme.of(context).colorScheme.error),
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
               );
             }
             try {
-              final entry =
-                  state.entries.firstWhere((e) => e.id == widget.entryId);
+              final entry = state.entries.firstWhere(
+                (e) => e.id == widget.entryId,
+              );
               return _buildBackground(context, entry);
             } catch (_) {
               return Center(
                 child: Text(
                   'Diary entry not found',
                   style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurface),
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
               );
             }
@@ -166,8 +167,7 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
       child: SafeArea(
         child: Stack(
           children: [
-            Container(
-                color: theme.colorScheme.surface.withValues(alpha: 0.4)),
+            Container(color: theme.colorScheme.surface.withValues(alpha: 0.4)),
             _buildContent(context, entry),
           ],
         ),
@@ -197,12 +197,15 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
                     physics: const BouncingScrollPhysics(),
                     slivers: [
                       SliverToBoxAdapter(
-                          child: _buildHeaderSection(context, entry)),
+                        child: _buildHeaderSection(context, entry),
+                      ),
                       const SliverToBoxAdapter(child: SizedBox(height: 20)),
                       SliverToBoxAdapter(
-                          child: _buildTitleField(context, entry)),
+                        child: _buildTitleField(context, entry),
+                      ),
                       SliverToBoxAdapter(
-                          child: _buildDescriptionSection(context, entry)),
+                        child: _buildDescriptionSection(context, entry),
+                      ),
                       const SliverToBoxAdapter(child: SizedBox(height: 20)),
                     ],
                   ),
@@ -235,12 +238,49 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
         icon: const Icon(CupertinoIcons.back),
       ),
       actions: [
+        BlocBuilder<DiaryBloc, DiaryState>(
+          buildWhen: (p, c) {
+            final pEntry = p.entries.firstWhere(
+              (e) => e.id == entry.id,
+              orElse: () => entry,
+            );
+            final cEntry = c.entries.firstWhere(
+              (e) => e.id == entry.id,
+              orElse: () => entry,
+            );
+            return pEntry.isFavorite != cEntry.isFavorite;
+          },
+          builder: (context, state) {
+            final current = state.entries.firstWhere(
+              (e) => e.id == entry.id,
+              orElse: () => entry,
+            );
+            return IconButton(
+              tooltip: current.isFavorite
+                  ? 'Remove from favourites'
+                  : 'Add to favourites',
+              onPressed: () {
+                context.read<DiaryBloc>().add(
+                  ToggleFavorite(id: entry.id, isFavorite: !current.isFavorite),
+                );
+              },
+              icon: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                transitionBuilder: (child, anim) =>
+                    ScaleTransition(scale: anim, child: child),
+                child: Icon(
+                  current.isFavorite ? Icons.favorite : Icons.favorite_border,
+                  key: ValueKey(current.isFavorite),
+                  color: current.isFavorite ? Colors.redAccent : null,
+                ),
+              ),
+            );
+          },
+        ),
         IconButton(
           onPressed: () async {
             await Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => DiaryEntryScreen(entry: entry),
-              ),
+              MaterialPageRoute(builder: (_) => DiaryEntryScreen(entry: entry)),
             );
             if (context.mounted) {
               Future.delayed(const Duration(milliseconds: 100), () {
@@ -298,8 +338,7 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
                     intl.DateFormat('MMMM yyyy').format(date),
                     style: theme.textTheme.titleMedium!.copyWith(
                       fontWeight: FontWeight.w900,
-                      color:
-                          theme.colorScheme.primary.withValues(alpha: 0.5),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.5),
                     ),
                   ),
                   const SizedBox(width: 6),
@@ -320,8 +359,7 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
           ),
         ),
         CircleAvatar(
-          backgroundColor:
-              theme.colorScheme.primary.withValues(alpha: 0.1),
+          backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
           radius: 25,
           child: Hero(
             tag: 'moodTag${entry.id}',
@@ -373,8 +411,7 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
   //   • stickers rendered last (upper Z, always on top of images)
   // Coordinates are description-local so they align with the editor positions.
 
-  Widget _buildDescriptionSection(
-      BuildContext context, DiaryEntryModel entry) {
+  Widget _buildDescriptionSection(BuildContext context, DiaryEntryModel entry) {
     final stickers = _parseStickers(entry);
     final images = _parseImages(entry);
 

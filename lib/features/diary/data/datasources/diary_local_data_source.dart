@@ -90,4 +90,34 @@ class DiaryLocalDataSource {
       return [];
     }
   }
+  Future<int> toggleFavorite(String id, bool isFavorite) async {
+  try {
+    final db = await _dbProvider.database;
+    return await db.update(
+      table,
+      {'is_favorite': isFavorite ? 1 : 0},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  } catch (e, st) {
+    log('toggleFavorite error: $e', stackTrace: st);
+    return 0;
+  }
+}
+
+Future<List<DiaryEntryModel>> getFavoriteEntries() async {
+  try {
+    final db = await _dbProvider.database;
+    final maps = await db.query(
+      table,
+      where: 'is_favorite = ?',
+      whereArgs: [1],
+      orderBy: 'created_at DESC',
+    );
+    return maps.map((m) => DiaryEntryModel.fromMap(m)).toList();
+  } catch (e, st) {
+    log('getFavoriteEntries error: $e', stackTrace: st);
+    return [];
+  }
+}
 }

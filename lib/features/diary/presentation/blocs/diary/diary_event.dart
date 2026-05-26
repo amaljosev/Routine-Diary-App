@@ -61,3 +61,13 @@ class SearchDiaryEntries extends DiaryEvent {
   @override
   List<Object?> get props => [query];
 }
+
+class ToggleFavorite extends DiaryEvent {
+  final String id;
+  final bool isFavorite;
+  const ToggleFavorite({required this.id, required this.isFavorite});
+  @override
+  List<Object?> get props => [id, isFavorite];
+}
+
+class FetchFavoriteEntries extends DiaryEvent {}
