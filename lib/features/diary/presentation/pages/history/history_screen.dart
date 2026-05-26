@@ -222,8 +222,8 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
                                 ),
                             onPageChanged: (focusedDay) =>
                                 setState(() => _focusedDay = focusedDay),
-
                             calendarStyle: CalendarStyle(
+                              outsideDaysVisible: false,
                               isTodayHighlighted: true,
                               selectedDecoration: BoxDecoration(
                                 shape: BoxShape.circle,
@@ -276,6 +276,7 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
                                   alpha: 0.7,
                                 ),
                               ),
+
                               weekendStyle: theme.textTheme.bodySmall!.copyWith(
                                 fontWeight: FontWeight.w500,
                                 color: theme.colorScheme.onSurface.withValues(
@@ -319,6 +320,7 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
                                   ),
                                 );
                               },
+
                               markerBuilder: (context, day, events) {
                                 if (markedDates.contains(day)) {
                                   return Positioned(

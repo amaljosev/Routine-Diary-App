@@ -1,12 +1,3 @@
-// lib/features/diary/presentation/pages/entry/diary_entry.dart
-//
-// Showcase + autofocus fix:
-//  • _showcaseDone flag added — starts false, set true once showcase finishes
-//    (or immediately if the user has already seen it)
-//  • autofocus on the title field is disabled while showcase is running
-//  • _titleFocusNode.requestFocus() is called after showcase finishes
-//  • All other code is identical to your original
-
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
@@ -77,7 +68,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   bool   _isAutoInsertingBullet   = false;
   final bool _isDraggingOverlay   = false;
 
-  // ── Showcase ───────────────────────────────────────────────────────────────
+  // ── Showcase keys ──────────────────────────────────────────────────────────
   final GlobalKey _showcaseBgKey      = GlobalKey();
   final GlobalKey _showcaseFontKey    = GlobalKey();
   final GlobalKey _showcaseColorKey   = GlobalKey();
@@ -87,22 +78,20 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
 
   static const _scope = 'diary_entry_showcase';
 
-  /// True once the showcase is finished (or skipped, or already seen).
-  /// Controls both [autofocus] and whether we request focus manually.
   bool _showcaseDone = false;
 
   // ── Change tracking ────────────────────────────────────────────────────────
-  String    _originalTitle         = '';
-  String    _originalDescription   = '';
-  String    _originalMood          = '😊';
+  String    _originalTitle        = '';
+  String    _originalDescription  = '';
+  String    _originalMood         = '😊';
   DateTime? _originalDate;
   String?   _originalBgImage;
   String?   _originalBgLocalPath;
   String?   _originalBgGalleryImage;
   Color?    _originalBgColor;
   String?   _originalFontFamily;
-  int       _originalStickerCount  = 0;
-  int       _originalImageCount    = 0;
+  int       _originalStickerCount = 0;
+  int       _originalImageCount   = 0;
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
 
@@ -113,19 +102,19 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
 
     if (widget.entry != null) {
       final e = widget.entry!;
-      _originalTitle           = e.title;
-      _originalDescription     = e.content;
-      _originalMood            = e.mood;
-      _originalDate            = DateTime.tryParse(e.date);
-      _originalBgImage         = e.bgImagePath;
-      _originalBgLocalPath     = e.bgLocalPath;
-      _originalBgGalleryImage  = e.bgGalleryImagePath;
-      _originalFontFamily      = e.fontFamily;
-      _originalStickerCount    =
+      _originalTitle          = e.title;
+      _originalDescription    = e.content;
+      _originalMood           = e.mood;
+      _originalDate           = DateTime.tryParse(e.date);
+      _originalBgImage        = e.bgImagePath;
+      _originalBgLocalPath    = e.bgLocalPath;
+      _originalBgGalleryImage = e.bgGalleryImagePath;
+      _originalFontFamily     = e.fontFamily;
+      _originalStickerCount   =
           (e.stickersJson != null && e.stickersJson!.isNotEmpty)
               ? (jsonDecode(e.stickersJson!) as List).length
               : 0;
-      _originalImageCount      =
+      _originalImageCount     =
           (e.imagesJson != null && e.imagesJson!.isNotEmpty)
               ? (jsonDecode(e.imagesJson!) as List).length
               : 0;
@@ -149,7 +138,6 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       });
     }
 
-    // ── Showcase registration ──────────────────────────────────────────────
     ShowcaseView.register(
       scope: _scope,
       onFinish: () {
@@ -164,8 +152,6 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     });
   }
 
-  /// Called when the showcase ends (finished or already seen).
-  /// Marks the flag and — for new entries — focuses the title field.
   void _onShowcaseFinished() {
     if (!mounted) return;
     setState(() => _showcaseDone = true);
@@ -248,10 +234,11 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
           children: [
             Icon(Icons.edit_note_rounded, color: theme.colorScheme.primary),
             const SizedBox(width: 8),
-             Text('Unsaved Changes',
-          style: theme.textTheme.titleMedium!.copyWith(
-            fontWeight: FontWeight.bold
-          )),
+            Text(
+              'Unsaved Changes',
+              style: theme.textTheme.titleMedium!
+                  .copyWith(fontWeight: FontWeight.bold),
+            ),
           ],
         ),
         content: Text(
@@ -316,13 +303,8 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     return BlocListener<ShowcaseCubit, ShowcaseState>(
       listener: (_, state) {
         if (state.shouldShow == true) {
-          // Showcase needed — delay so layout settles first.
-          Future.delayed(
-            const Duration(milliseconds: 600),
-            _startShowcase,
-          );
+          Future.delayed(const Duration(milliseconds: 600), _startShowcase);
         } else if (state.shouldShow == false && !_showcaseDone) {
-          // User already saw the showcase — skip straight to focus.
           _onShowcaseFinished();
         }
       },
@@ -334,20 +316,18 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
         listener: (context, state) {
           if (_titleController.text != state.title) {
             _titleController.value = TextEditingValue(
-              text: state.title,
-              selection:
-                  TextSelection.collapsed(offset: state.title.length),
+              text:      state.title,
+              selection: TextSelection.collapsed(offset: state.title.length),
             );
           }
           if (_descriptionController.text != state.description) {
             _descriptionController.value = TextEditingValue(
-              text: state.description,
+              text:      state.description,
               selection: TextSelection.collapsed(
                   offset: state.description.length),
             );
           }
-          if (state.errorMessage != null &&
-              state.errorMessage!.isNotEmpty) {
+          if (state.errorMessage != null && state.errorMessage!.isNotEmpty) {
             debugPrint(state.errorMessage.toString());
           }
         },
@@ -433,11 +413,11 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
             _buildAppBar(context, state),
             Expanded(
               child: GestureDetector(
-                onTap: () => _bloc.add(const DeselectAll()),
-                behavior: HitTestBehavior.opaque,
+                onTap:     () => _bloc.add(const DeselectAll()),
+                behavior:  HitTestBehavior.opaque,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: _buildScrollView(state, context),
+                  child:   _buildScrollView(state, context),
                 ),
               ),
             ),
@@ -451,17 +431,18 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   // ── AppBar ─────────────────────────────────────────────────────────────────
 
   AppBar _buildAppBar(BuildContext context, DiaryEntryState state) {
-    final theme = Theme.of(context);
+    final theme  = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final isValid = state.title.isNotEmpty || state.description.isNotEmpty;
+    final isValid =
+        state.title.isNotEmpty || state.description.isNotEmpty;
 
     return AppBar(
-      backgroundColor: Colors.transparent,
-      foregroundColor: theme.colorScheme.onSurface,
+      backgroundColor:         Colors.transparent,
+      foregroundColor:         theme.colorScheme.onSurface,
       forceMaterialTransparency: true,
       leading: IconButton(
         onPressed: _onBackPressed,
-        icon: const Icon(CupertinoIcons.back),
+        icon:      const Icon(CupertinoIcons.back),
       ),
       actions: [
         Padding(
@@ -479,15 +460,15 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
               elevation: isValid ? 2 : 0,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30)),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 16, vertical: 8),
               minimumSize: const Size(70, 36),
             ),
             child: Text(
               widget.entry != null ? 'UPDATE' : 'SAVE',
               style: theme.textTheme.labelMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
+                fontWeight:    FontWeight.bold,
+                fontSize:      12,
                 letterSpacing: 0.5,
               ),
             ),
@@ -502,7 +483,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   Widget _buildScrollView(DiaryEntryState state, BuildContext context) {
     return CustomScrollView(
       controller: _scrollController,
-      physics: _isDraggingOverlay
+      physics:    _isDraggingOverlay
           ? const NeverScrollableScrollPhysics()
           : const BouncingScrollPhysics(),
       slivers: [
@@ -543,7 +524,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
             intl.DateFormat('dd').format(state.date),
             style: theme.textTheme.headlineLarge!.copyWith(
               fontWeight: FontWeight.w900,
-              color: theme.colorScheme.onSurface,
+              color:      theme.colorScheme.onSurface,
             ),
           ),
           Row(
@@ -552,7 +533,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
                 intl.DateFormat('EE').format(state.date),
                 style: theme.textTheme.titleMedium!.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: theme.colorScheme.primary,
+                  color:      theme.colorScheme.primary,
                 ),
               ),
               const SizedBox(width: 8),
@@ -560,8 +541,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
                 intl.DateFormat('MMMM yyyy').format(state.date),
                 style: theme.textTheme.titleMedium!.copyWith(
                   fontWeight: FontWeight.w900,
-                  color: theme.colorScheme.primary
-                      .withValues(alpha: 0.5),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.5),
                 ),
               ),
               const SizedBox(width: 6),
@@ -571,8 +551,8 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
           ),
           Container(
             height: 10,
-            width: 150,
-            color: theme.colorScheme.primary.withValues(alpha: 0.5),
+            width:  150,
+            color:  theme.colorScheme.primary.withValues(alpha: 0.5),
           ),
         ],
       ),
@@ -599,30 +579,29 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   Widget _buildTitleField(BuildContext context, DiaryEntryState state) {
     final theme = Theme.of(context);
     return TextFormField(
-      controller: _titleController,
-      maxLines: null,
-      maxLength: 50,
-      // ── autofocus is suppressed until showcase is done ─────────────────
-      autofocus: widget.entry == null && _showcaseDone,
-      focusNode: _titleFocusNode,
+      controller:      _titleController,
+      maxLines:        null,
+      maxLength:       50,
+      autofocus:       widget.entry == null && _showcaseDone,
+      focusNode:       _titleFocusNode,
       textInputAction: TextInputAction.next,
       decoration: InputDecoration(
-        hintText: 'Title',
+        hintText:  'Title',
         hintStyle: theme.textTheme.bodyLarge?.copyWith(
           fontWeight: FontWeight.w900,
-          fontSize: 24,
+          fontSize:   24,
           color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
           fontFamily: state.fontFamily,
         ),
-        border: InputBorder.none,
+        border:       InputBorder.none,
         counterStyle: TextStyle(
           color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
         ),
       ),
       style: theme.textTheme.bodyLarge?.copyWith(
         fontWeight: FontWeight.w900,
-        fontSize: 24,
-        color: theme.colorScheme.onSurface,
+        fontSize:   24,
+        color:      theme.colorScheme.onSurface,
         fontFamily: state.fontFamily,
       ),
     );
@@ -633,51 +612,57 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   Widget _buildDescriptionSection(
       DiaryEntryState state, BuildContext context) {
     return Container(
-      key: _descriptionKey,
+      key:         _descriptionKey,
       constraints: const BoxConstraints(minHeight: 400),
       child: Stack(
         clipBehavior: Clip.none,
         children: [
+          // ── Text field ───────────────────────────────────────────────────
           IgnorePointer(
             ignoring: state.selectedStickerId != null ||
                 state.selectedImageId != null,
             child: TextFormField(
-              controller: _descriptionController,
-              focusNode: _descriptionFocusNode,
-              maxLines: null,
+              controller:  _descriptionController,
+              focusNode:   _descriptionFocusNode,
+              maxLines:    null,
               decoration: const InputDecoration(
                 hintText: "What's on your mind?",
-                border: InputBorder.none,
+                border:   InputBorder.none,
               ),
               style: TextStyle(fontFamily: state.fontFamily),
             ),
           ),
+
+          // ── Images (interactive, with fullscreen support) ────────────────
           ...state.images.map((i) => _buildImage(i, state)),
+
+          // ── Stickers (interactive, no fullscreen) ────────────────────────
           ...state.stickers.map((s) => _buildSticker(s, state)),
         ],
       ),
     );
   }
 
-  // ── Sticker overlay ────────────────────────────────────────────────────────
+  // ── Sticker overlay — no imagePath, no fullscreen ──────────────────────────
 
   Widget _buildSticker(StickerModel sticker, DiaryEntryState state) {
     final isSelected = state.selectedStickerId == sticker.id;
 
     Widget content;
-    if (sticker.localPath != null && File(sticker.localPath!).existsSync()) {
+    if (sticker.localPath != null &&
+        File(sticker.localPath!).existsSync()) {
       content = Image.file(File(sticker.localPath!), fit: BoxFit.contain);
     } else if (sticker.url.isNotEmpty && sticker.url.startsWith('http')) {
       content = CachedNetworkImage(
-        imageUrl: sticker.url,
-        fit: BoxFit.contain,
+        imageUrl:    sticker.url,
+        fit:         BoxFit.contain,
         placeholder: (_, __) => Container(
           color: Colors.grey.shade200,
           child: const Center(
             child: SizedBox(
-              width: 24,
+              width:  24,
               height: 24,
-              child: CircularProgressIndicator(strokeWidth: 2),
+              child:  CircularProgressIndicator(strokeWidth: 2),
             ),
           ),
         ),
@@ -690,13 +675,14 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     }
 
     return TransformableItem(
-      id: sticker.id,
+      id:              sticker.id,
       initialPosition: Offset(sticker.x, sticker.y),
-      initialScale: sticker.size,
+      initialScale:    sticker.size,
       initialRotation: sticker.rotation,
-      isSelected: isSelected,
-      getBounds: _getDescriptionBounds,
-      onSelect: () => _bloc.add(SelectSticker(sticker.id)),
+      isSelected:      isSelected,
+      getBounds:       _getDescriptionBounds,
+      // ← no imagePath: stickers never open fullscreen
+      onSelect:  () => _bloc.add(SelectSticker(sticker.id)),
       onUpdate: ({
         required id,
         required x,
@@ -710,7 +696,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     );
   }
 
-  // ── Image overlay ──────────────────────────────────────────────────────────
+  // ── Image overlay — with imagePath → fullscreen on double-tap / button ─────
 
   Widget _buildImage(DiaryImage image, DiaryEntryState state) {
     final isSelected = state.selectedImageId == image.id;
@@ -718,15 +704,16 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     final safeHeight = image.height.isFinite ? image.height : 120.0;
 
     return TransformableItem(
-      id: image.id,
+      id:              image.id,
       initialPosition: Offset(image.x, image.y),
-      initialScale: image.scale,
+      initialScale:    image.scale,
       initialRotation: image.rotation,
-      isSelected: isSelected,
-      baseWidth: safeWidth,
-      baseHeight: safeHeight,
-      getBounds: _getDescriptionBounds,
-      onSelect: () => _bloc.add(SelectImage(image.id)),
+      isSelected:      isSelected,
+      baseWidth:       safeWidth,
+      baseHeight:      safeHeight,
+      getBounds:       _getDescriptionBounds,
+      // ← imagePath enables double-tap fullscreen + expand button
+      onSelect:  () => _bloc.add(SelectImage(image.id)),
       onUpdate: ({
         required id,
         required x,
@@ -736,9 +723,19 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       }) =>
           _bloc.add(UpdateImageTransform(id, x, y, scale, rotation)),
       onRemove: () => _bloc.add(RemoveImage(image.id)),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Image.file(File(image.imagePath), fit: BoxFit.cover),
+      child: Hero(
+        tag: 'diary_image_${image.id}',
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.file(
+            File(image.imagePath),
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Container(
+              color: Colors.grey.shade300,
+              child: const Icon(Icons.broken_image, color: Colors.white54),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -770,57 +767,79 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
                   child: Row(
                     children: [
                       _showcaseWrap(
-                        globalKey: _showcaseBgKey,
-                        title: 'Change Background',
-                        description:
-                            'Pick a preset image or gallery photo as your entry background.',
-                        child: _actionButton(Icons.layers_outlined,
-                            'Change Background', _onBgImagePressed, context),
+                        globalKey:   _showcaseBgKey,
+                        title:       'Change Background',
+                        description: 'Pick a preset image or gallery photo as your entry background.',
+                        child: _actionButton(
+                          Icons.layers_outlined,
+                          'Change Background',
+                          _onBgImagePressed,
+                          context,
+                        ),
                       ),
                       _showcaseWrap(
-                        globalKey: _showcaseFontKey,
-                        title: 'Change Font',
-                        description:
-                            'Choose from a variety of fonts to style your writing.',
-                        child: _actionButton(Icons.text_fields_rounded,
-                            'Change Font', _onFontPressed, context),
+                        globalKey:   _showcaseFontKey,
+                        title:       'Change Font',
+                        description: 'Choose from a variety of fonts to style your writing.',
+                        child: _actionButton(
+                          Icons.text_fields_rounded,
+                          'Change Font',
+                          _onFontPressed,
+                          context,
+                        ),
                       ),
                       _showcaseWrap(
-                        globalKey: _showcaseColorKey,
-                        title: 'Background Color',
-                        description:
-                            'Set a solid color as the background for this entry.',
-                        child: _actionButton(Icons.palette_outlined,
-                            'Background Color', _onBgColorPressed, context),
+                        globalKey:   _showcaseColorKey,
+                        title:       'Background Color',
+                        description: 'Set a solid color as the background for this entry.',
+                        child: _actionButton(
+                          Icons.palette_outlined,
+                          'Background Color',
+                          _onBgColorPressed,
+                          context,
+                        ),
                       ),
                       _showcaseWrap(
-                        globalKey: _showcasePhotoKey,
-                        title: 'Add Photo',
-                        description:
-                            'Insert photos from your gallery — drag and resize freely.',
-                        child: _actionButton(Icons.photo_outlined,
-                            'Add Photo', _onPhotoPressed, context),
+                        globalKey:   _showcasePhotoKey,
+                        title:       'Add Photo',
+                        description: 'Insert photos from your gallery — drag and resize freely.',
+                        child: _actionButton(
+                          Icons.photo_outlined,
+                          'Add Photo',
+                          _onPhotoPressed,
+                          context,
+                        ),
                       ),
                       if (state.bgGalleryImage != null ||
                           state.bgImage.isNotEmpty ||
                           state.bgColor != null)
-                        _actionButton(Icons.close, 'Clear Background',
-                            () => _bloc.add(const ClearBackground()), context),
+                        _actionButton(
+                          Icons.close,
+                          'Clear Background',
+                          () => _bloc.add(const ClearBackground()),
+                          context,
+                        ),
                       _showcaseWrap(
-                        globalKey: _showcaseBulletKey,
-                        title: 'Bullet List',
-                        description:
-                            'Add a bullet point. Bullets continue automatically on new lines.',
-                        child: _actionButton(Icons.format_list_bulleted,
-                            'Add Bullet', _onBulletPressed, context),
+                        globalKey:   _showcaseBulletKey,
+                        title:       'Bullet List',
+                        description: 'Add a bullet point. Bullets continue automatically on new lines.',
+                        child: _actionButton(
+                          Icons.format_list_bulleted,
+                          'Add Bullet',
+                          _onBulletPressed,
+                          context,
+                        ),
                       ),
                       _showcaseWrap(
-                        globalKey: _showcaseStickerKey,
-                        title: 'Add Sticker',
-                        description:
-                            'Decorate your entry with fun stickers — drag, pinch, and rotate.',
-                        child: _actionButton(Icons.auto_awesome_outlined,
-                            'Add Sticker', _onStickerPressed, context),
+                        globalKey:   _showcaseStickerKey,
+                        title:       'Add Sticker',
+                        description: 'Decorate your entry with fun stickers — drag, pinch, and rotate.',
+                        child: _actionButton(
+                          Icons.auto_awesome_outlined,
+                          'Add Sticker',
+                          _onStickerPressed,
+                          context,
+                        ),
                       ),
                     ],
                   ),
@@ -834,8 +853,8 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   }
 
   Widget _actionButton(
-    IconData icon,
-    String label,
+    IconData    icon,
+    String      label,
     VoidCallback onPressed,
     BuildContext context,
   ) {
@@ -845,15 +864,14 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       child: Tooltip(
         message: label,
         decoration: BoxDecoration(
-          color: theme.colorScheme.primary,
+          color:        theme.colorScheme.primary,
           borderRadius: const BorderRadius.all(Radius.circular(12)),
         ),
         child: Container(
           decoration: const BoxDecoration(shape: BoxShape.circle),
           child: Padding(
             padding: const EdgeInsets.all(8.0),
-            child:
-                Icon(icon, color: theme.colorScheme.primary, size: 25),
+            child: Icon(icon, color: theme.colorScheme.primary, size: 25),
           ),
         ),
       ),
@@ -862,22 +880,21 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
 
   Widget _showcaseWrap({
     required GlobalKey globalKey,
-    required String title,
-    required String description,
-    required Widget child,
+    required String    title,
+    required String    description,
+    required Widget    child,
   }) {
     return Showcase(
-      key: globalKey,
-      title: title,
-      description: description,
+      key:                    globalKey,
+      title:                  title,
+      description:            description,
       tooltipBackgroundColor: Colors.white,
       titleTextStyle: const TextStyle(
         fontWeight: FontWeight.w700,
-        fontSize: 14,
-        color: Colors.black,
+        fontSize:   14,
+        color:      Colors.black,
       ),
-      descTextStyle:
-          const TextStyle(fontSize: 12, color: Colors.black87),
+      descTextStyle: const TextStyle(fontSize: 12, color: Colors.black87),
       child: child,
     );
   }
@@ -889,26 +906,29 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
       id: widget.entry == null
           ? DateTime.now().toIso8601String()
           : widget.entry!.id,
-      title: state.title,
-      date: state.date.toIso8601String(),
+      title:   state.title,
+      date:    state.date.toIso8601String(),
       preview: state.description,
-      mood: state.mood,
+      mood:    state.mood,
       content: state.description,
       createdAt: widget.entry == null
           ? DateTime.now().toIso8601String()
           : widget.entry!.createdAt,
       updatedAt: DateTime.now().toIso8601String(),
-      bgColor:
-          state.bgColor?.toARGB32().toRadixString(16).padLeft(8, '0'),
+      bgColor:   state.bgColor
+          ?.toARGB32()
+          .toRadixString(16)
+          .padLeft(8, '0'),
       stickersJson:
           jsonEncode(state.stickers.map((s) => s.toJson()).toList()),
       imagesJson:
           jsonEncode(state.images.map((i) => i.toJson()).toList()),
-      bgImagePath: state.bgImage.isNotEmpty ? state.bgImage : null,
-      bgLocalPath: state.bgLocalPath,
+      bgImagePath:        state.bgImage.isNotEmpty ? state.bgImage : null,
+      bgLocalPath:        state.bgLocalPath,
       bgGalleryImagePath: state.bgGalleryImage,
-      fontFamily: state.fontFamily,
+      fontFamily:         state.fontFamily,
     );
+
     final isNewEntry = widget.entry == null;
 
     if (widget.entry != null) {
@@ -918,7 +938,6 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     }
 
     Navigator.pop(context, widget.entry != null ? widget.entry!.id : true);
-
     if (isNewEntry) FeedbackUtil.askFeedbackIfFirstEntry();
   }
 
@@ -971,7 +990,8 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
 
   void _onBgImagePressed() => DiaryUIHelpers.openBgImagePicker(
         context,
-        onPresetSelected: (url) => _bloc.add(SelectSupabaseBackground(url)),
+        onPresetSelected: (url) =>
+            _bloc.add(SelectSupabaseBackground(url)),
         onGallerySelected: (path) =>
             _bloc.add(CropAndSetBackgroundImage(path)),
         onClear: () => _bloc.add(const ClearBackground()),
@@ -979,9 +999,9 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
 
   void _onFontPressed() {
     showModalBottomSheet(
-      context: context,
+      context:          context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor:  Colors.transparent,
       builder: (_) => FontPickerSheet(
         currentFont: _bloc.state.fontFamily ?? 'Quicksand',
         onFontSelected: (family) {
@@ -995,16 +1015,15 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   void _onBulletPressed() {
     final text      = _descriptionController.text;
     final selection = _descriptionController.selection;
-    final insertPos =
-        (selection.isValid &&
-                selection.baseOffset >= 0 &&
-                selection.baseOffset <= text.length)
-            ? selection.baseOffset
-            : text.length;
+    final insertPos = (selection.isValid &&
+            selection.baseOffset >= 0 &&
+            selection.baseOffset <= text.length)
+        ? selection.baseOffset
+        : text.length;
     final newText =
         '${text.substring(0, insertPos)}\n• ${text.substring(insertPos)}';
     _descriptionController.value = TextEditingValue(
-      text: newText,
+      text:      newText,
       selection: TextSelection.collapsed(offset: insertPos + 3),
     );
   }
@@ -1033,7 +1052,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
         _isAutoInsertingBullet = true;
         final updatedText = '$newText• ';
         _descriptionController.value = TextEditingValue(
-          text: updatedText,
+          text:      updatedText,
           selection: TextSelection.collapsed(offset: updatedText.length),
         );
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1041,7 +1060,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
             _scrollController.animateTo(
               _scrollController.position.maxScrollExtent,
               duration: const Duration(milliseconds: 100),
-              curve: Curves.easeOut,
+              curve:    Curves.easeOut,
             );
           }
         });
@@ -1063,13 +1082,17 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
 
     final existing = <Rect>[
       for (final s in state.stickers)
-        Rect.fromLTWH(s.x, s.y,
-            TransformableItem.stickerBaseSize * s.size,
-            TransformableItem.stickerBaseSize * s.size),
+        Rect.fromLTWH(
+          s.x, s.y,
+          TransformableItem.stickerBaseSize * s.size,
+          TransformableItem.stickerBaseSize * s.size,
+        ),
       for (final i in state.images)
-        Rect.fromLTWH(i.x, i.y,
-            (i.width.isFinite  ? i.width  : 120.0) * i.scale,
-            (i.height.isFinite ? i.height : 120.0) * i.scale),
+        Rect.fromLTWH(
+          i.x, i.y,
+          (i.width.isFinite  ? i.width  : 120.0) * i.scale,
+          (i.height.isFinite ? i.height : 120.0) * i.scale,
+        ),
     ];
 
     final startTL = Offset(
@@ -1085,7 +1108,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
     final searchCenter = Offset(size.width / 2, size.height / 2);
     for (double r = 20.0; r <= 500.0; r += 20.0) {
       for (int d = 0; d < 8; d++) {
-        final angle = d * math.pi / 4;
+        final angle          = d * math.pi / 4;
         final candidateCenter = searchCenter +
             Offset(r * math.cos(angle), r * math.sin(angle));
         final tl = Offset(
@@ -1105,9 +1128,7 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   bool _isPositionValid(
       Rect rect, List<Rect> existing, double w, double h) {
     if (rect.left < 0 || rect.top < 0 ||
-        rect.right > w || rect.bottom > h) {
-      return false;
-    }
+        rect.right > w || rect.bottom > h) return false;
     return existing.every((r) => !rect.overlaps(r));
   }
 
@@ -1119,12 +1140,12 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
         duration: const Duration(seconds: 1),
         content: Text(
           message,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
+          maxLines:  2,
+          overflow:  TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.titleSmall!.copyWith(
-                color: Theme.of(context).colorScheme.onPrimary,
-                fontWeight: FontWeight.bold,
-              ),
+            color:      Theme.of(context).colorScheme.onPrimary,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         backgroundColor: Theme.of(context).colorScheme.primary,
       ),

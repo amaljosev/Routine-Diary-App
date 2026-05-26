@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui';
 import 'package:path_provider/path_provider.dart';
 import 'package:routine/features/diary/data/models/diary_entry_model.dart';
 import 'package:routine/features/diary/data/repository/supabase_background_repository.dart';
@@ -9,7 +10,6 @@ import 'package:routine/features/diary/domain/repository/background_repository.d
 import 'package:routine/features/diary/domain/repository/sticker_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
 
 part 'diary_entry_event.dart';
@@ -352,36 +352,49 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
     emit(state.copyWith(stickers: updatedStickers, selectedStickerId: null));
   }
 
-  // ── Image handlers ──────────────────────────────────────────────────────────
+  // In diary_entry_bloc.dart, replace _onImageAdded:
 
-  Future<void> _onImageAdded(
-    ImageAdded event,
-    Emitter<DiaryEntryState> emit,
-  ) async {
-    try {
-      // Copy to permanent storage so the image survives cache clears
-      final permanentPath = await _copyImageToPermanentStorage(event.imagePath);
+Future<void> _onImageAdded(
+  ImageAdded event,
+  Emitter<DiaryEntryState> emit,
+) async {
+  try {
+    final permanentPath = await _copyImageToPermanentStorage(event.imagePath);
 
-      final newImage = DiaryImage(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        imagePath: permanentPath, // ← permanent path, not cache path
-        x: event.x,
-        y: event.y,
-        width: 100,
-        height: 100,
-        scale: 1.0,
-      );
-      emit(
-        state.copyWith(
-          images: [...state.images, newImage],
-          selectedStickerId: null,
-          selectedImageId: null,
-        ),
-      );
-    } catch (e) {
-      emit(state.copyWith(errorMessage: 'Failed to add image: $e'));
-    }
+    // Decode actual image dimensions to preserve aspect ratio
+    final bytes       = await File(permanentPath).readAsBytes();
+    final codec       = await instantiateImageCodec(bytes);
+    final frameInfo   = await codec.getNextFrame();
+    final imageWidth  = frameInfo.image.width.toDouble();
+    final imageHeight = frameInfo.image.height.toDouble();
+
+    // Scale down to a reasonable starting size (max 200px on longest side)
+    const maxSize     = 200.0;
+    final scaleFactor = imageWidth >= imageHeight
+        ? maxSize / imageWidth
+        : maxSize / imageHeight;
+    final displayW    = imageWidth  * scaleFactor;
+    final displayH    = imageHeight * scaleFactor;
+
+    final newImage = DiaryImage(
+      id:        DateTime.now().millisecondsSinceEpoch.toString(),
+      imagePath: permanentPath,
+      x:         event.x,
+      y:         event.y,
+      width:     displayW,   // ← real proportional width
+      height:    displayH,   // ← real proportional height
+      scale:     1.0,
+    );
+
+    emit(state.copyWith(
+      images:           [...state.images, newImage],
+      selectedStickerId: null,
+      selectedImageId:   null,
+    ));
+  } catch (e) {
+    emit(state.copyWith(errorMessage: 'Failed to add image: $e'));
   }
+}
 
   /// Copies [sourcePath] into the app's permanent documents directory.
   /// Returns the new permanent path.
