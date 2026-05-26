@@ -1128,7 +1128,9 @@ class _DiaryEntryFormState extends State<DiaryEntryForm> {
   bool _isPositionValid(
       Rect rect, List<Rect> existing, double w, double h) {
     if (rect.left < 0 || rect.top < 0 ||
-        rect.right > w || rect.bottom > h) return false;
+        rect.right > w || rect.bottom > h) {
+      return false;
+    }
     return existing.every((r) => !rect.overlaps(r));
   }
 

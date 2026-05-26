@@ -92,20 +92,24 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer>
   // ── Double-tap zoom ────────────────────────────────────────────────────────
 
   void _onDoubleTapDown(TapDownDetails details) {
-    if (_isZoomedIn) {
-      // Zoom back out to identity
-      _animateMatrix(Matrix4.identity());
-      _isZoomedIn = false;
-    } else {
-      // Zoom 2.5× centred on the tap point
-      final position = details.localPosition;
-      final Matrix4 zoomed = Matrix4.identity()
-        ..translate(-position.dx * 1.5, -position.dy * 1.5)
-        ..scale(2.5);
-      _animateMatrix(zoomed);
-      _isZoomedIn = true;
-    }
+  if (_isZoomedIn) {
+    // Zoom back out to identity
+    _animateMatrix(Matrix4.identity());
+    _isZoomedIn = false;
+  } else {
+    // Zoom 2.5× centred on the tap point
+    final position = details.localPosition;
+
+    // FIX: Multiply the identity matrix directly using built-in constructors 
+    // to avoid the 4D math bugs of translateByDouble / scaleByDouble
+    final Matrix4 zoomed = Matrix4.identity()
+      ..multiply(Matrix4.translationValues(-position.dx * 1.5, -position.dy * 1.5, 0.0))
+      ..multiply(Matrix4.diagonal3Values(2.5, 2.5, 1.0));
+
+    _animateMatrix(zoomed);
+    _isZoomedIn = true;
   }
+}
 
   void _animateMatrix(Matrix4 end) {
     _doubleTapMatrix = Matrix4Tween(
