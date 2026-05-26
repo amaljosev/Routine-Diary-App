@@ -1,10 +1,4 @@
 // lib/features/diary/presentation/widgets/bottom_nav_bar.dart
-//
-// Identical to your original except:
-//  • Three optional GlobalKey params added (fabKey, calendarKey, settingsKey)
-//  • _maybeShowcase() helper wraps items only when a key is supplied
-//  • All painter / layout code is pixel-for-pixel the same as your original
-
 import 'package:flutter/material.dart';
 import 'package:showcaseview/showcaseview.dart';
 

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 import 'package:routine/features/diary/data/models/diary_entry_model.dart';
 import 'package:routine/features/diary/data/repository/supabase_background_repository.dart';
 import 'package:routine/features/diary/data/repository/supabase_sticker_repository.dart';
@@ -248,26 +249,16 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
           IOSUiSettings(title: 'Crop Background', aspectRatioLockEnabled: true),
         ],
       );
-
-      if (croppedFile != null) {
-        emit(
+      final sourcePath = croppedFile?.path ?? event.imagePath;
+      final permanentPath = await _copyImageToPermanentStorage(sourcePath);
+      emit(
           state.copyWith(
-            bgGalleryImage: croppedFile.path,
+            bgGalleryImage: permanentPath,
             bgImage: '',
             bgColor: null,
             bgLocalPath: null,
           ),
         );
-      } else {
-        emit(
-          state.copyWith(
-            bgGalleryImage: event.imagePath,
-            bgImage: '',
-            bgColor: null,
-            bgLocalPath: null,
-          ),
-        );
-      }
     } catch (e) {
       emit(
         state.copyWith(
@@ -361,24 +352,51 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
     emit(state.copyWith(stickers: updatedStickers, selectedStickerId: null));
   }
 
-  // Image handlers
-  void _onImageAdded(ImageAdded event, Emitter<DiaryEntryState> emit) {
-    final newImage = DiaryImage(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      imagePath: event.imagePath,
-      x: event.x,
-      y: event.y,
-      width: 100,
-      height: 100,
-      scale: 1.0,
-    );
-    emit(
-      state.copyWith(
-        images: [...state.images, newImage],
-        selectedStickerId: null,
-        selectedImageId: null,
-      ),
-    );
+  // ── Image handlers ──────────────────────────────────────────────────────────
+
+  Future<void> _onImageAdded(
+    ImageAdded event,
+    Emitter<DiaryEntryState> emit,
+  ) async {
+    try {
+      // Copy to permanent storage so the image survives cache clears
+      final permanentPath = await _copyImageToPermanentStorage(event.imagePath);
+
+      final newImage = DiaryImage(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        imagePath: permanentPath, // ← permanent path, not cache path
+        x: event.x,
+        y: event.y,
+        width: 100,
+        height: 100,
+        scale: 1.0,
+      );
+      emit(
+        state.copyWith(
+          images: [...state.images, newImage],
+          selectedStickerId: null,
+          selectedImageId: null,
+        ),
+      );
+    } catch (e) {
+      emit(state.copyWith(errorMessage: 'Failed to add image: $e'));
+    }
+  }
+
+  /// Copies [sourcePath] into the app's permanent documents directory.
+  /// Returns the new permanent path.
+  Future<String> _copyImageToPermanentStorage(String sourcePath) async {
+    final appDir = await getApplicationDocumentsDirectory();
+    final diaryImagesDir = Directory('${appDir.path}/diary_images');
+    if (!diaryImagesDir.existsSync()) {
+      diaryImagesDir.createSync(recursive: true);
+    }
+
+    final fileName =
+        '${DateTime.now().millisecondsSinceEpoch}_${sourcePath.split('/').last}';
+    final destination = '${diaryImagesDir.path}/$fileName';
+    await File(sourcePath).copy(destination);
+    return destination;
   }
 
   void _onUpdateImagePosition(
