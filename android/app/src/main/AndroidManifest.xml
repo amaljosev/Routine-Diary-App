@@ -8,7 +8,7 @@
     <application
     android:label="Routine"
     android:name="${applicationName}"
-    android:icon="@mipmap/launcher_icon"
+    android:icon="@mipmap/ic_launcher"
     android:allowBackup="false"
     android:usesCleartextTraffic="true">
 

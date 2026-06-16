@@ -130,7 +130,7 @@ class _SplashViewState extends State<SplashView>
                               ),
                               child: Center(
                                 child: Image.asset(
-                                  'assets/icons/routine_icon.png',
+                                  'assets/icons/routine_icon.webp',
                                   height: size.width * 0.2,
                                   width: size.width * 0.2,
                                   errorBuilder: (context, error, stackTrace) {

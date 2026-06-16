@@ -19,9 +19,9 @@ class DiaryDatabase {
 
     return await openDatabase(
       path,
-      version: 2,           // ← bumped from 1 → 2
+      version: 2,         
       onCreate: _onCreate,
-      onUpgrade: _onUpgrade, // ← new
+      onUpgrade: _onUpgrade, 
     );
   }
 

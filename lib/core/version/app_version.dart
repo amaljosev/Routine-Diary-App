@@ -1,3 +1,3 @@
 class AppVersion {
-  static const String version="1.0.6";
+  static const String version="1.1.0";
 }
