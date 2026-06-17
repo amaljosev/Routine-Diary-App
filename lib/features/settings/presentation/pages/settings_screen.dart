@@ -285,7 +285,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 spacing: 20,
                 children: [
                   Image.asset(
-                    'assets/icons/routine_icon.png',
+                    'assets/icons/routine_icon.webp',
                     height: 80,
                     width: 80,
                   ),
