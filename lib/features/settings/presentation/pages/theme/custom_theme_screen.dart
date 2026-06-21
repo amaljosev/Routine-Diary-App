@@ -36,7 +36,8 @@ class CustomThemeScreen extends StatefulWidget {
 class _CustomThemeScreenState extends State<CustomThemeScreen> {
   // ── Draft state ──────────────────────────────────────────────────────────
   late CustomThemeModel _draft;
-  late CustomThemeModel _original; // snapshot when screen opened – for dirty check
+  late CustomThemeModel
+  _original; // snapshot when screen opened – for dirty check
   bool _initialized = false;
 
   // ── Palette list (built-in + custom sentinel) ────────────────────────────
@@ -73,8 +74,7 @@ class _CustomThemeScreenState extends State<CustomThemeScreen> {
   // ── Image helpers ─────────────────────────────────────────────────────────
 
   Future<void> _pickFromGallery() async {
-    final XFile? picked =
-        await _picker.pickImage(source: ImageSource.gallery);
+    final XFile? picked = await _picker.pickImage(source: ImageSource.gallery);
     if (picked == null) return;
 
     final CroppedFile? cropped = await ImageCropper().cropImage(
@@ -83,6 +83,7 @@ class _CustomThemeScreenState extends State<CustomThemeScreen> {
       uiSettings: [
         AndroidUiSettings(
           toolbarTitle: 'Crop Header Image',
+          // ignore: use_build_context_synchronously
           toolbarColor: Theme.of(context).colorScheme.primary,
           toolbarWidgetColor: Colors.white,
           lockAspectRatio: true,
@@ -98,11 +99,9 @@ class _CustomThemeScreenState extends State<CustomThemeScreen> {
 
     // Copy into app-local storage so path stays valid.
     final appDir = await getApplicationDocumentsDirectory();
-    final customImgDir =
-        Directory(p.join(appDir.path, 'custom_theme_headers'));
+    final customImgDir = Directory(p.join(appDir.path, 'custom_theme_headers'));
     await customImgDir.create(recursive: true);
-    final fileName =
-        'header_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    final fileName = 'header_${DateTime.now().millisecondsSinceEpoch}.jpg';
     final destPath = p.join(customImgDir.path, fileName);
     await File(cropped.path).copy(destPath);
 
@@ -227,8 +226,7 @@ class _CustomThemeScreenState extends State<CustomThemeScreen> {
   // ── Custom Color round-trip ───────────────────────────────────────────────
 
   Future<void> _openCustomColor() async {
-    final initialColors = _draft.customColors ??
-        CustomColorSet.defaultColors();
+    final initialColors = _draft.customColors ?? CustomColorSet.defaultColors();
 
     final result = await Navigator.of(context).push<CustomColorSet>(
       MaterialPageRoute(
@@ -287,8 +285,7 @@ class _CustomThemeScreenState extends State<CustomThemeScreen> {
 
             // ── Header action buttons ──────────────────────────────────────
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               child: Row(
                 children: [
                   Expanded(
@@ -308,11 +305,14 @@ class _CustomThemeScreenState extends State<CustomThemeScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: OutlinedButton.icon(
-                      icon: Icon(Icons.delete_outline,
-                          color: theme.colorScheme.error),
-                      label: Text('Remove',
-                          style:
-                              TextStyle(color: theme.colorScheme.error)),
+                      icon: Icon(
+                        Icons.delete_outline,
+                        color: theme.colorScheme.error,
+                      ),
+                      label: Text(
+                        'Remove',
+                        style: TextStyle(color: theme.colorScheme.error),
+                      ),
                       onPressed: _removeHeader,
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(color: theme.colorScheme.error),
@@ -328,8 +328,7 @@ class _CustomThemeScreenState extends State<CustomThemeScreen> {
 
             // ── Palette section header ─────────────────────────────────────
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
               child: Text(
                 'Choose a Palette',
                 style: theme.textTheme.titleMedium?.copyWith(
@@ -343,7 +342,8 @@ class _CustomThemeScreenState extends State<CustomThemeScreen> {
             ..._palettes.asMap().entries.map((entry) {
               final idx = entry.key;
               final palette = entry.value;
-              final isSelected = _draft.paletteType == PaletteType.builtIn &&
+              final isSelected =
+                  _draft.paletteType == PaletteType.builtIn &&
                   _draft.builtInPaletteIndex == idx;
 
               return _PaletteTile(
@@ -373,8 +373,7 @@ class _CustomThemeScreenState extends State<CustomThemeScreen> {
         // ── Apply button ───────────────────────────────────────────────────
         bottomNavigationBar: SafeArea(
           child: Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             child: ElevatedButton(
               onPressed: _apply,
               style: ElevatedButton.styleFrom(
@@ -472,7 +471,7 @@ class _PaletteTile extends StatelessWidget {
                     color: palette.primary.withValues(alpha: 0.15),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
-                  )
+                  ),
                 ]
               : [],
         ),
@@ -504,16 +503,20 @@ class _PaletteTile extends StatelessWidget {
                     Text(
                       palette.isDark ? 'Dark theme' : 'Light theme',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface
-                            .withValues(alpha: 0.55),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.55,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
               if (isSelected)
-                Icon(Icons.check_circle_rounded,
-                    color: palette.primary, size: 22),
+                Icon(
+                  Icons.check_circle_rounded,
+                  color: palette.primary,
+                  size: 22,
+                ),
             ],
           ),
         ),
@@ -549,9 +552,7 @@ class _ColorSwatch extends StatelessWidget {
               decoration: BoxDecoration(
                 color: background,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: Colors.grey.withValues(alpha: 0.2),
-                ),
+                border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
               ),
             ),
           ),
@@ -561,10 +562,7 @@ class _ColorSwatch extends StatelessWidget {
             child: Container(
               width: 24,
               height: 24,
-              decoration: BoxDecoration(
-                color: primary,
-                shape: BoxShape.circle,
-              ),
+              decoration: BoxDecoration(color: primary, shape: BoxShape.circle),
             ),
           ),
           Positioned(
@@ -663,8 +661,9 @@ class _CustomColorTile extends StatelessWidget {
                           ? 'Custom colors configured'
                           : 'Tap to pick your own colors',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface
-                            .withValues(alpha: 0.55),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.55,
+                        ),
                       ),
                     ),
                   ],
@@ -712,9 +711,9 @@ class _AssetPickerSheet extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Text(
             'Choose Header Image',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
         ),
         SizedBox(

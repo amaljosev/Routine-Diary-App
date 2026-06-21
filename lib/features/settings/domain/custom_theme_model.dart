@@ -1,17 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 
-/// Sentinel index used in SharedPreferences to indicate the custom theme is active.
-/// Must be > allThemes.length - 1 (currently 6), so 99 is safe.
 const int kCustomThemeIndex = 99;
 
-/// Palette selection inside the custom theme editor.
-/// [builtIn] = one of the 7 hard-coded palettes (0-6).
-/// [custom]  = user-defined colors via CustomColorScreen.
 enum PaletteType { builtIn, custom }
 
-/// All colors needed to reconstruct a full ThemeData for the app.
-/// Mirrors exactly the color fields used in app_theme.dart.
 class CustomColorSet {
   final Color primary;
   final Color secondary;
@@ -33,34 +26,34 @@ class CustomColorSet {
 
   /// Default: copy of theme index 0 (lightTheme2 – Purple/Teal).
   factory CustomColorSet.defaultColors() => const CustomColorSet(
-        primary: Color(0xFF1976D2),   // light1Primary
-        secondary: Color(0xFFFF6F00), // light1Secondary
-        surface: Color(0xFFFFFFFF),
-        background: Color(0xFFE3F2FD),
-        onBackground: Color(0xFF1A1A1A),
-        error: Color(0xFFC62828),
-        isDark: false,
-      );
+    primary: Color(0xFF1976D2), // light1Primary
+    secondary: Color(0xFFFF6F00), // light1Secondary
+    surface: Color(0xFFFFFFFF),
+    background: Color(0xFFE3F2FD),
+    onBackground: Color(0xFF1A1A1A),
+    error: Color(0xFFC62828),
+    isDark: false,
+  );
 
   Map<String, dynamic> toMap() => {
-        'primary': primary.toARGB32(),
-        'secondary': secondary.toARGB32(),
-        'surface': surface.toARGB32(),
-        'background': background.toARGB32(),
-        'onBackground': onBackground.toARGB32(),
-        'error': error.toARGB32(),
-        'isDark': isDark,
-      };
+    'primary': primary.toARGB32(),
+    'secondary': secondary.toARGB32(),
+    'surface': surface.toARGB32(),
+    'background': background.toARGB32(),
+    'onBackground': onBackground.toARGB32(),
+    'error': error.toARGB32(),
+    'isDark': isDark,
+  };
 
   factory CustomColorSet.fromMap(Map<String, dynamic> map) => CustomColorSet(
-        primary: Color(map['primary'] as int),
-        secondary: Color(map['secondary'] as int),
-        surface: Color(map['surface'] as int),
-        background: Color(map['background'] as int),
-        onBackground: Color(map['onBackground'] as int),
-        error: Color(map['error'] as int),
-        isDark: map['isDark'] as bool,
-      );
+    primary: Color(map['primary'] as int),
+    secondary: Color(map['secondary'] as int),
+    surface: Color(map['surface'] as int),
+    background: Color(map['background'] as int),
+    onBackground: Color(map['onBackground'] as int),
+    error: Color(map['error'] as int),
+    isDark: map['isDark'] as bool,
+  );
 
   CustomColorSet copyWith({
     Color? primary,
@@ -70,16 +63,15 @@ class CustomColorSet {
     Color? onBackground,
     Color? error,
     bool? isDark,
-  }) =>
-      CustomColorSet(
-        primary: primary ?? this.primary,
-        secondary: secondary ?? this.secondary,
-        surface: surface ?? this.surface,
-        background: background ?? this.background,
-        onBackground: onBackground ?? this.onBackground,
-        error: error ?? this.error,
-        isDark: isDark ?? this.isDark,
-      );
+  }) => CustomColorSet(
+    primary: primary ?? this.primary,
+    secondary: secondary ?? this.secondary,
+    surface: surface ?? this.surface,
+    background: background ?? this.background,
+    onBackground: onBackground ?? this.onBackground,
+    error: error ?? this.error,
+    isDark: isDark ?? this.isDark,
+  );
 }
 
 /// The persisted configuration for the user's custom theme.
@@ -105,18 +97,19 @@ class CustomThemeModel {
 
   /// Default state: everything from theme index 0.
   factory CustomThemeModel.defaultModel() => const CustomThemeModel(
-        headerImagePath: 'assets/img/themes/theme_2.webp',
-        paletteType: PaletteType.builtIn,
-        builtInPaletteIndex: 0,
-      );
+    headerImagePath: 'assets/img/themes/theme_2.webp',
+    paletteType: PaletteType.builtIn,
+    builtInPaletteIndex: 0,
+  );
 
   Map<String, dynamic> toMap() => {
-        'headerImagePath': headerImagePath,
-        'paletteType': paletteType.name,
-        'builtInPaletteIndex': builtInPaletteIndex,
-        'customColors':
-            customColors != null ? jsonEncode(customColors!.toMap()) : null,
-      };
+    'headerImagePath': headerImagePath,
+    'paletteType': paletteType.name,
+    'builtInPaletteIndex': builtInPaletteIndex,
+    'customColors': customColors != null
+        ? jsonEncode(customColors!.toMap())
+        : null,
+  };
 
   factory CustomThemeModel.fromMap(Map<String, dynamic> map) =>
       CustomThemeModel(
@@ -145,12 +138,12 @@ class CustomThemeModel {
     int? builtInPaletteIndex,
     CustomColorSet? customColors,
     bool clearCustomColors = false,
-  }) =>
-      CustomThemeModel(
-        headerImagePath: headerImagePath ?? this.headerImagePath,
-        paletteType: paletteType ?? this.paletteType,
-        builtInPaletteIndex: builtInPaletteIndex ?? this.builtInPaletteIndex,
-        customColors:
-            clearCustomColors ? null : (customColors ?? this.customColors),
-      );
+  }) => CustomThemeModel(
+    headerImagePath: headerImagePath ?? this.headerImagePath,
+    paletteType: paletteType ?? this.paletteType,
+    builtInPaletteIndex: builtInPaletteIndex ?? this.builtInPaletteIndex,
+    customColors: clearCustomColors
+        ? null
+        : (customColors ?? this.customColors),
+  );
 }

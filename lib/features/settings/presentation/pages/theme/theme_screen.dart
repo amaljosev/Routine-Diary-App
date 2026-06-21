@@ -1,17 +1,6 @@
-// ─── CHANGES vs previous version ──────────────────────────────────────────
-// 1. Removed 'custom' sentinel from _themes list. Built-in themes only (0-6).
-// 2. Fixed scroll: nested ListViews use NeverScrollableScrollPhysics so the
-//    PageView swipe gesture is never stolen.
-// 3. Custom Theme is now a persistent FAB-style pill button always visible
-//    at the bottom of the screen — no need to swipe to a last item.
-// 4. FAB shows a checkmark badge when custom theme is currently active.
-// 5. All existing built-in theme logic is UNCHANGED.
-// ──────────────────────────────────────────────────────────────────────────
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:routine/core/theme/app_colors.dart';
-import 'package:routine/features/settings/domain/custom_theme_model.dart';
 import 'package:routine/features/settings/presentation/bloc/apptheme_bloc.dart';
 import 'package:routine/features/settings/presentation/pages/theme/custom_theme_screen.dart';
 

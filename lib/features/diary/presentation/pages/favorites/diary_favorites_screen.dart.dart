@@ -72,7 +72,7 @@ class _DiaryFavoritesScreenState extends State<DiaryFavoritesScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Favourites',
+                                  'Favorites',
                                   style: theme.textTheme.headlineSmall
                                       ?.copyWith(
                                     fontWeight: FontWeight.w900,
@@ -169,7 +169,7 @@ class _EmptyFavoritesView extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           Text(
-            'No favourites yet',
+            'No favorites yet',
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w700,
               color: theme.colorScheme.onSurface,
@@ -310,7 +310,6 @@ class _FavoriteEntryCard extends StatelessWidget {
                               style: const TextStyle(fontSize: 22),
                             ),
                             const SizedBox(width: 8),
-                            // Unfav button
                             GestureDetector(
                               onTap: () {
                                 context.read<DiaryBloc>().add(

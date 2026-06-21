@@ -4,9 +4,7 @@ import 'package:routine/core/theme/app_theme.dart';
 import 'package:routine/core/theme/theme_extenstions.dart';
 import 'custom_theme_model.dart';
 
-/// Resolves a [CustomThemeModel] into a proper [ThemeData] that can be
-/// passed directly to [MaterialApp]. It mirrors the structure of all
-/// hard-coded themes in app_theme.dart (same fonts, same TabBarTheme, etc.).
+
 ThemeData buildCustomThemeData(CustomThemeModel model) {
   final colors = _resolveColors(model);
   final base =

@@ -1,14 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 
-/// Utility for rendering theme header images that may be either:
-/// - A bundled asset  (path starts with 'assets/')
-/// - An absolute file-system path  (gallery-picked, saved to app docs dir)
-///
-/// Use [ThemeImageHelper.buildImage] everywhere a theme header is displayed —
-/// in the diary home screen, custom theme preview, etc. — so the same logic
-/// is applied consistently and you never accidentally call Image.asset() on
-/// a file-system path (which throws "Asset not found").
+
 class ThemeImageHelper {
   ThemeImageHelper._();
 
