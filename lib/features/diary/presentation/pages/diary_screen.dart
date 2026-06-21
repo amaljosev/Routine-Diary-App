@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:routine/features/diary/presentation/blocs/cubit/showcase_cubit.dart';
+import 'package:routine/features/settings/presentation/pages/theme/theme_image_helper.dart';
 import 'package:showcaseview/showcaseview.dart';
 import 'package:routine/core/theme/theme_extenstions.dart';
 import 'package:routine/features/diary/data/models/diary_entry_model.dart';
@@ -103,13 +104,12 @@ class _DiaryBodyState extends State<_DiaryBody> {
                     background: Stack(
                       fit: StackFit.expand,
                       children: [
-                        Image.asset(
+                        ThemeImageHelper.buildImage(
                           Theme.of(context)
                                   .extension<BackgroundImageTheme>()
                                   ?.imagePath ??
-                              'assets/img/themes/theme_1.webp', // ← updated fallback
+                              'assets/img/themes/theme_1.webp',
                           fit: BoxFit.cover,
-                          filterQuality:  FilterQuality.high,
                         ),
                       ],
                     ),

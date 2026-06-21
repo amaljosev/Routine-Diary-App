@@ -9,6 +9,7 @@ import 'package:routine/core/utils/diary_color_parser.dart';
 import 'package:routine/features/diary/data/models/diary_entry_model.dart';
 import 'package:routine/features/diary/presentation/blocs/diary/diary_bloc.dart';
 import 'package:routine/features/diary/presentation/pages/preview/diary_preview.dart';
+import 'package:routine/features/settings/presentation/pages/theme/theme_image_helper.dart';
 
 class DiaryFavoritesScreen extends StatefulWidget {
   const DiaryFavoritesScreen({super.key});
@@ -38,11 +39,11 @@ class _DiaryFavoritesScreenState extends State<DiaryFavoritesScreen> {
             children: [
               // ── Parallax background ──────────────────────────────────
               Positioned.fill(
-                child: Image.asset(
+                child: ThemeImageHelper.buildImage(
                   Theme.of(context)
                           .extension<BackgroundImageTheme>()
                           ?.imagePath ??
-                      'assets/img/themes/theme_1.png',
+                      'assets/img/themes/theme_1.webp',
                   fit: BoxFit.cover,
                 ),
               ),

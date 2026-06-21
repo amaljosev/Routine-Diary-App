@@ -9,6 +9,7 @@ import 'package:routine/features/diary/presentation/blocs/diary/diary_bloc.dart'
 import 'package:routine/features/diary/presentation/pages/entry/diary_entry.dart';
 import 'package:routine/features/diary/presentation/pages/favorites/diary_favorites_screen.dart.dart';
 import 'package:routine/features/diary/presentation/pages/preview/diary_preview.dart';
+import 'package:routine/features/settings/presentation/pages/theme/theme_image_helper.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -279,7 +280,7 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen>
                       children: [
                         Opacity(
                           opacity: expandRatio,
-                          child: Image.asset(bgImagePath, fit: BoxFit.cover),
+                          child: ThemeImageHelper.buildImage(bgImagePath, fit: BoxFit.cover),
                         ),
                         Opacity(
                           opacity: expandRatio,

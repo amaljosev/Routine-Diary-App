@@ -10,6 +10,7 @@ import 'package:routine/features/settings/domain/custom_theme_builder.dart';
 import 'package:routine/features/settings/domain/custom_theme_model.dart';
 import 'package:routine/features/settings/presentation/bloc/apptheme_bloc.dart';
 import 'package:routine/features/settings/presentation/pages/theme/custom_color_screen.dart';
+import 'package:routine/features/settings/presentation/pages/theme/theme_image_helper.dart';
 
 // ── Default fallback asset (theme index 0 header) ────────────────────────────
 const String _kDefaultHeader = 'assets/img/themes/theme_2.webp';
@@ -70,8 +71,6 @@ class _CustomThemeScreenState extends State<CustomThemeScreen> {
       _draft.customColors != _original.customColors;
 
   // ── Image helpers ─────────────────────────────────────────────────────────
-
-  bool get _headerIsAsset => _draft.headerImagePath.startsWith('assets/');
 
   Future<void> _pickFromGallery() async {
     final XFile? picked =
@@ -284,10 +283,7 @@ class _CustomThemeScreenState extends State<CustomThemeScreen> {
           padding: const EdgeInsets.only(bottom: 120),
           children: [
             // ── Header preview ─────────────────────────────────────────────
-            _HeaderPreview(
-              imagePath: _draft.headerImagePath,
-              isAsset: _headerIsAsset,
-            ),
+            _HeaderPreview(imagePath: _draft.headerImagePath),
 
             // ── Header action buttons ──────────────────────────────────────
             Padding(
@@ -412,41 +408,29 @@ class _CustomThemeScreenState extends State<CustomThemeScreen> {
 
 class _HeaderPreview extends StatelessWidget {
   final String imagePath;
-  final bool isAsset;
 
-  const _HeaderPreview({
-    required this.imagePath,
-    required this.isAsset,
-  });
+  const _HeaderPreview({required this.imagePath});
 
   @override
   Widget build(BuildContext context) {
     final primary = Theme.of(context).colorScheme.primary;
 
-    return SizedBox(
+    return ThemeImageHelper.buildHeader(
+      imagePath,
       height: 200,
-      width: double.infinity,
-      child: isAsset
-          ? Image.asset(
-              imagePath,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _fallback(primary),
-            )
-          : Image.file(
-              File(imagePath),
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _fallback(primary),
-            ),
-    );
-  }
-
-  Widget _fallback(Color primary) => Container(
+      errorBuilder: (_, __, ___) => Container(
+        height: 200,
         color: primary.withValues(alpha: 0.2),
         child: Center(
-          child: Icon(Icons.broken_image_outlined,
-              size: 48, color: primary.withValues(alpha: 0.6)),
+          child: Icon(
+            Icons.broken_image_outlined,
+            size: 48,
+            color: primary.withValues(alpha: 0.6),
+          ),
         ),
-      );
+      ),
+    );
+  }
 }
 
 // ── Palette tile ──────────────────────────────────────────────────────────────
