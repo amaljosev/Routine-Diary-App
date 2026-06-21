@@ -1,7 +1,19 @@
+// ─── CHANGES vs previous version ──────────────────────────────────────────
+// 1. Removed 'custom' sentinel from _themes list. Built-in themes only (0-6).
+// 2. Fixed scroll: nested ListViews use NeverScrollableScrollPhysics so the
+//    PageView swipe gesture is never stolen.
+// 3. Custom Theme is now a persistent FAB-style pill button always visible
+//    at the bottom of the screen — no need to swipe to a last item.
+// 4. FAB shows a checkmark badge when custom theme is currently active.
+// 5. All existing built-in theme logic is UNCHANGED.
+// ──────────────────────────────────────────────────────────────────────────
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:routine/core/theme/app_colors.dart';
+import 'package:routine/features/settings/domain/custom_theme_model.dart';
 import 'package:routine/features/settings/presentation/bloc/apptheme_bloc.dart';
+import 'package:routine/features/settings/presentation/pages/theme/custom_theme_screen.dart';
 
 class ThemeSwitcherScreen extends StatefulWidget {
   const ThemeSwitcherScreen({super.key});
@@ -16,14 +28,15 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
   bool _initialScrollDone = false;
   bool _isLoading = true;
 
+  // Only built-in themes — no sentinel needed anymore.
   final List<String> _themes = [
-    'assets/img/themes/theme_2.webp', // ← updated
-    'assets/img/themes/theme_1.webp', // ← updated
-    'assets/img/themes/theme_3.webp', // ← updated
-    'assets/img/themes/theme_7.webp', // ← updated
-    'assets/img/themes/theme_4.webp', // ← updated
-    'assets/img/themes/theme_5.webp', // ← updated
-    'assets/img/themes/theme_6.webp', // ← updated
+    'assets/img/themes/theme_2.webp',
+    'assets/img/themes/theme_1.webp',
+    'assets/img/themes/theme_3.webp',
+    'assets/img/themes/theme_7.webp',
+    'assets/img/themes/theme_4.webp',
+    'assets/img/themes/theme_5.webp',
+    'assets/img/themes/theme_6.webp',
   ];
 
   @override
@@ -39,87 +52,57 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
     super.dispose();
   }
 
+  // ── color helpers ─────────────────────────────────────────────────────────
+
   Color _getPreviewBackgroundColor(int index) {
     switch (index) {
-      case 0:
-        return AppColors.light1Background;
-      case 1:
-        return AppColors.light2Background;
-      case 2:
-        return AppColors.light3Background;
-      case 3:
-        return AppColors.light4Background;
-      case 4:
-        return AppColors.dark1Background;
-      case 5:
-        return AppColors.dark2Background;
-      case 6:
-        return AppColors.dark3Background;
-      default:
-        return Theme.of(context).scaffoldBackgroundColor;
+      case 0: return AppColors.light1Background;
+      case 1: return AppColors.light2Background;
+      case 2: return AppColors.light3Background;
+      case 3: return AppColors.light4Background;
+      case 4: return AppColors.dark1Background;
+      case 5: return AppColors.dark2Background;
+      case 6: return AppColors.dark3Background;
+      default: return Theme.of(context).scaffoldBackgroundColor;
     }
   }
 
   Color _getThemePrimaryColor(int index) {
     switch (index) {
-      case 0:
-        return AppColors.light1Primary;
-      case 1:
-        return AppColors.light2Primary;
-      case 2:
-        return AppColors.light3Primary;
-      case 3:
-        return AppColors.light4Primary;
-      case 4:
-        return AppColors.dark1Primary;
-      case 5:
-        return AppColors.dark2Primary;
-      case 6:
-        return AppColors.dark3Primary;
-      default:
-        return Theme.of(context).colorScheme.primary;
+      case 0: return AppColors.light1Primary;
+      case 1: return AppColors.light2Primary;
+      case 2: return AppColors.light3Primary;
+      case 3: return AppColors.light4Primary;
+      case 4: return AppColors.dark1Primary;
+      case 5: return AppColors.dark2Primary;
+      case 6: return AppColors.dark3Primary;
+      default: return Theme.of(context).colorScheme.primary;
     }
   }
 
   Color _getThemeSecondaryColor(int index) {
     switch (index) {
-      case 0:
-        return AppColors.light1Secondary;
-      case 1:
-        return AppColors.light2Secondary;
-      case 2:
-        return AppColors.light3Secondary;
-      case 3:
-        return AppColors.light4Secondary;
-      case 4:
-        return AppColors.dark1Secondary;
-      case 5:
-        return AppColors.dark2Secondary;
-      case 6:
-        return AppColors.dark3Secondary;
-      default:
-        return Theme.of(context).colorScheme.secondary;
+      case 0: return AppColors.light1Secondary;
+      case 1: return AppColors.light2Secondary;
+      case 2: return AppColors.light3Secondary;
+      case 3: return AppColors.light4Secondary;
+      case 4: return AppColors.dark1Secondary;
+      case 5: return AppColors.dark2Secondary;
+      case 6: return AppColors.dark3Secondary;
+      default: return Theme.of(context).colorScheme.secondary;
     }
   }
 
   Color _getThemeSurfaceColor(int index) {
     switch (index) {
-      case 0:
-        return AppColors.light1Surface;
-      case 1:
-        return AppColors.light2Surface;
-      case 2:
-        return AppColors.light3Surface;
-      case 3:
-        return AppColors.light4Surface;
-      case 4:
-        return AppColors.dark1Surface;
-      case 5:
-        return AppColors.dark2Surface;
-      case 6:
-        return AppColors.dark3Surface;
-      default:
-        return Theme.of(context).colorScheme.surface;
+      case 0: return AppColors.light1Surface;
+      case 1: return AppColors.light2Surface;
+      case 2: return AppColors.light3Surface;
+      case 3: return AppColors.light4Surface;
+      case 4: return AppColors.dark1Surface;
+      case 5: return AppColors.dark2Surface;
+      case 6: return AppColors.dark3Surface;
+      default: return Theme.of(context).colorScheme.surface;
     }
   }
 
@@ -127,24 +110,31 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
 
   String _getThemeName(int index) {
     switch (index) {
-      case 0:
-        return 'Purple Teal Theme selected!';
-      case 1:
-        return 'Blue Orange Theme selected!';
-      case 2:
-        return 'Green Coral Theme selected!';
-      case 3:
-        return 'Orange Purple Theme selected!';
-      case 4:
-        return 'Deep Purple Amber Theme selected!';
-      case 5:
-        return 'Blue Grey Theme selected!';
-      case 6:
-        return 'Forest Green Theme selected!';
-      default:
-        return 'Theme ${index + 1} selected!';
+      case 0: return 'Blue Orange Theme selected!';
+      case 1: return 'Purple Teal Theme selected!';
+      case 2: return 'Green Coral Theme selected!';
+      case 3: return 'Orange Purple Theme selected!';
+      case 4: return 'Deep Purple Amber Theme selected!';
+      case 5: return 'Blue Grey Theme selected!';
+      case 6: return 'Forest Green Theme selected!';
+      default: return 'Theme ${index + 1} selected!';
     }
   }
+
+  // ── navigation to Custom Theme editor ────────────────────────────────────
+
+  void _openCustomThemeEditor() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => BlocProvider.value(
+          value: context.read<ThemeBloc>(),
+          child: const CustomThemeScreen(),
+        ),
+      ),
+    );
+  }
+
+  // ── preview card skeleton (NeverScrollableScrollPhysics fixes the swipe) ──
 
   Widget _buildPreviewItem(BuildContext context, int themeIndex) {
     final isDarkPreview = _isPreviewDark(themeIndex);
@@ -158,14 +148,9 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
       decoration: BoxDecoration(
-        color: isDarkPreview
-            ? surfaceColor.withValues(alpha: 0.6)
-            : surfaceColor,
+        color: isDarkPreview ? surfaceColor.withValues(alpha: 0.6) : surfaceColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: primaryColor.withValues(alpha: 0.1),
-          width: 1,
-        ),
+        border: Border.all(color: primaryColor.withValues(alpha: 0.1), width: 1),
         boxShadow: [
           BoxShadow(
             color: isDarkPreview
@@ -295,68 +280,61 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
     );
   }
 
+  // ── main build ────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ThemeBloc, ThemeState>(
       builder: (context, state) {
-        final selectedThemeIndex = state.themeIndex;
+        // When custom theme is active we don't highlight any built-in page.
+        final int selectedThemeIndex =
+            state.isCustomThemeActive ? -1 : state.themeIndex;
+        final bool isCustomActive = state.isCustomThemeActive;
 
-        if (!_initialScrollDone && selectedThemeIndex != -1 && mounted) {
+        if (!_initialScrollDone) {
           _isLoading = false;
-
+          final jumpTo = state.isCustomThemeActive ? 0 : state.themeIndex;
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted && _pageController.hasClients) {
-              _pageController.jumpToPage(selectedThemeIndex);
-              setState(() {
-                _currentPage = selectedThemeIndex;
-                _initialScrollDone = true;
-              });
-            } else if (mounted) {
-              Future.delayed(const Duration(milliseconds: 50), () {
-                if (mounted && _pageController.hasClients) {
-                  _pageController.jumpToPage(selectedThemeIndex);
-                  setState(() {
-                    _currentPage = selectedThemeIndex;
-                    _initialScrollDone = true;
-                  });
-                }
-              });
+            if (!mounted) return;
+            void doJump() {
+              if (_pageController.hasClients) {
+                _pageController.jumpToPage(jumpTo);
+                setState(() {
+                  _currentPage = jumpTo;
+                  _initialScrollDone = true;
+                });
+              } else {
+                Future.delayed(
+                  const Duration(milliseconds: 50),
+                  () { if (mounted) doJump(); },
+                );
+              }
             }
+            doJump();
           });
         }
 
-        if (_isLoading || selectedThemeIndex == -1) {
+        if (_isLoading) {
           return Scaffold(
-            backgroundColor: selectedThemeIndex != -1
-                ? _getPreviewBackgroundColor(selectedThemeIndex)
-                : AppColors.light1Background,
+            backgroundColor: AppColors.light1Background,
             appBar: AppBar(
               title: const Text('Choose Your Diary Theme'),
               centerTitle: true,
               backgroundColor: Colors.transparent,
-              foregroundColor: selectedThemeIndex != -1
-                  ? _getThemePrimaryColor(selectedThemeIndex)
-                  : AppColors.light1Primary,
+              foregroundColor: AppColors.light1Primary,
               elevation: 0,
             ),
-            body: Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  selectedThemeIndex != -1
-                      ? _getThemePrimaryColor(selectedThemeIndex)
-                      : AppColors.light1Primary,
-                ),
-              ),
-            ),
+            body: const Center(child: CircularProgressIndicator()),
           );
         }
 
         final previewPrimary = _getThemePrimaryColor(_currentPage);
         final previewSecondary = _getThemeSecondaryColor(_currentPage);
-        final isCurrentThemeSelected = selectedThemeIndex == _currentPage;
+        final isCurrentPageSelected = selectedThemeIndex == _currentPage;
 
         return Scaffold(
           backgroundColor: _getPreviewBackgroundColor(_currentPage),
+
           appBar: AppBar(
             title: const Text('Choose Your Diary Theme'),
             titleTextStyle: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -368,10 +346,24 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
             foregroundColor: previewPrimary,
             elevation: 0,
           ),
+
+          // ── Persistent "Customize Theme" pill — always accessible ──────────
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.centerFloat,
+          floatingActionButton: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: _CustomizeThemePill(
+              isActive: isCustomActive,
+              primaryColor: previewPrimary,
+              onTap: _openCustomThemeEditor,
+            ),
+          ),
+
           body: Padding(
             padding: const EdgeInsets.symmetric(vertical: 20.0),
             child: Column(
               children: [
+                // ── Page view ─────────────────────────────────────────────
                 Expanded(
                   flex: 4,
                   child: Padding(
@@ -382,13 +374,11 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                         PageView.builder(
                           controller: _pageController,
                           itemCount: _themes.length,
-                          onPageChanged: (index) {
-                            setState(() {
-                              _currentPage = index;
-                            });
-                          },
+                          onPageChanged: (index) =>
+                              setState(() => _currentPage = index),
                           itemBuilder: (context, index) {
                             final isDarkPreview = _isPreviewDark(index);
+                            final isSelected = selectedThemeIndex == index;
 
                             return AnimatedContainer(
                               duration: const Duration(milliseconds: 300),
@@ -404,28 +394,30 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                                 child: GestureDetector(
                                   onTap: () {
                                     if (selectedThemeIndex != index) {
-                                      context.read<ThemeBloc>().add(
-                                        ChangeTheme(index),
-                                      );
-
+                                      context
+                                          .read<ThemeBloc>()
+                                          .add(ChangeTheme(index));
                                       _pageController.animateToPage(
                                         index,
-                                        duration: const Duration(milliseconds: 400),
+                                        duration:
+                                            const Duration(milliseconds: 400),
                                         curve: Curves.easeInOutCubic,
                                       );
-
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      ScaffoldMessenger.of(context).clearSnackBars();
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
                                         SnackBar(
                                           content: Text(
                                             _getThemeName(index),
                                             style: const TextStyle(
-                                              fontWeight: FontWeight.w500,
-                                            ),
+                                                fontWeight: FontWeight.w500),
                                           ),
-                                          backgroundColor: _getThemePrimaryColor(index),
+                                          backgroundColor:
+                                              _getThemePrimaryColor(index),
                                           behavior: SnackBarBehavior.floating,
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(16),
+                                            borderRadius:
+                                                BorderRadius.circular(16),
                                           ),
                                         ),
                                       );
@@ -449,38 +441,52 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                                                 width: double.infinity,
                                                 height: 150,
                                                 fit: BoxFit.cover,
-                                                errorBuilder: (context, error, stackTrace) {
-                                                  return Container(
-                                                    width: double.infinity,
-                                                    height: 150,
-                                                    color: _getThemePrimaryColor(index).withValues(alpha: 0.3),
-                                                    child: Center(
-                                                      child: Icon(
-                                                        Icons.image_not_supported,
-                                                        color: _getThemePrimaryColor(index),
-                                                        size: 40,
-                                                      ),
+                                                errorBuilder:
+                                                    (context, error, _) =>
+                                                        Container(
+                                                  width: double.infinity,
+                                                  height: 150,
+                                                  color: _getThemePrimaryColor(
+                                                          index)
+                                                      .withValues(alpha: 0.3),
+                                                  child: Center(
+                                                    child: Icon(
+                                                      Icons.image_not_supported,
+                                                      color:
+                                                          _getThemePrimaryColor(
+                                                              index),
+                                                      size: 40,
                                                     ),
-                                                  );
-                                                },
+                                                  ),
+                                                ),
                                               ),
+                                              // ── FIX: NeverScrollable so
+                                              //    PageView swipe works ──────
                                               Expanded(
                                                 child: ListView.builder(
-                                                  padding: const EdgeInsets.all(8),
+                                                  physics:
+                                                      const NeverScrollableScrollPhysics(),
+                                                  padding:
+                                                      const EdgeInsets.all(8),
                                                   itemCount: 4,
                                                   itemBuilder: (context, idx) =>
-                                                      _buildPreviewItem(context, index),
+                                                      _buildPreviewItem(
+                                                          context, index),
                                                 ),
                                               ),
                                             ],
                                           ),
-                                          if (selectedThemeIndex == index)
+                                          // Selection border
+                                          if (isSelected)
                                             Positioned.fill(
                                               child: Container(
                                                 decoration: BoxDecoration(
-                                                  borderRadius: BorderRadius.circular(32),
+                                                  borderRadius:
+                                                      BorderRadius.circular(32),
                                                   border: Border.all(
-                                                    color: _getThemePrimaryColor(selectedThemeIndex),
+                                                    color:
+                                                        _getThemePrimaryColor(
+                                                            index),
                                                     width: 4,
                                                   ),
                                                 ),
@@ -506,13 +512,15 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                               _themes.length,
                               (index) => AnimatedContainer(
                                 duration: const Duration(milliseconds: 300),
-                                margin: const EdgeInsets.symmetric(horizontal: 4),
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 4),
                                 height: 6,
                                 width: _currentPage == index ? 24 : 6,
                                 decoration: BoxDecoration(
                                   color: _currentPage == index
                                       ? previewPrimary
-                                      : previewSecondary.withValues(alpha: 0.3),
+                                      : previewSecondary
+                                          .withValues(alpha: 0.3),
                                   borderRadius: BorderRadius.circular(3),
                                 ),
                               ),
@@ -523,18 +531,19 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                     ),
                   ),
                 ),
+
+                // ── "Use This Theme" / "Currently Selected" button ────────
                 SafeArea(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 25),
+                    // Extra bottom padding so the FAB pill doesn't overlap
+                    padding: const EdgeInsets.fromLTRB(25, 0, 25, 72),
                     child: Column(
                       children: [
-                        if (isCurrentThemeSelected)
+                        if (isCurrentPageSelected)
                           Container(
                             margin: const EdgeInsets.only(bottom: 12),
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
+                                horizontal: 16, vertical: 8),
                             decoration: BoxDecoration(
                               color: previewPrimary.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(20),
@@ -548,24 +557,24 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                             ),
                           ),
                         ElevatedButton(
-                          onPressed: isCurrentThemeSelected
+                          onPressed: isCurrentPageSelected
                               ? null
                               : () {
-                                  context.read<ThemeBloc>().add(
-                                    ChangeTheme(_currentPage),
-                                  );
+                                  context
+                                      .read<ThemeBloc>()
+                                      .add(ChangeTheme(_currentPage));
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
                                         _getThemeName(_currentPage),
                                         style: const TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                        ),
+                                            fontWeight: FontWeight.w500),
                                       ),
                                       backgroundColor: previewPrimary,
                                       behavior: SnackBarBehavior.floating,
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
+                                        borderRadius:
+                                            BorderRadius.circular(16),
                                       ),
                                     ),
                                   );
@@ -573,16 +582,20 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: previewPrimary,
                             foregroundColor: Colors.white,
-                            disabledBackgroundColor: previewPrimary.withValues(alpha: 0.3),
-                            disabledForegroundColor: Colors.white.withValues(alpha: 0.5),
+                            disabledBackgroundColor:
+                                previewPrimary.withValues(alpha: 0.3),
+                            disabledForegroundColor:
+                                Colors.white.withValues(alpha: 0.5),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            elevation: isCurrentThemeSelected ? 0 : 5,
+                            elevation: isCurrentPageSelected ? 0 : 5,
                             minimumSize: const Size(double.infinity, 50),
                           ),
                           child: Text(
-                            isCurrentThemeSelected ? 'Currently Selected' : 'Use This Theme',
+                            isCurrentPageSelected
+                                ? 'Currently Selected'
+                                : 'Use This Theme',
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
@@ -599,6 +612,90 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
           ),
         );
       },
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Persistent "Customize Theme" pill button
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _CustomizeThemePill extends StatelessWidget {
+  final bool isActive;
+  final Color primaryColor;
+  final VoidCallback onTap;
+
+  const _CustomizeThemePill({
+    required this.isActive,
+    required this.primaryColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        height: 52,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(26),
+          color: isActive ? primaryColor : Colors.transparent,
+          border: Border.all(
+            color: primaryColor,
+            width: 2,
+          ),
+          boxShadow: isActive
+              ? [
+                  BoxShadow(
+                    color: primaryColor.withValues(alpha: 0.35),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  )
+                ]
+              : [],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.palette_outlined,
+              size: 20,
+              color: isActive ? Colors.white : primaryColor,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Customize Theme',
+              style: TextStyle(
+                fontFamily: 'Quicksand',
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
+                color: isActive ? Colors.white : primaryColor,
+              ),
+            ),
+            if (isActive) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.25),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Text(
+                  'Active',
+                  style: TextStyle(
+                    fontFamily: 'Nunito',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

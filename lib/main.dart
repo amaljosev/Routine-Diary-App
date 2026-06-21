@@ -1,3 +1,11 @@
+// ─── CHANGES vs original main.dart ────────────────────────────────────────
+// 1. BlocBuilder now handles kCustomThemeIndex: uses state.customThemeData
+//    when the custom theme is active, falls back to allThemes otherwise.
+// 2. ThemeMode is derived from the resolved ThemeData brightness so the
+//    custom theme's dark/light setting is respected.
+// 3. Everything else is UNCHANGED.
+// ──────────────────────────────────────────────────────────────────────────
+
 import 'package:routine/core/config/secrets.dart';
 import 'package:routine/core/services/showcase_prefs_service.dart';
 import 'package:routine/core/theme/app_theme.dart';
@@ -16,6 +24,7 @@ import 'package:routine/features/onboarding/data/repositories/onboarding_reposit
 import 'package:routine/features/onboarding/domain/repositories/onboarding_repository.dart';
 import 'package:routine/features/onboarding/presentation/pages/splash_screen.dart';
 import 'package:routine/features/settings/data/theme_repository_impl.dart';
+import 'package:routine/features/settings/domain/custom_theme_model.dart';
 import 'package:routine/features/settings/domain/theme_repository.dart';
 import 'package:routine/features/settings/presentation/bloc/apptheme_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -36,7 +45,7 @@ Future<void> main() async {
     url: Secrets.supabaseUrl,
     anonKey: Secrets.supabaseAnonKey,
   );
-await ShowcasePrefsService.init();
+  await ShowcasePrefsService.init();
   runApp(
     MyApp(
       onboardingRepository: onboardingRepository,
@@ -88,12 +97,22 @@ class MyApp extends StatelessWidget {
         ).copyWith(textScaler: const TextScaler.linear(1.0)),
         child: BlocBuilder<ThemeBloc, ThemeState>(
           builder: (context, state) {
-            final themeIndex = state.themeIndex;
-            final safeIndex = themeIndex.clamp(0, allThemes.length - 1);
-            final themeData = allThemes[safeIndex];
-            final ThemeMode themeMode = safeIndex <= 3
-                ? ThemeMode.light
-                : ThemeMode.dark;
+            // ── CHANGED: resolve ThemeData accounting for custom theme ──────
+            final ThemeData themeData;
+            if (state.isCustomThemeActive && state.customThemeData != null) {
+              themeData = state.customThemeData!;
+            } else {
+              final safeIndex =
+                  state.themeIndex.clamp(0, allThemes.length - 1);
+              themeData = allThemes[safeIndex];
+            }
+
+            final ThemeMode themeMode =
+                themeData.colorScheme.brightness == Brightness.dark
+                    ? ThemeMode.dark
+                    : ThemeMode.light;
+            // ── END CHANGED ──────────────────────────────────────────────────
+
             return MaterialApp(
               title: 'Routine: Diary App',
               debugShowCheckedModeBanner: false,

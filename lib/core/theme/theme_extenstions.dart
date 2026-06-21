@@ -1,3 +1,4 @@
+// lib/core/theme/theme_extenstions.dart
 import 'package:flutter/material.dart';
 
 class BackgroundImageTheme extends ThemeExtension<BackgroundImageTheme> {

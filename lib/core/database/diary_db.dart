@@ -1,3 +1,5 @@
+// lib/core/database/diary_db.dart
+
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
@@ -68,3 +70,5 @@ class DiaryDatabase {
     _database = null;
   }
 }
+
+
