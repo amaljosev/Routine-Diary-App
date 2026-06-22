@@ -4,6 +4,18 @@ import 'package:routine/features/app_lock/presentation/bloc/lock_bloc.dart';
 
 enum LockMode { create, verify }
 
+// ─── Palette ────────────────────────────────────────────────────────────
+// Matches app_lock_settings_page.dart so the two screens feel like one flow.
+const _bgTop = Color(0xFFFFE3D6);
+const _bgMid = Color(0xFFF6DCEF);
+const _bgBottom = Color(0xFFE2E2FB);
+const _ink = Color(0xFF2B2640);
+const _inkSoft = Color(0xFF8C8696);
+const _accent = Color(
+  0xFFFF6F91,
+); // PIN lock's accent color from the settings page
+const _accentSoft = Color(0xFFFFDCE5);
+
 class PinLockScreen extends StatefulWidget {
   final LockMode mode;
 
@@ -32,9 +44,10 @@ class _PinLockScreenState extends State<PinLockScreen>
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
-    _shakeAnimation = Tween<double>(begin: 0.0, end: 10.0)
-        .chain(CurveTween(curve: Curves.elasticIn))
-        .animate(_shakeController);
+    _shakeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 10.0,
+    ).chain(CurveTween(curve: Curves.elasticIn)).animate(_shakeController);
 
     // check whether device supports biometric / device authentication
     _initCanAuth();
@@ -69,14 +82,21 @@ class _PinLockScreenState extends State<PinLockScreen>
   void _addDigit(String d) {
     if (_entered.length >= 4) return;
 
-    setState(() => _entered += d);
+    setState(() {
+      _entered += d;
+      _error = '';
+    });
 
     if (_entered.length == 4) {
       if (widget.mode == LockMode.create) {
         if (_firstPin.isEmpty) {
-          _firstPin = _entered;
-          _entered = '';
-          setState(() {});
+          Future.delayed(const Duration(milliseconds: 150), () {
+            if (!mounted) return;
+            setState(() {
+              _firstPin = _entered;
+              _entered = '';
+            });
+          });
         } else {
           if (_firstPin == _entered) {
             Navigator.pop(context, _entered);
@@ -105,8 +125,8 @@ class _PinLockScreenState extends State<PinLockScreen>
   }
 
   void _onForgotPressed() {
-  context.read<AppLockBloc>().add(const SwitchToBiometricLock());
-}
+    context.read<AppLockBloc>().add(const SwitchToBiometricLock());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -119,8 +139,10 @@ class _PinLockScreenState extends State<PinLockScreen>
         listener: (context, state) {
           if (state.verificationStatus == AppVerificationStatus.success) {
             // Handled by LockGate – do nothing here
-          } else if (state.verificationStatus == AppVerificationStatus.failure) {
+          } else if (state.verificationStatus ==
+              AppVerificationStatus.failure) {
             _showError('Wrong PIN');
+            _entered = '';
             context.read<AppLockBloc>().add(ResetAppVerification());
           }
         },
@@ -134,39 +156,40 @@ class _PinLockScreenState extends State<PinLockScreen>
   }
 
   Widget _buildContent(BuildContext context, bool isCreate) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: colorScheme.primary,
-        elevation: 0,
-        foregroundColor: colorScheme.onPrimary,
-        title: Text(
-          isCreate ? 'Set PIN' : 'Enter PIN',
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: colorScheme.onPrimary,
+      backgroundColor: _bgBottom,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [_bgTop, _bgMid, _bgBottom],
+            stops: [0.0, 0.45, 1.0],
           ),
         ),
-        centerTitle: true,
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+        child: SafeArea(
           child: Column(
             children: [
-              const Spacer(flex: 2),
-              // Instruction text
+              _Header(
+                title: isCreate
+                    ? (_firstPin.isEmpty ? 'Set PIN' : 'Confirm PIN')
+                    : 'Enter PIN',
+                onBack: () => Navigator.maybePop(context),
+              ),
+              const SizedBox(height: 6),
               Text(
                 isCreate
-                    ? (_firstPin.isEmpty ? 'Create a 4-digit PIN' : 'Confirm your PIN')
+                    ? (_firstPin.isEmpty
+                          ? 'Create a 4-digit PIN'
+                          : 'Type it again to confirm')
                     : 'Enter your 4-digit PIN',
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: colorScheme.onSurface.withValues(alpha: 0.7),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: _inkSoft,
                 ),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 28),
 
               // Animated pin dots
               AnimatedBuilder(
@@ -181,71 +204,82 @@ class _PinLockScreenState extends State<PinLockScreen>
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(4, (index) {
                     final isFilled = index < _entered.length;
-                    return Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 12),
-                      width: 20,
-                      height: 20,
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      margin: const EdgeInsets.symmetric(horizontal: 10),
+                      width: 16,
+                      height: 16,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: isFilled
-                            ? colorScheme.primary
-                            : colorScheme.onSurface.withValues(alpha: 0.2),
-                      ),
-                      child: isFilled
-                          ? Center(
-                              child: Container(
-                                width: 8,
-                                height: 8,
-                                decoration: const BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
+                        color: isFilled ? _accent : Colors.white,
+                        border: Border.all(
+                          color: isFilled ? _accent : _accent.withOpacity(0.35),
+                          width: 1.4,
+                        ),
+                        boxShadow: isFilled
+                            ? [
+                                BoxShadow(
+                                  color: _accent.withOpacity(0.35),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
                                 ),
-                              ),
-                            )
-                          : null,
+                              ]
+                            : null,
+                      ),
                     );
                   }),
                 ),
               ),
 
-              // Error message
-              if (_error.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: Text(
-                    _error,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.error,
-                      fontWeight: FontWeight.w500,
-                    ),
+              // Error / forgot row
+              SizedBox(
+                height: 32,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: _error.isNotEmpty
+                      ? Center(
+                          child: Text(
+                            _error,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFFE4574B),
+                            ),
+                          ),
+                        )
+                      : (!isCreate && !_checkingAuth && _canAuthenticate)
+                      ? Center(
+                          child: TextButton(
+                            onPressed: _onForgotPressed,
+                            style: TextButton.styleFrom(
+                              foregroundColor: _accent,
+                              padding: EdgeInsets.zero,
+                            ),
+                            child: const Text(
+                              'Forgot? Tap here!',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        )
+                      : null,
+                ),
+              ),
+
+              const SizedBox(height: 4),
+              Expanded(
+                child: ClipPath(
+                  clipper: _CloudTopClipper(),
+                  child: Container(
+                    width: double.infinity,
+                    color: Colors.white,
+                    padding: const EdgeInsets.fromLTRB(20, 44, 20, 12),
+                    child: Center(child: _buildKeypad()),
                   ),
                 ),
-
-              // Forgot button (only in verify mode & only when device supports authentication)
-              if (!isCreate && !_checkingAuth && _canAuthenticate)
-                Padding(
-                  padding: const EdgeInsets.only(top: 12.0),
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: _onForgotPressed,
-                      child: Text(
-                        'Forgot?',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-              const Spacer(flex: 3),
-
-              // Keypad
-              _buildKeypad(theme, colorScheme),
-
-              const Spacer(flex: 1),
+              ),
             ],
           ),
         ),
@@ -253,28 +287,29 @@ class _PinLockScreenState extends State<PinLockScreen>
     );
   }
 
-  Widget _buildKeypad(ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildKeypad() {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         for (int row = 0; row < 3; row++)
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            padding: const EdgeInsets.symmetric(vertical: 6),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 for (int col = 1; col <= 3; col++)
-                  _buildKey('${row * 3 + col}', theme, colorScheme),
+                  _buildKey('${row * 3 + col}'),
               ],
             ),
           ),
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: 6),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const SizedBox(width: 80), // placeholder
-              _buildKey('0', theme, colorScheme),
-              _buildBackspaceKey(theme, colorScheme),
+              const SizedBox(width: 78), // placeholder to balance the row
+              _buildKey('0'),
+              _buildBackspaceKey(),
             ],
           ),
         ),
@@ -282,25 +317,24 @@ class _PinLockScreenState extends State<PinLockScreen>
     );
   }
 
-  Widget _buildKey(String digit, ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildKey(String digit) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),
-      width: 70,
-      height: 70,
+      width: 68,
+      height: 68,
       child: Material(
-        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(35),
-        elevation: 2,
-        shadowColor: colorScheme.shadow,
+        color: _accentSoft,
+        borderRadius: BorderRadius.circular(34),
         child: InkWell(
-          borderRadius: BorderRadius.circular(35),
+          borderRadius: BorderRadius.circular(34),
           onTap: () => _addDigit(digit),
           child: Center(
             child: Text(
               digit,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w500,
-                color: colorScheme.onSurface,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: _ink,
               ),
             ),
           ),
@@ -309,26 +343,79 @@ class _PinLockScreenState extends State<PinLockScreen>
     );
   }
 
-  Widget _buildBackspaceKey(ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildBackspaceKey() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),
-      width: 70,
-      height: 70,
+      width: 68,
+      height: 68,
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(35),
+        borderRadius: BorderRadius.circular(34),
         child: InkWell(
-          borderRadius: BorderRadius.circular(35),
+          borderRadius: BorderRadius.circular(34),
           onTap: _backspace,
-          child: Center(
-            child: Icon(
-              Icons.backspace_outlined,
-              size: 28,
-              color: colorScheme.onSurface.withValues(alpha: 0.7),
-            ),
+          child: const Center(
+            child: Icon(Icons.backspace_rounded, size: 24, color: _inkSoft),
           ),
         ),
       ),
     );
   }
+}
+
+// ─── Header ─────────────────────────────────────────────────────────────
+class _Header extends StatelessWidget {
+  const _Header({required this.title, required this.onBack});
+
+  final String title;
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 4, 20, 0),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: onBack,
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: _ink,
+              size: 20,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                color: _ink,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Wavy "cloud horizon" top edge for the keypad panel ────────────────
+class _CloudTopClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.lineTo(0, 26);
+    path.quadraticBezierTo(size.width * 0.12, 4, size.width * 0.25, 16);
+    path.quadraticBezierTo(size.width * 0.38, 30, size.width * 0.5, 12);
+    path.quadraticBezierTo(size.width * 0.62, 0, size.width * 0.75, 18);
+    path.quadraticBezierTo(size.width * 0.88, 32, size.width, 8);
+    path.lineTo(size.width, size.height);
+    path.lineTo(0, size.height);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }

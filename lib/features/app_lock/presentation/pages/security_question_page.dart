@@ -29,6 +29,12 @@ class _SecurityQuestionPageState extends State<SecurityQuestionPage> {
     _initCanAuth();
   }
 
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   Future<void> _initCanAuth() async {
     final repo = context.read<AppLockBloc>().repository;
     try {
@@ -51,14 +57,15 @@ class _SecurityQuestionPageState extends State<SecurityQuestionPage> {
 
   Future<void> _loadQuestion() async {
     final data = await context.read<AppLockBloc>().repository.getSecurityData();
-    if (data != null) {
+    if (data != null && mounted) {
       setState(() => _question = data['question']);
     }
   }
 
   void _submit() {
     if (!widget.isVerification) {
-      if (_question == null || _question!.isEmpty) {
+      final question = _question?.trim() ?? '';
+      if (question.isEmpty) {
         setState(() => _error = 'Please enter a question');
         return;
       }
@@ -67,7 +74,7 @@ class _SecurityQuestionPageState extends State<SecurityQuestionPage> {
         setState(() => _error = 'Please enter an answer');
         return;
       }
-      Navigator.pop(context, {'question': _question, 'answer': answer});
+      Navigator.pop(context, {'question': question, 'answer': answer});
     } else {
       context.read<AppLockBloc>().add(
         VerifyAppSecurityAnswer(_controller.text.trim()),
@@ -98,189 +105,285 @@ class _SecurityQuestionPageState extends State<SecurityQuestionPage> {
           }
         },
         builder: (context, state) {
-          return Stack(
-            children: [
-              _buildContent(theme, colorScheme),
-              FloatingParticles(color: colorScheme.primary),
-            ],
-          );
+          return _buildScaffold(theme, colorScheme);
         },
       );
     }
-    return Stack(
-      children: [
-        _buildContent(theme, colorScheme),
-        FloatingParticles(color: colorScheme.primary),
-      ],
+    return _buildScaffold(theme, colorScheme);
+  }
+
+  Widget _buildScaffold(ThemeData theme, ColorScheme colorScheme) {
+    return Scaffold(
+      backgroundColor: colorScheme.surface,
+      body: Stack(
+        children: [
+          // Soft gradient world shared with the rest of the lock flow,
+          // derived from the theme so it adapts to light/dark automatically.
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  colorScheme.primaryContainer.withValues(alpha: 0.9),
+                  colorScheme.tertiaryContainer.withValues(alpha: 0.6),
+                  colorScheme.surface,
+                ],
+                stops: const [0.0, 0.45, 1.0],
+              ),
+            ),
+          ),
+          FloatingParticles(color: colorScheme.primary),
+          _buildContent(theme, colorScheme),
+        ],
+      ),
     );
   }
 
   Widget _buildContent(ThemeData theme, ColorScheme colorScheme) {
     final isVerification = widget.isVerification;
 
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: colorScheme.primary,
-        elevation: 0,
-        foregroundColor: colorScheme.onPrimary,
-        title: Text(
-          isVerification ? 'Verify Security Question' : 'Set Security Question',
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: colorScheme.onPrimary,
+    return SafeArea(
+      child: Column(
+        children: [
+          _Header(
+            title: isVerification ? 'Verify Question' : 'Set a Question',
+            colorScheme: colorScheme,
+            onBack: () => Navigator.maybePop(context),
           ),
-        ),
-        centerTitle: true,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (isVerification && _question != null) ...[
-              const Spacer(flex: 2),
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest.withValues(
-                    alpha: 0.3,
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: colorScheme.primary.withValues(alpha: 0.2),
-                    width: 1,
-                  ),
-                ),
-                child: Text(
-                  _question!,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              if (_canAuthenticate && !_checkingAuth)
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: _onForgotPressed,
-                    child: Text(
-                      'Forgot?',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.primary,
-                        fontWeight: FontWeight.w600,
+          Expanded(
+            child: ClipPath(
+              clipper: _CloudTopClipper(),
+              child: Container(
+                width: double.infinity,
+                color: colorScheme.surface,
+                padding: const EdgeInsets.fromLTRB(24, 40, 24, 20),
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (isVerification) ...[
+                        if (_question != null)
+                          _QuestionBubble(
+                            question: _question!,
+                            colorScheme: colorScheme,
+                            theme: theme,
+                          )
+                        else
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 24),
+                            child: Center(child: CircularProgressIndicator()),
+                          ),
+                        const SizedBox(height: 8),
+                        if (_canAuthenticate && !_checkingAuth)
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: _onForgotPressed,
+                              style: TextButton.styleFrom(
+                                foregroundColor: colorScheme.primary,
+                                padding: EdgeInsets.zero,
+                              ),
+                              child: const Text(
+                                'Forgot? Tap here!',
+                                style: TextStyle(fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                          ),
+                        const SizedBox(height: 16),
+                      ] else ...[
+                        _FieldLabel('Your question', colorScheme),
+                        const SizedBox(height: 10),
+                        _PillTextField(
+                          hint: 'eg: What is your favorite color?',
+                          colorScheme: colorScheme,
+                          theme: theme,
+                          onChanged: (v) => _question = v,
+                        ),
+                        const SizedBox(height: 22),
+                      ],
+                      _FieldLabel(
+                        isVerification ? 'Your answer' : 'Answer',
+                        colorScheme,
                       ),
-                    ),
+                      const SizedBox(height: 10),
+                      _PillTextField(
+                        controller: _controller,
+                        hint: 'eg: Red',
+                        obscureText: !isVerification,
+                        colorScheme: colorScheme,
+                        theme: theme,
+                      ),
+                      if (_error.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        _ErrorPill(message: _error, colorScheme: colorScheme),
+                      ],
+                      const SizedBox(height: 28),
+                      _SubmitButton(
+                        label: isVerification ? 'Verify' : 'Continue',
+                        colorScheme: colorScheme,
+                        theme: theme,
+                        onPressed: _submit,
+                      ),
+                      const SizedBox(height: 12),
+                    ],
                   ),
-                ),
-
-              const SizedBox(height: 20),
-            ],
-
-            if (!isVerification) ...[
-              const Spacer(flex: 2),
-              Text(
-                'Create a security question',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                hint: 'eg: What is your favorite color?',
-                onChanged: (v) => _question = v,
-              ),
-              const SizedBox(height: 20),
-            ],
-
-            Text(
-              isVerification ? 'Enter your answer' : 'Answer',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _controller,
-              hint: 'eg: Red',
-              obscureText: !isVerification,
-            ),
-
-            if (_error.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: colorScheme.error.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(
-                    color: colorScheme.error.withValues(alpha: 0.3),
-                  ),
-                ),
-                child: Text(
-                  _error,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.error,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ],
-
-            const Spacer(flex: 3),
-
-            ElevatedButton(
-              onPressed: _submit,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colorScheme.primary,
-                foregroundColor: colorScheme.onPrimary,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                elevation: 4,
-                shadowColor: colorScheme.primary.withValues(alpha: 0.4),
-              ),
-              child: Text(
-                isVerification ? 'Verify' : 'Continue',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: colorScheme.onPrimary,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.5,
                 ),
               ),
             ),
-
-            const SizedBox(height: 16),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
+}
 
-  Widget _buildTextField({
-    TextEditingController? controller,
-    String? hint,
-    Function(String)? onChanged,
-    bool obscureText = false,
-  }) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+// ─── Header ─────────────────────────────────────────────────────────────
+class _Header extends StatelessWidget {
+  const _Header({
+    required this.title,
+    required this.colorScheme,
+    required this.onBack,
+  });
 
+  final String title;
+  final ColorScheme colorScheme;
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 4, 24, 18),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: onBack,
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: colorScheme.onSurface,
+              size: 20,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                color: colorScheme.onSurface,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── "Speech bubble" showing the stored question in verify mode ───────
+class _QuestionBubble extends StatelessWidget {
+  const _QuestionBubble({
+    required this.question,
+    required this.colorScheme,
+    required this.theme,
+  });
+
+  final String question;
+  final ColorScheme colorScheme;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: colorScheme.secondaryContainer.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: colorScheme.primary.withValues(alpha: 0.18),
+          width: 1.4,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: colorScheme.surface,
+            ),
+            child: Icon(
+              Icons.question_answer_rounded,
+              size: 18,
+              color: colorScheme.primary,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              question,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: colorScheme.onSecondaryContainer,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FieldLabel extends StatelessWidget {
+  const _FieldLabel(this.text, this.colorScheme);
+
+  final String text;
+  final ColorScheme colorScheme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: TextStyle(
+        fontSize: 13.5,
+        fontWeight: FontWeight.w700,
+        color: colorScheme.onSurfaceVariant,
+      ),
+    );
+  }
+}
+
+// ─── Rounded "pill" text field ──────────────────────────────────────────
+class _PillTextField extends StatelessWidget {
+  const _PillTextField({
+    required this.colorScheme,
+    required this.theme,
+    this.controller,
+    this.hint,
+    this.onChanged,
+    this.obscureText = false,
+  });
+
+  final ColorScheme colorScheme;
+  final ThemeData theme;
+  final TextEditingController? controller;
+  final String? hint;
+  final ValueChanged<String>? onChanged;
+  final bool obscureText;
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: colorScheme.shadow.withValues(alpha: 0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -290,35 +393,31 @@ class _SecurityQuestionPageState extends State<SecurityQuestionPage> {
         obscureText: obscureText,
         style: theme.textTheme.titleMedium?.copyWith(
           color: colorScheme.onSurface,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w700,
         ),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: theme.textTheme.bodyMedium?.copyWith(
+          hintStyle: TextStyle(
             fontStyle: FontStyle.italic,
+            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+            fontWeight: FontWeight.w400,
           ),
           filled: true,
-          fillColor: colorScheme.surfaceContainerHighest,
+          fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(
-              color: colorScheme.outline.withValues(alpha: 0.5),
-              width: 1.5,
-            ),
+            borderRadius: BorderRadius.circular(20),
+            borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(
-              color: colorScheme.outline.withValues(alpha: 0.5),
-              width: 1.5,
-            ),
+            borderRadius: BorderRadius.circular(20),
+            borderSide: BorderSide.none,
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: colorScheme.primary, width: 2.5),
+            borderRadius: BorderRadius.circular(20),
+            borderSide: BorderSide(color: colorScheme.primary, width: 2),
           ),
           errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
             borderSide: BorderSide(color: colorScheme.error, width: 1.5),
           ),
           contentPadding: const EdgeInsets.symmetric(
@@ -329,4 +428,91 @@ class _SecurityQuestionPageState extends State<SecurityQuestionPage> {
       ),
     );
   }
+}
+
+class _ErrorPill extends StatelessWidget {
+  const _ErrorPill({required this.message, required this.colorScheme});
+
+  final String message;
+  final ColorScheme colorScheme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: colorScheme.errorContainer.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: colorScheme.error.withValues(alpha: 0.3)),
+      ),
+      child: Text(
+        message,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: colorScheme.error,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+class _SubmitButton extends StatelessWidget {
+  const _SubmitButton({
+    required this.label,
+    required this.colorScheme,
+    required this.theme,
+    required this.onPressed,
+  });
+
+  final String label;
+  final ColorScheme colorScheme;
+  final ThemeData theme;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30),
+        ),
+        elevation: 6,
+        shadowColor: colorScheme.primary.withValues(alpha: 0.4),
+      ),
+      child: Text(
+        label,
+        style: theme.textTheme.titleSmall?.copyWith(
+          color: colorScheme.onPrimary,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Wavy "cloud horizon" top edge, matching the rest of the lock flow ─
+class _CloudTopClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.lineTo(0, 26);
+    path.quadraticBezierTo(size.width * 0.12, 4, size.width * 0.25, 16);
+    path.quadraticBezierTo(size.width * 0.38, 30, size.width * 0.5, 12);
+    path.quadraticBezierTo(size.width * 0.62, 0, size.width * 0.75, 18);
+    path.quadraticBezierTo(size.width * 0.88, 32, size.width, 8);
+    path.lineTo(size.width, size.height);
+    path.lineTo(0, size.height);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
