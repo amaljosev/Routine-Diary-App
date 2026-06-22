@@ -1,4 +1,5 @@
 import 'package:routine/core/config/secrets.dart';
+import 'package:routine/core/network/network_info.dart';
 import 'package:routine/core/services/showcase_prefs_service.dart';
 import 'package:routine/core/theme/app_theme.dart';
 import 'package:routine/features/app_lock/data/datasources/biometric_local_auth_datasource.dart';
@@ -6,6 +7,13 @@ import 'package:routine/features/app_lock/data/datasources/shared_preferences_da
 import 'package:routine/features/app_lock/data/repositories/app_lock_repository_impl.dart';
 import 'package:routine/features/app_lock/domain/repositories/app_lock_repository.dart';
 import 'package:routine/features/app_lock/presentation/bloc/lock_bloc.dart';
+import 'package:routine/features/backup/data/datasources/diary_local_datasource.dart';
+import 'package:routine/features/backup/data/datasources/diary_local_datasource.dart' as backup_local;
+import 'package:routine/features/backup/data/datasources/drive_remote_datasource.dart';
+import 'package:routine/features/backup/data/datasources/google_auth_datasource.dart';
+import 'package:routine/features/backup/data/repositories/backup_repository_impl.dart';
+import 'package:routine/features/backup/domain/repositories/backup_repository.dart';
+import 'package:routine/features/backup/presentation/bloc/backup_bloc.dart';
 import 'package:routine/features/diary/data/datasources/diary_local_data_source.dart';
 import 'package:routine/features/diary/data/repository/diary_repo_implementation.dart';
 import 'package:routine/features/diary/domain/repository/diary_repository.dart';
@@ -39,6 +47,18 @@ Future<void> main() async {
     biometricDataSource: biometricDataSource,
     prefsDataSource: prefsDataSource,
   );
+
+
+  final googleAuthDataSource = GoogleAuthDataSource();
+  final driveRemoteDataSource = DriveRemoteDataSource(googleAuthDataSource);
+  final diaryBackupLocalDataSource = backup_local.DiaryBackupLocalDataSource();
+  final networkInfo = NetworkInfoImpl();
+  final backupRepository = BackupRepositoryImpl(
+    authDataSource: googleAuthDataSource,
+    remoteDataSource: driveRemoteDataSource,
+    localDataSource: diaryBackupLocalDataSource,
+    networkInfo: networkInfo,
+  );
   await Supabase.initialize(
     url: Secrets.supabaseUrl,
     anonKey: Secrets.supabaseAnonKey,
@@ -50,6 +70,7 @@ Future<void> main() async {
       diaryRepository: diaryRepository,
       themeRepository: themeRepository,
       appLockRepository: appLockRepository,
+      backupRepository: backupRepository,
     ),
   );
 }
@@ -59,6 +80,7 @@ class MyApp extends StatelessWidget {
   final DiaryRepository diaryRepository;
   final ThemeRepository themeRepository;
   final AppLockRepository appLockRepository;
+  final BackupRepository backupRepository;
 
   const MyApp({
     super.key,
@@ -66,6 +88,7 @@ class MyApp extends StatelessWidget {
     required this.diaryRepository,
     required this.themeRepository,
     required this.appLockRepository,
+    required this.backupRepository,
   });
 
   @override
@@ -88,6 +111,11 @@ class MyApp extends StatelessWidget {
               AppLockBloc(repository: appLockRepository)
                 ..add(LoadAppLockSettings()),
         ),
+        BlocProvider(
+    create: (_) =>
+        BackupBloc(repository: backupRepository)
+          ..add(const BackupSilentSignInRequested()),
+  ),
       ],
       child: MediaQuery(
         data: MediaQuery.of(
@@ -113,7 +141,6 @@ class MyApp extends StatelessWidget {
                 : ThemeMode.light;
  
             return MaterialApp(
-              title: 'Routine: Diary App',
               debugShowCheckedModeBanner: false,
               theme: themeData,
               darkTheme: themeData,

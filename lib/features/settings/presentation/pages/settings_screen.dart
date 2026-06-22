@@ -8,6 +8,7 @@ import 'package:routine/core/services/export_diary_service.dart';
 import 'package:routine/core/utils/share_util.dart';
 import 'package:routine/core/version/app_version.dart';
 import 'package:routine/features/app_lock/presentation/pages/app_lock_settings_page.dart';
+import 'package:routine/features/backup/presentation/pages/backup_page.dart';
 import 'package:routine/features/diary/presentation/blocs/diary/diary_bloc.dart';
 import 'package:routine/features/settings/presentation/pages/contact_us.dart';
 import 'package:routine/features/settings/presentation/pages/help_screen.dart';
@@ -340,6 +341,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           builder: (context) => const AppLockSettingsPage(),
                         ),
                       ),
+                    ),
+                    ListTile(
+                      leading: Icon(
+                        Icons.drive_file_move_rtl_outlined,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                      title: const Text('Backup'),
+                      titleTextStyle: Theme.of(context).textTheme.titleSmall,
+                      trailing: const CupertinoListTileChevron(),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const BackupPage(),
+                        ),
+                      ),
+
                     ),
                   ],
                 ),
