@@ -3,6 +3,7 @@ import 'dart:async';
 
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
+import 'package:routine/core/config/secrets.dart';
 
 import '../../../../core/error/exceptions.dart';
 
@@ -39,10 +40,7 @@ class GoogleAuthDataSource {
 
   Future<void> _ensureInitialized() async {
     if (_initialized) return;
-    await GoogleSignIn.instance.initialize(
-      serverClientId:
-          '670128708904-39pbdqs73ss5n0ju0l5l212fkairs8fa.apps.googleusercontent.com',
-    );
+    await GoogleSignIn.instance.initialize(serverClientId: Secrets.googleApi);
 
     _authSub = GoogleSignIn.instance.authenticationEvents.listen((event) {
       if (event is GoogleSignInAuthenticationEventSignIn) {

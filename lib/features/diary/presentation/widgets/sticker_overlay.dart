@@ -29,32 +29,25 @@ class StickerOverlay extends StatelessWidget {
   }
 
   Widget _buildImage() {
-    if (sticker.localPath != null && sticker.localPath!.isNotEmpty) {
-      final file = File(sticker.localPath!);
-      if (file.existsSync()) {
-        return Image.file(file, fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) =>
-                const Icon(Icons.broken_image, size: 40));
-      }
-      return const Icon(Icons.broken_image, size: 40);
-    }
-
-    if (sticker.url.isNotEmpty && sticker.url.startsWith('http')) {
-      return CachedNetworkImage(
-        imageUrl: sticker.url,
-        fit: BoxFit.contain,
-        placeholder: (_, __) => const SizedBox.shrink(),
-        errorWidget: (_, __, ___) =>
-            const Icon(Icons.broken_image, size: 40),
-      );
-    }
-
-    if (sticker.url.isNotEmpty) {
-      return Image.asset(sticker.url, fit: BoxFit.contain,
+  // Always prefer local file
+  if (sticker.localPath != null && sticker.localPath!.isNotEmpty) {
+    final file = File(sticker.localPath!);
+    if (file.existsSync()) {
+      return Image.file(file, fit: BoxFit.contain,
           errorBuilder: (_, __, ___) =>
               const Icon(Icons.broken_image, size: 40));
     }
-
+    // Local file missing — show broken image, never hit network
     return const Icon(Icons.broken_image, size: 40);
   }
+
+  // Only use URL for asset paths (not http URLs)
+  if (sticker.url.isNotEmpty && !sticker.url.startsWith('http')) {
+    return Image.asset(sticker.url, fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) =>
+            const Icon(Icons.broken_image, size: 40));
+  }
+
+  return const Icon(Icons.broken_image, size: 40);
+}
 }

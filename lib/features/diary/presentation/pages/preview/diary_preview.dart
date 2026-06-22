@@ -146,15 +146,7 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
       final file = File(entry.bgLocalPath!);
       if (file.existsSync()) {
         backgroundImage = FileImage(file);
-      } else if (entry.bgImagePath != null && entry.bgImagePath!.isNotEmpty) {
-        backgroundImage = entry.bgImagePath!.startsWith('http')
-            ? NetworkImage(entry.bgImagePath!)
-            : AssetImage(entry.bgImagePath!) as ImageProvider;
       }
-    } else if (entry.bgImagePath != null && entry.bgImagePath!.isNotEmpty) {
-      backgroundImage = entry.bgImagePath!.startsWith('http')
-          ? NetworkImage(entry.bgImagePath!)
-          : AssetImage(entry.bgImagePath!) as ImageProvider;
     }
 
     return Container(

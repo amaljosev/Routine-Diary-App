@@ -509,31 +509,30 @@ Future<void> _onImageAdded(
   }
 
   Future<void> _onDownloadBackground(
-    DownloadBackground event,
-    Emitter<DiaryEntryState> emit,
-  ) async {
-    emit(state.copyWith(isDownloadingBackground: true, downloadError: null));
-    try {
-      final localPath = await _backgroundRepo.downloadBackground(event.url);
-      emit(
-        state.copyWith(
-          isDownloadingBackground: false,
-          bgImage: event.url,
-          bgLocalPath: localPath,
-          bgColor: null,
-          bgGalleryImage: null,
-        ),
-      );
-    } catch (e) {
-      // Don't touch bgImage or bgLocalPath — leave background unchanged
-      emit(
-        state.copyWith(
-          isDownloadingBackground: false,
-          downloadError: 'Background unavailable. Please try again later.',
-        ),
-      );
-    }
+  DownloadBackground event,
+  Emitter<DiaryEntryState> emit,
+) async {
+  emit(state.copyWith(isDownloadingBackground: true, downloadError: null));
+  try {
+    final localPath = await _backgroundRepo.downloadBackground(event.url);
+    emit(
+      state.copyWith(
+        isDownloadingBackground: false,
+        bgImage: '',          
+        bgLocalPath: localPath,
+        bgColor: null,
+        bgGalleryImage: null,
+      ),
+    );
+  } catch (e) {
+    emit(
+      state.copyWith(
+        isDownloadingBackground: false,
+        downloadError: 'Background unavailable. Please try again later.',
+      ),
+    );
   }
+}
 
   // Sticker Supabase methods
   Future<void> _onLoadStickers(
