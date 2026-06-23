@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:routine/core/widgets/floating_particles.dart';
 import 'package:routine/features/app_lock/presentation/bloc/lock_bloc.dart';
 
 class SecurityQuestionPage extends StatefulWidget {
@@ -133,7 +132,7 @@ class _SecurityQuestionPageState extends State<SecurityQuestionPage> {
               ),
             ),
           ),
-          FloatingParticles(color: colorScheme.primary),
+          // FloatingParticles(color: colorScheme.primary),
           _buildContent(theme, colorScheme),
         ],
       ),
