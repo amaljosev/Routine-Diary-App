@@ -12,7 +12,12 @@
           "package_name": "com.amaljosev.routine"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "670128708904-fq2e1l7pen5b0e55rdko9balhunsef3d.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyD-b9hHYiTV9wr5qs6QLFuts7t_oqdad7A"
@@ -20,7 +25,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "670128708904-fq2e1l7pen5b0e55rdko9balhunsef3d.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

@@ -46,6 +46,7 @@ class BackupRepositoryImpl implements BackupRepository {
 
   @override
   ResultFuture<void> signOut() => guard(() => authDataSource.signOut());
+  
 
   // ── Backup ────────────────────────────────────────────────────────
 

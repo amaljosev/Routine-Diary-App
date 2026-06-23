@@ -31,6 +31,7 @@ class AuthFailure extends Failure {
   const AuthFailure([super.message = 'Authentication failed.']);
 }
 
+
 class AuthCancelledFailure extends Failure {
   const AuthCancelledFailure([super.message = 'Sign-in was cancelled.']);
 }
