@@ -249,8 +249,8 @@ class _DiaryEntryPreviewFormState extends State<DiaryEntryPreviewForm> {
             );
             return IconButton(
               tooltip: current.isFavorite
-                  ? 'Remove from favourites'
-                  : 'Add to favourites',
+                  ? 'Remove from favorites'
+                  : 'Add to favorites',
               onPressed: () {
                 context.read<DiaryBloc>().add(
                   ToggleFavorite(id: entry.id, isFavorite: !current.isFavorite),

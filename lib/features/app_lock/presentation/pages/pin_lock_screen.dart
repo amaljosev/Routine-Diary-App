@@ -213,13 +213,13 @@ class _PinLockScreenState extends State<PinLockScreen>
                         shape: BoxShape.circle,
                         color: isFilled ? _accent : Colors.white,
                         border: Border.all(
-                          color: isFilled ? _accent : _accent.withOpacity(0.35),
+                          color: isFilled ? _accent : _accent.withValues(alpha:0.35),
                           width: 1.4,
                         ),
                         boxShadow: isFilled
                             ? [
                                 BoxShadow(
-                                  color: _accent.withOpacity(0.35),
+                                  color: _accent.withValues(alpha:0.35),
                                   blurRadius: 8,
                                   offset: const Offset(0, 3),
                                 ),

@@ -4,24 +4,30 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-
 import 'package:googleapis/drive/v3.dart' as drive;
 
 import '../../../../core/error/exceptions.dart';
 import '../models/backup_manifest_model.dart';
 import 'google_auth_datasource.dart';
 
-/// Drive appDataFolder operations (no DI; takes auth datasource by ctor).
+/// Drive appDataFolder operations.
 class DriveRemoteDataSource {
   final GoogleAuthDataSource authDataSource;
   const DriveRemoteDataSource(this.authDataSource);
 
   static const String _appDataFolder = 'appDataFolder';
 
+  /// Name prefix used for diary JSON manifests.
+  /// Image files never have this prefix, so filtering by it reliably
+  /// separates JSON backups from their companion image files.
+  static const String _backupPrefix = 'diary_backup_';
+
   Future<drive.DriveApi> _api() async {
     final client = await authDataSource.authClient();
     return drive.DriveApi(client);
   }
+
+  // ── Upload ────────────────────────────────────────────────────────
 
   Future<BackupManifestModel> uploadBackup({
     required String fileName,
@@ -50,11 +56,45 @@ class DriveRemoteDataSource {
     });
   }
 
+  Future<String> uploadImageFile({
+    required String localPath,
+    required String fileName,
+  }) {
+    return _run(() async {
+      final api = await _api();
+      final file = File(localPath);
+      final bytes = await file.readAsBytes();
+
+      final media = drive.Media(
+        Stream.value(bytes),
+        bytes.length,
+        contentType: _mimeType(localPath),
+      );
+      final fileMeta = drive.File()
+        ..name = fileName
+        ..parents = [_appDataFolder];
+
+      final created = await api.files.create(
+        fileMeta,
+        uploadMedia: media,
+        $fields: 'id',
+      );
+      return created.id!;
+    });
+  }
+
+  // ── List ──────────────────────────────────────────────────────────
+
+  /// Returns only the diary JSON manifests (files whose name starts with
+  /// [_backupPrefix]).  Image files uploaded alongside backups are excluded,
+  /// so they never appear in the UI as 0-KB restore targets.
   Future<List<BackupManifestModel>> listBackups() {
     return _run(() async {
       final api = await _api();
       final result = await api.files.list(
         spaces: _appDataFolder,
+        // Filter to only JSON manifests by name prefix.
+        q: "name contains '$_backupPrefix'",
         orderBy: 'createdTime desc',
         $fields: 'files(id,name,size,createdTime,appProperties)',
         pageSize: 100,
@@ -63,6 +103,23 @@ class DriveRemoteDataSource {
       return files.map(BackupManifestModel.fromDriveFile).toList();
     });
   }
+
+  /// Lists EVERY file in appDataFolder (JSON manifests + images).
+  /// Used by [BackupRepositoryImpl._deleteAllBackupsAndImages] to wipe Drive
+  /// clean before uploading a fresh snapshot.
+  Future<List<drive.File>> listAllFiles() {
+    return _run(() async {
+      final api = await _api();
+      final result = await api.files.list(
+        spaces: _appDataFolder,
+        $fields: 'files(id)',
+        pageSize: 1000,
+      );
+      return result.files ?? const [];
+    });
+  }
+
+  // ── Download ──────────────────────────────────────────────────────
 
   Future<String> downloadBackup(String driveFileId) {
     return _run(() async {
@@ -80,14 +137,41 @@ class DriveRemoteDataSource {
     });
   }
 
-  Future<void> deleteBackup(String driveFileId) {
+  Future<void> downloadImageFile({
+    required String driveFileId,
+    required String destinationPath,
+  }) {
+    return _run(() async {
+      final api = await _api();
+      final media = await api.files.get(
+        driveFileId,
+        downloadOptions: drive.DownloadOptions.fullMedia,
+      ) as drive.Media;
+
+      final chunks = <int>[];
+      await for (final chunk in media.stream) {
+        chunks.addAll(chunk);
+      }
+
+      final dest = File(destinationPath);
+      await dest.parent.create(recursive: true);
+      await dest.writeAsBytes(chunks);
+    });
+  }
+
+  // ── Delete ────────────────────────────────────────────────────────
+
+  /// Deletes a single file by its Drive file ID.
+  /// Works for both JSON manifests and image files.
+  Future<void> deleteFile(String driveFileId) {
     return _run(() async {
       final api = await _api();
       await api.files.delete(driveFileId);
     });
   }
 
-  /// Central error translation for all Drive calls.
+  // ── Error handling ────────────────────────────────────────────────
+
   Future<T> _run<T>(Future<T> Function() action) async {
     try {
       return await action();
@@ -122,7 +206,7 @@ class DriveRemoteDataSource {
           return const RateLimitException('Too many requests. Try again shortly.');
         case 'domainPolicy':
           return const DomainPolicyException(
-              'Your organization has blocked Drive access.');
+              'Your organisation has blocked Drive access.');
         default:
           return ServerException('Drive denied the request: $reason');
       }
@@ -132,73 +216,21 @@ class DriveRemoteDataSource {
     }
     return ServerException('Drive error ($status): ${e.message}');
   }
-  /// Uploads a local image file to appDataFolder.
-/// Returns the Drive file ID of the uploaded file.
-Future<String> uploadImageFile({
-  required String localPath,
-  required String fileName,
-}) {
-  return _run(() async {
-    final api = await _api();
-    final file = File(localPath);
-    final bytes = await file.readAsBytes();
-    final mimeType = _mimeType(localPath);
 
-    final media = drive.Media(
-      Stream.value(bytes),
-      bytes.length,
-      contentType: mimeType,
-    );
-    final fileMeta = drive.File()
-      ..name = fileName
-      ..parents = [_appDataFolder];
-
-    final created = await api.files.create(
-      fileMeta,
-      uploadMedia: media,
-      $fields: 'id',
-    );
-    return created.id!;
-  });
-}
-
-/// Downloads a Drive file to [destinationPath].
-Future<void> downloadImageFile({
-  required String driveFileId,
-  required String destinationPath,
-}) {
-  return _run(() async {
-    final api = await _api();
-    final media = await api.files.get(
-      driveFileId,
-      downloadOptions: drive.DownloadOptions.fullMedia,
-    ) as drive.Media;
-
-    final chunks = <int>[];
-    await for (final chunk in media.stream) {
-      chunks.addAll(chunk);
+  String _mimeType(String path) {
+    final ext = path.split('.').last.toLowerCase();
+    switch (ext) {
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+      case 'webp':
+        return 'image/webp';
+      case 'gif':
+        return 'image/gif';
+      default:
+        return 'application/octet-stream';
     }
-
-    final dest = File(destinationPath);
-    await dest.parent.create(recursive: true);
-    await dest.writeAsBytes(chunks);
-  });
-}
-
-String _mimeType(String path) {
-  final ext = path.split('.').last.toLowerCase();
-  switch (ext) {
-    case 'jpg':
-    case 'jpeg':
-      return 'image/jpeg';
-    case 'png':
-      return 'image/png';
-    case 'webp':
-      return 'image/webp';
-    case 'gif':
-      return 'image/gif';
-    default:
-      return 'application/octet-stream';
   }
-}
 }

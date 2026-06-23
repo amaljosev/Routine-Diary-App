@@ -3,34 +3,47 @@
 import '../../../../core/typedefs/typedefs.dart';
 import '../entities/backup_metadata.dart';
 
-/// Contract the data layer (BackupRepositoryImpl) fulfils.
+/// Callback fired as a backup progresses.
 ///
-/// All methods return [ResultFuture] (= Future<Either<Failure, T>>),
-/// so callers never deal with raw exceptions.
+/// [phase]          – which sub-step is running (maps to [BackupPhase] in the
+///                    presentation layer via a shared string constant or direct
+///                    import — up to the consumer to parse).
+/// [uploadedImages] – images uploaded so far (meaningful in image phase).
+/// [totalImages]    – total images to upload (0 if no images).
+typedef BackupProgressCallback = void Function({
+  required String phase,
+  required int uploadedImages,
+  required int totalImages,
+});
+
 abstract class BackupRepository {
-  // --- Auth ---
+  // ── Auth ────────────────────────────────────────────────────────
 
-  /// Interactive Google sign-in + Drive appdata authorization.
   ResultFuture<void> signIn();
-
-  /// Silent / lightweight re-auth on app start. Fails with a Failure
-  /// if no previously-authorized session can be restored.
-ResultFuture<bool> signInSilently();
-
-  /// Sign out and forget the local session.
+  ResultFuture<bool> signInSilently();
   ResultFuture<void> signOut();
 
-  // --- Backup ops ---
+  // ── Backup ops ──────────────────────────────────────────────────
 
-  /// Reads all local entries, serializes, uploads to appDataFolder,
-  /// prunes old backups, returns metadata for the created backup.
-  ResultFuture<BackupMetadata> backupEntries();
+  /// Backs up all diary entries + images to Drive.
+  ///
+  /// [onProgress] is called on each meaningful state change so the UI can
+  /// show granular feedback without polling.
+  ResultFuture<BackupMetadata> backupEntries({
+    BackupProgressCallback? onProgress,
+  });
 
   /// Lists existing backups, newest first.
   ResultFuture<List<BackupMetadata>> listBackups();
 
-  /// Downloads the backup identified by [driveFileId] and upserts entries
-  /// into the local DB (newer-wins, non-destructive). Returns the number
-  /// of entries that were applied.
-  ResultFuture<int> restoreEntries(String driveFileId);
+  /// Restores entries from a Drive backup file.
+  ///
+  /// [onProgress] is called during download + write phases.
+  ResultFuture<int> restoreEntries(
+    String driveFileId, {
+    BackupProgressCallback? onProgress,
+  });
+
+  /// Permanently deletes a backup file from Drive.
+  ResultFuture<void> deleteBackup(String driveFileId);
 }

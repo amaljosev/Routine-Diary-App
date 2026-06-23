@@ -7,7 +7,6 @@ import 'package:routine/features/app_lock/data/datasources/shared_preferences_da
 import 'package:routine/features/app_lock/data/repositories/app_lock_repository_impl.dart';
 import 'package:routine/features/app_lock/domain/repositories/app_lock_repository.dart';
 import 'package:routine/features/app_lock/presentation/bloc/lock_bloc.dart';
-import 'package:routine/features/backup/data/datasources/diary_local_datasource.dart';
 import 'package:routine/features/backup/data/datasources/diary_local_datasource.dart' as backup_local;
 import 'package:routine/features/backup/data/datasources/drive_remote_datasource.dart';
 import 'package:routine/features/backup/data/datasources/google_auth_datasource.dart';

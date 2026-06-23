@@ -54,6 +54,8 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
     on<BackgroundsLoadFailed>(_onBackgroundsLoadFailed);
     on<SelectSupabaseBackground>(_onSelectSupabaseBackground);
     on<DownloadBackground>(_onDownloadBackground);
+    on<BackgroundDownloadCompleted>(_onBackgroundDownloadCompleted);
+    on<BackgroundDownloadFailed>(_onBackgroundDownloadFailed);
 
     // Sticker events
     on<LoadStickers>(_onLoadStickers);
@@ -83,65 +85,125 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
     });
   }
 
-  void _onInitializeDiaryEntry(
+  // ── Initialization ────────────────────────────────────────────────
+
+  /// Populates the editor state from a saved [DiaryEntryModel].
+  ///
+  /// After emitting the base state, performs two recovery checks for entries
+  /// that were restored from a Drive backup on a new device:
+  ///
+  /// 1. **Background recovery** — if `bgLocalPath` is null but `bgImagePath`
+  ///    (the Supabase preset URL) is present, the local cached copy was not
+  ///    restored (either because the file download failed or it was originally
+  ///    a Supabase preset that was never uploaded to Drive). We re-download it
+  ///    from Supabase so `bgLocalPath` is populated for rendering.
+  ///
+  /// 2. **Sticker recovery** — any sticker whose `localPath` is null (set to
+  ///    null by [ImagePathExtractor.decodePaths] when its Drive download
+  ///    failed, or that was never downloaded on the original device) is
+  ///    re-downloaded from its Supabase `url` and its `localPath` is patched
+  ///    in-place in the stickers list.
+  Future<void> _onInitializeDiaryEntry(
     InitializeDiaryEntry event,
     Emitter<DiaryEntryState> emit,
-  ) {
+  ) async {
     final e = event.entry;
+    if (e == null) return;
 
-    if (e != null) {
-      String? bgGalleryImage = e.bgGalleryImagePath;
+    // ── Gallery background validation ─────────────────────────────
+    String? bgGalleryImage = e.bgGalleryImagePath;
+    if (bgGalleryImage != null && bgGalleryImage.isNotEmpty) {
+      if (!File(bgGalleryImage).existsSync()) bgGalleryImage = null;
+    }
 
-      if (bgGalleryImage != null && bgGalleryImage.isNotEmpty) {
-        final file = File(bgGalleryImage);
-        if (!file.existsSync()) {
-          bgGalleryImage = null;
-        }
+    // ── Parse stickers ────────────────────────────────────────────
+    List<StickerModel> stickers = [];
+    if (e.stickersJson != null && e.stickersJson!.isNotEmpty) {
+      try {
+        final List<dynamic> stickerList = jsonDecode(e.stickersJson!);
+        stickers = stickerList.map((s) => StickerModel.fromJson(s)).toList();
+      } catch (_) {
+        stickers = [];
       }
+    }
 
-      // Parse stickers (new format: url, localPath)
-      List<StickerModel> stickers = [];
-      if (e.stickersJson != null && e.stickersJson!.isNotEmpty) {
-        try {
-          final List<dynamic> stickerList = jsonDecode(e.stickersJson!);
-          stickers = stickerList.map((s) {
-            final sticker = StickerModel.fromJson(s);
-            // Optional: convert legacy sizes if needed
-            return sticker;
-          }).toList();
-        } catch (_) {
-          stickers = [];
-        }
+    // ── Parse images ──────────────────────────────────────────────
+    List<DiaryImage> images = [];
+    if (e.imagesJson != null && e.imagesJson!.isNotEmpty) {
+      try {
+        final List<dynamic> imageList = jsonDecode(e.imagesJson!);
+        images = imageList.map((i) => DiaryImage.fromJson(i)).toList();
+      } catch (_) {
+        images = [];
       }
+    }
 
-      // Parse images
-      List<DiaryImage> images = [];
-      if (e.imagesJson != null && e.imagesJson!.isNotEmpty) {
-        try {
-          final List<dynamic> imageList = jsonDecode(e.imagesJson!);
-          images = imageList.map((i) => DiaryImage.fromJson(i)).toList();
-        } catch (_) {
-          images = [];
-        }
+    // ── Emit base state ───────────────────────────────────────────
+    emit(
+      state.copyWith(
+        title: e.title,
+        description: e.content,
+        mood: e.mood,
+        fontFamily: e.fontFamily,
+        bgColor: _parseColorFromString(e.bgColor),
+        bgGalleryImage: bgGalleryImage,
+        stickers: stickers,
+        images: images,
+        date: DateTime.tryParse(e.date) ?? DateTime.now(),
+        bgImage: e.bgImagePath ?? '',
+        bgLocalPath: e.bgLocalPath,
+      ),
+    );
+
+    // ── Recovery 1: background ────────────────────────────────────
+    // bgLocalPath is null  → local file is missing (failed Drive restore, or
+    //                         was a Supabase preset never cached locally).
+    // bgImagePath is set   → we have a Supabase URL to re-download from.
+    //
+    // We also check bgLocalPath against the file system: it's possible the
+    // path is non-null but the file was deleted (e.g. app reinstall).
+    final needsBgRecovery = _needsBackgroundRecovery(e);
+    if (needsBgRecovery && e.bgImagePath != null && e.bgImagePath!.isNotEmpty) {
+      add(DownloadBackground(e.bgImagePath!));
+    }
+
+    // ── Recovery 2: stickers ──────────────────────────────────────
+    // Any sticker with localPath == null or a path that no longer exists on
+    // disk needs to be re-fetched from Supabase using its `url`.
+    for (final sticker in stickers) {
+      if (_needsStickerRecovery(sticker)) {
+        add(DownloadSticker(sticker.url));
       }
-
-      emit(
-        state.copyWith(
-          title: e.title,
-          description: e.content,
-          mood: e.mood,
-          fontFamily: e.fontFamily,
-          bgColor: _parseColorFromString(e.bgColor),
-          bgGalleryImage: bgGalleryImage,
-          stickers: stickers,
-          images: images,
-          date: DateTime.tryParse(e.date) ?? DateTime.now(),
-          bgImage: e.bgImagePath ?? '',
-          bgLocalPath: e.bgLocalPath,
-        ),
-      );
     }
   }
+
+  /// Returns true if the background local file is missing and must be
+  /// re-downloaded from Supabase.
+  bool _needsBackgroundRecovery(DiaryEntryModel e) {
+    // No Supabase preset URL → nothing to recover from.
+    if (e.bgImagePath == null || e.bgImagePath!.isEmpty) return false;
+
+    // bgLocalPath is null → definitely missing.
+    if (e.bgLocalPath == null || e.bgLocalPath!.isEmpty) return true;
+
+    // bgLocalPath is set but file no longer exists on this device.
+    return !File(e.bgLocalPath!).existsSync();
+  }
+
+  /// Returns true if the sticker's local file is missing and must be
+  /// re-downloaded from Supabase.
+  bool _needsStickerRecovery(StickerModel sticker) {
+    // No Supabase URL → nothing to recover from.
+    if (sticker.url.isEmpty) return false;
+
+    // localPath is null → definitely missing.
+    if (sticker.localPath == null || sticker.localPath!.isEmpty) return true;
+
+    // localPath is set but file no longer exists on this device.
+    return !File(sticker.localPath!).existsSync();
+  }
+
+  // ── Color parsing ─────────────────────────────────────────────────
 
   Color? _parseColorFromString(String? input) {
     if (input == null || input.isEmpty) return null;
@@ -151,9 +213,7 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
     final match = colorRegex.firstMatch(s);
     if (match != null) {
       final hex = match.group(1);
-      if (hex != null) {
-        return Color(int.parse(hex, radix: 16));
-      }
+      if (hex != null) return Color(int.parse(hex, radix: 16));
     }
 
     if (RegExp(r'^[0-9a-fA-F]{8}$').hasMatch(s)) {
@@ -191,6 +251,8 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
 
     return null;
   }
+
+  // ── Background handlers ───────────────────────────────────────────
 
   void _onBgColorChanged(BgColorChanged event, Emitter<DiaryEntryState> emit) {
     emit(
@@ -252,13 +314,13 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
       final sourcePath = croppedFile?.path ?? event.imagePath;
       final permanentPath = await _copyImageToPermanentStorage(sourcePath);
       emit(
-          state.copyWith(
-            bgGalleryImage: permanentPath,
-            bgImage: '',
-            bgColor: null,
-            bgLocalPath: null,
-          ),
-        );
+        state.copyWith(
+          bgGalleryImage: permanentPath,
+          bgImage: '',
+          bgColor: null,
+          bgLocalPath: null,
+        ),
+      );
     } catch (e) {
       emit(
         state.copyWith(
@@ -286,7 +348,106 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
     );
   }
 
-  // Sticker handlers
+  Future<void> _onLoadBackgrounds(
+    LoadBackgrounds event,
+    Emitter<DiaryEntryState> emit,
+  ) async {
+    emit(state.copyWith(isLoadingBackgrounds: true, backgroundsError: null));
+    try {
+      final urls = await _backgroundRepo.getBackgroundUrls();
+      add(BackgroundsLoaded(urls));
+    } catch (e) {
+      add(BackgroundsLoadFailed(e.toString()));
+    }
+  }
+
+  void _onBackgroundsLoaded(
+    BackgroundsLoaded event,
+    Emitter<DiaryEntryState> emit,
+  ) {
+    emit(
+      state.copyWith(
+        availableBackgrounds: event.urls,
+        isLoadingBackgrounds: false,
+      ),
+    );
+  }
+
+  void _onBackgroundsLoadFailed(
+    BackgroundsLoadFailed event,
+    Emitter<DiaryEntryState> emit,
+  ) {
+    emit(
+      state.copyWith(
+        isLoadingBackgrounds: false,
+        backgroundsError: event.error,
+      ),
+    );
+  }
+
+  void _onSelectSupabaseBackground(
+    SelectSupabaseBackground event,
+    Emitter<DiaryEntryState> emit,
+  ) {
+    add(DownloadBackground(event.imageUrl));
+  }
+
+  /// Downloads a Supabase background and updates [bgLocalPath].
+  ///
+  /// Used both when the user picks a new preset background AND during
+  /// [_onInitializeDiaryEntry] recovery (when bgLocalPath is missing after
+  /// a Drive restore). On success the bgImage (Supabase URL) is preserved in
+  /// state via [BackgroundDownloadCompleted] so the DB retains it for future
+  /// recovery attempts.
+  Future<void> _onDownloadBackground(
+    DownloadBackground event,
+    Emitter<DiaryEntryState> emit,
+  ) async {
+    emit(state.copyWith(isDownloadingBackground: true, downloadError: null));
+    try {
+      final localPath = await _backgroundRepo.downloadBackground(event.url);
+      add(BackgroundDownloadCompleted(event.url, localPath));
+    } catch (e) {
+      add(BackgroundDownloadFailed(event.url, e.toString()));
+    }
+  }
+
+  /// Applies a successfully downloaded background.
+  ///
+  /// Stores both [bgImage] (the Supabase URL, kept for future recovery) and
+  /// [bgLocalPath] (the local cached file used for rendering). This way if
+  /// the entry is backed up and restored again, [_needsBackgroundRecovery]
+  /// can use bgImagePath to re-download.
+  void _onBackgroundDownloadCompleted(
+    BackgroundDownloadCompleted event,
+    Emitter<DiaryEntryState> emit,
+  ) {
+    emit(
+      state.copyWith(
+        isDownloadingBackground: false,
+        downloadError: null,
+        bgImage: event.url, // ← Supabase URL retained for recovery
+        bgLocalPath: event.localPath,
+        bgColor: null,
+        bgGalleryImage: null,
+      ),
+    );
+  }
+
+  void _onBackgroundDownloadFailed(
+    BackgroundDownloadFailed event,
+    Emitter<DiaryEntryState> emit,
+  ) {
+    emit(
+      state.copyWith(
+        isDownloadingBackground: false,
+        downloadError: 'Background unavailable. Please try again later.',
+      ),
+    );
+  }
+
+  // ── Sticker handlers ──────────────────────────────────────────────
+
   void _onStickerAdded(StickerAdded event, Emitter<DiaryEntryState> emit) {
     final newSticker = StickerModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -352,189 +513,6 @@ class DiaryEntryBloc extends Bloc<DiaryEntryEvent, DiaryEntryState> {
     emit(state.copyWith(stickers: updatedStickers, selectedStickerId: null));
   }
 
-  // In diary_entry_bloc.dart, replace _onImageAdded:
-
-Future<void> _onImageAdded(
-  ImageAdded event,
-  Emitter<DiaryEntryState> emit,
-) async {
-  try {
-    final permanentPath = await _copyImageToPermanentStorage(event.imagePath);
-
-    // Decode actual image dimensions to preserve aspect ratio
-    final bytes       = await File(permanentPath).readAsBytes();
-    final codec       = await instantiateImageCodec(bytes);
-    final frameInfo   = await codec.getNextFrame();
-    final imageWidth  = frameInfo.image.width.toDouble();
-    final imageHeight = frameInfo.image.height.toDouble();
-
-    // Scale down to a reasonable starting size (max 200px on longest side)
-    const maxSize     = 200.0;
-    final scaleFactor = imageWidth >= imageHeight
-        ? maxSize / imageWidth
-        : maxSize / imageHeight;
-    final displayW    = imageWidth  * scaleFactor;
-    final displayH    = imageHeight * scaleFactor;
-
-    final newImage = DiaryImage(
-      id:        DateTime.now().millisecondsSinceEpoch.toString(),
-      imagePath: permanentPath,
-      x:         event.x,
-      y:         event.y,
-      width:     displayW,   // ← real proportional width
-      height:    displayH,   // ← real proportional height
-      scale:     1.0,
-    );
-
-    emit(state.copyWith(
-      images:           [...state.images, newImage],
-      selectedStickerId: null,
-      selectedImageId:   null,
-    ));
-  } catch (e) {
-    emit(state.copyWith(errorMessage: 'Failed to add image: $e'));
-  }
-}
-
-  /// Copies [sourcePath] into the app's permanent documents directory.
-  /// Returns the new permanent path.
-  Future<String> _copyImageToPermanentStorage(String sourcePath) async {
-    final appDir = await getApplicationDocumentsDirectory();
-    final diaryImagesDir = Directory('${appDir.path}/diary_images');
-    if (!diaryImagesDir.existsSync()) {
-      diaryImagesDir.createSync(recursive: true);
-    }
-
-    final fileName =
-        '${DateTime.now().millisecondsSinceEpoch}_${sourcePath.split('/').last}';
-    final destination = '${diaryImagesDir.path}/$fileName';
-    await File(sourcePath).copy(destination);
-    return destination;
-  }
-
-  void _onUpdateImagePosition(
-    UpdateImagePosition event,
-    Emitter<DiaryEntryState> emit,
-  ) {
-    final updatedImages = state.images.map((image) {
-      if (image.id == event.imageId) {
-        return image.copyWith(x: event.x, y: event.y);
-      }
-      return image;
-    }).toList();
-    emit(state.copyWith(images: updatedImages));
-  }
-
-  void _onUpdateImageSize(
-    UpdateImageSize event,
-    Emitter<DiaryEntryState> emit,
-  ) {
-    final updatedImages = state.images.map((image) {
-      if (image.id == event.imageId) {
-        return image.copyWith(scale: event.scale);
-      }
-      return image;
-    }).toList();
-    emit(state.copyWith(images: updatedImages));
-  }
-
-  void _onUpdateImageTransform(
-    UpdateImageTransform event,
-    Emitter<DiaryEntryState> emit,
-  ) {
-    final updatedImages = state.images.map((image) {
-      if (image.id == event.imageId) {
-        return image.copyWith(
-          x: event.x,
-          y: event.y,
-          scale: event.scale,
-          rotation: event.rotation,
-        );
-      }
-      return image;
-    }).toList();
-    emit(state.copyWith(images: updatedImages));
-  }
-
-  void _onRemoveImage(RemoveImage event, Emitter<DiaryEntryState> emit) {
-    final updatedImages = state.images
-        .where((image) => image.id != event.imageId)
-        .toList();
-    emit(state.copyWith(images: updatedImages, selectedImageId: null));
-  }
-
-  // Background methods
-  Future<void> _onLoadBackgrounds(
-    LoadBackgrounds event,
-    Emitter<DiaryEntryState> emit,
-  ) async {
-    emit(state.copyWith(isLoadingBackgrounds: true, backgroundsError: null));
-    try {
-      final urls = await _backgroundRepo.getBackgroundUrls();
-      add(BackgroundsLoaded(urls));
-    } catch (e) {
-      add(BackgroundsLoadFailed(e.toString()));
-    }
-  }
-
-  void _onBackgroundsLoaded(
-    BackgroundsLoaded event,
-    Emitter<DiaryEntryState> emit,
-  ) {
-    emit(
-      state.copyWith(
-        availableBackgrounds: event.urls,
-        isLoadingBackgrounds: false,
-      ),
-    );
-  }
-
-  void _onBackgroundsLoadFailed(
-    BackgroundsLoadFailed event,
-    Emitter<DiaryEntryState> emit,
-  ) {
-    emit(
-      state.copyWith(
-        isLoadingBackgrounds: false,
-        backgroundsError: event.error,
-      ),
-    );
-  }
-
-  void _onSelectSupabaseBackground(
-    SelectSupabaseBackground event,
-    Emitter<DiaryEntryState> emit,
-  ) {
-    add(DownloadBackground(event.imageUrl));
-  }
-
-  Future<void> _onDownloadBackground(
-  DownloadBackground event,
-  Emitter<DiaryEntryState> emit,
-) async {
-  emit(state.copyWith(isDownloadingBackground: true, downloadError: null));
-  try {
-    final localPath = await _backgroundRepo.downloadBackground(event.url);
-    emit(
-      state.copyWith(
-        isDownloadingBackground: false,
-        bgImage: '',          
-        bgLocalPath: localPath,
-        bgColor: null,
-        bgGalleryImage: null,
-      ),
-    );
-  } catch (e) {
-    emit(
-      state.copyWith(
-        isDownloadingBackground: false,
-        downloadError: 'Background unavailable. Please try again later.',
-      ),
-    );
-  }
-}
-
-  // Sticker Supabase methods
   Future<void> _onLoadStickers(
     LoadStickers event,
     Emitter<DiaryEntryState> emit,
@@ -609,6 +587,13 @@ Future<void> _onImageAdded(
     }
   }
 
+  /// Downloads a sticker from Supabase.
+  ///
+  /// Used both when the user picks a sticker from the picker AND during
+  /// [_onInitializeDiaryEntry] recovery (when a sticker's localPath is null
+  /// after a Drive restore). On [StickerDownloadCompleted] the localPath is
+  /// patched into every matching sticker in the current stickers list so the
+  /// UI renders it immediately without needing a full reload.
   Future<void> _onDownloadSticker(
     DownloadSticker event,
     Emitter<DiaryEntryState> emit,
@@ -624,13 +609,31 @@ Future<void> _onImageAdded(
     }
   }
 
+  /// Patches [localPath] into every sticker whose [url] matches the
+  /// completed download.
+  ///
+  /// This covers the recovery case: multiple stickers in one entry can share
+  /// the same Supabase URL (e.g. the user added the same sticker twice), so
+  /// we update all of them at once.
   void _onStickerDownloadCompleted(
     StickerDownloadCompleted event,
     Emitter<DiaryEntryState> emit,
   ) {
-    emit(state.copyWith(isDownloadingSticker: false));
-    // Optionally add the sticker automatically after download
-    // You can emit an event here or let the UI handle it via onSelected.
+    final updatedStickers = state.stickers.map((s) {
+      if (s.url == event.url &&
+          (s.localPath == null || !File(s.localPath!).existsSync())) {
+        return s.copyWith(localPath: event.localPath);
+      }
+      return s;
+    }).toList();
+
+    emit(
+      state.copyWith(
+        stickers: updatedStickers,
+        isDownloadingSticker: false,
+        stickerDownloadError: null,
+      ),
+    );
   }
 
   void _onStickerDownloadFailed(
@@ -643,5 +646,118 @@ Future<void> _onImageAdded(
         stickerDownloadError: event.error,
       ),
     );
+  }
+
+  // ── Image (diary_images) handlers ─────────────────────────────────
+
+  Future<void> _onImageAdded(
+    ImageAdded event,
+    Emitter<DiaryEntryState> emit,
+  ) async {
+    try {
+      final permanentPath = await _copyImageToPermanentStorage(event.imagePath);
+
+      // Decode actual image dimensions to preserve aspect ratio.
+      final bytes = await File(permanentPath).readAsBytes();
+      final codec = await instantiateImageCodec(bytes);
+      final frameInfo = await codec.getNextFrame();
+      final imageWidth = frameInfo.image.width.toDouble();
+      final imageHeight = frameInfo.image.height.toDouble();
+
+      // Scale down to a reasonable starting size (max 200px on longest side).
+      const maxSize = 200.0;
+      final scaleFactor = imageWidth >= imageHeight
+          ? maxSize / imageWidth
+          : maxSize / imageHeight;
+      final displayW = imageWidth * scaleFactor;
+      final displayH = imageHeight * scaleFactor;
+
+      final newImage = DiaryImage(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        imagePath: permanentPath,
+        x: event.x,
+        y: event.y,
+        width: displayW,
+        height: displayH,
+        scale: 1.0,
+      );
+
+      emit(
+        state.copyWith(
+          images: [...state.images, newImage],
+          selectedStickerId: null,
+          selectedImageId: null,
+        ),
+      );
+    } catch (e) {
+      emit(state.copyWith(errorMessage: 'Failed to add image: $e'));
+    }
+  }
+
+  void _onUpdateImagePosition(
+    UpdateImagePosition event,
+    Emitter<DiaryEntryState> emit,
+  ) {
+    final updatedImages = state.images.map((image) {
+      if (image.id == event.imageId) {
+        return image.copyWith(x: event.x, y: event.y);
+      }
+      return image;
+    }).toList();
+    emit(state.copyWith(images: updatedImages));
+  }
+
+  void _onUpdateImageSize(
+    UpdateImageSize event,
+    Emitter<DiaryEntryState> emit,
+  ) {
+    final updatedImages = state.images.map((image) {
+      if (image.id == event.imageId) {
+        return image.copyWith(scale: event.scale);
+      }
+      return image;
+    }).toList();
+    emit(state.copyWith(images: updatedImages));
+  }
+
+  void _onUpdateImageTransform(
+    UpdateImageTransform event,
+    Emitter<DiaryEntryState> emit,
+  ) {
+    final updatedImages = state.images.map((image) {
+      if (image.id == event.imageId) {
+        return image.copyWith(
+          x: event.x,
+          y: event.y,
+          scale: event.scale,
+          rotation: event.rotation,
+        );
+      }
+      return image;
+    }).toList();
+    emit(state.copyWith(images: updatedImages));
+  }
+
+  void _onRemoveImage(RemoveImage event, Emitter<DiaryEntryState> emit) {
+    final updatedImages = state.images
+        .where((image) => image.id != event.imageId)
+        .toList();
+    emit(state.copyWith(images: updatedImages, selectedImageId: null));
+  }
+
+  // ── Utilities ─────────────────────────────────────────────────────
+
+  /// Copies [sourcePath] into the app's permanent `diary_images/` directory.
+  Future<String> _copyImageToPermanentStorage(String sourcePath) async {
+    final appDir = await getApplicationDocumentsDirectory();
+    final diaryImagesDir = Directory('${appDir.path}/diary_images');
+    if (!diaryImagesDir.existsSync()) {
+      diaryImagesDir.createSync(recursive: true);
+    }
+    final fileName =
+        '${DateTime.now().millisecondsSinceEpoch}_${sourcePath.split('/').last}';
+    final destination = '${diaryImagesDir.path}/$fileName';
+    await File(sourcePath).copy(destination);
+    return destination;
   }
 }
