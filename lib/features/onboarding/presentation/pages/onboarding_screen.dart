@@ -35,48 +35,48 @@ class _OnboardingViewState extends State<OnboardingView>
   // Cycles through the 3 available background images.
   // ignore: unused_field
   static const _bgImages = [
-    'assets/img/onboarding/test_1.png',
-    'assets/img/onboarding/test_2.png',
-    'assets/img/onboarding/test_3.png',
+    'assets/img/onboarding/boarding_1.webp',
+    'assets/img/onboarding/boarding_2.webp',
+    'assets/img/onboarding/boarding_3.webp',
   ];
 
   final List<OnboardingPageData> _pages = const [
     OnboardingPageData(
-      imagePath: 'assets/img/onboarding/test_1.png',
+      imagePath:'assets/img/onboarding/boarding_1.webp',
       title: 'Your Personal Diary',
       description:
           'Capture your daily thoughts, feelings, and moments in one beautiful space. Add titles, moods, and rich descriptions to every entry.',
     ),
     OnboardingPageData(
-      imagePath: 'assets/img/onboarding/test_2.png',
+      imagePath: 'assets/img/onboarding/boarding_2.webp',
       title: 'Express Yourself',
       description:
           'Make each entry unique with stickers, photos, and custom backgrounds. Choose from multiple fonts and express your mood with emojis.',
     ),
     OnboardingPageData(
-      imagePath: 'assets/img/onboarding/test_3.png',
+      imagePath: 'assets/img/onboarding/boarding_3.webp',
       title: 'Secure & Private',
       description:
           'Your diary is protected by PIN lock, device biometrics, or a personal security question — keeping your entries safe no matter where they live.',
     ),
-    OnboardingPageData(
-      imagePath: 'assets/img/onboarding/test_1.png',
-      title: 'Memory Timeline',
-      description:
-          'Browse your entries visually with the calendar view. See your journey through time and relive special moments with ease.',
-    ),
-    OnboardingPageData(
-      imagePath: 'assets/img/onboarding/test_2.png',
-      title: 'Make It Yours',
-      description:
-          'Build your perfect look with fully custom themes — pick accent colours, switch between light and dark modes, and style every detail to match your vibe.',
-    ),
-    OnboardingPageData(
-      imagePath: 'assets/img/onboarding/test_3.png',
-      title: 'Backed Up to the Cloud',
-      description:
-          'Never lose a memory. Your diary is automatically backed up to Google Drive so your entries are safe, synced, and always with you.',
-    ),
+    // OnboardingPageData(
+    //   imagePath: 'assets/img/onboarding/boarding_1.webp',
+    //   title: 'Memory Timeline',
+    //   description:
+    //       'Browse your entries visually with the calendar view. See your journey through time and relive special moments with ease.',
+    // ),
+    // OnboardingPageData(
+    //   imagePath: 'assets/img/onboarding/boarding_1.webp',
+    //   title: 'Make It Yours',
+    //   description:
+    //       'Build your perfect look with fully custom themes — pick accent colors, switch between light and dark modes, and style every detail to match your vibe.',
+    // ),
+    // OnboardingPageData(
+    //   imagePath: 'assets/img/onboarding/boarding_1.webp',
+    //   title: 'Backed Up to the Cloud',
+    //   description:
+    //       'Never lose a memory. Your diary is automatically backed up to Google Drive so your entries are safe, synced, and always with you.',
+    // ),
   ];
 
   // ── helpers ──────────────────────────────────────────────────────────────────
