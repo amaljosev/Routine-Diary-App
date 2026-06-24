@@ -6,6 +6,8 @@ import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:routine/features/premium/presentation/bloc/premium_bloc.dart';
+import 'package:routine/features/premium/presentation/widgets/paywall_sheet.dart';
 import 'package:routine/features/settings/domain/custom_theme_builder.dart';
 import 'package:routine/features/settings/domain/custom_theme_model.dart';
 import 'package:routine/features/settings/presentation/bloc/apptheme_bloc.dart';
@@ -185,17 +187,31 @@ class _CustomThemeScreenState extends State<CustomThemeScreen> {
   // ── Apply ─────────────────────────────────────────────────────────────────
 
   void _apply() {
-    context.read<ThemeBloc>().add(ApplyCustomTheme(_draft));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Custom theme applied!'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      ),
+  final isPremium = context.read<PremiumBloc>().state.isPremium;
+ 
+  if (isPremium) {
+    _applyTheme();
+  } else {
+    // FIX Bug 4: Use 'onSuccess' — matches the parameter name in paywall_sheet.dart
+    showPaywallSheet(
+      context,
+      onSuccess: _applyTheme,
     );
-    Navigator.of(context).pop();
   }
+}
+ 
+void _applyTheme() {
+  context.read<ThemeBloc>().add(ApplyCustomTheme(_draft));
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: const Text('Custom theme applied!'),
+      backgroundColor: Theme.of(context).colorScheme.primary,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    ),
+  );
+  Navigator.of(context).pop();
+}
 
   // ── Back / discard ────────────────────────────────────────────────────────
 

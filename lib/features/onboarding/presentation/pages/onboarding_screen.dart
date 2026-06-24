@@ -33,6 +33,7 @@ class _OnboardingViewState extends State<OnboardingView>
   late final AnimationController _scaleController;
 
   // Cycles through the 3 available background images.
+  // ignore: unused_field
   static const _bgImages = [
     'assets/img/onboarding/test_1.png',
     'assets/img/onboarding/test_2.png',

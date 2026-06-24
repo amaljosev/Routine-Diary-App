@@ -7,7 +7,8 @@ import 'package:routine/features/app_lock/data/datasources/shared_preferences_da
 import 'package:routine/features/app_lock/data/repositories/app_lock_repository_impl.dart';
 import 'package:routine/features/app_lock/domain/repositories/app_lock_repository.dart';
 import 'package:routine/features/app_lock/presentation/bloc/lock_bloc.dart';
-import 'package:routine/features/backup/data/datasources/diary_local_datasource.dart' as backup_local;
+import 'package:routine/features/backup/data/datasources/diary_local_datasource.dart'
+    as backup_local;
 import 'package:routine/features/backup/data/datasources/drive_remote_datasource.dart';
 import 'package:routine/features/backup/data/datasources/google_auth_datasource.dart';
 import 'package:routine/features/backup/data/repositories/backup_repository_impl.dart';
@@ -22,10 +23,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:routine/features/onboarding/data/repositories/onboarding_repository_impl.dart';
 import 'package:routine/features/onboarding/domain/repositories/onboarding_repository.dart';
 import 'package:routine/features/onboarding/presentation/pages/splash_screen.dart';
+import 'package:routine/features/premium/data/datasources/premium_iap_datasource.dart';
+import 'package:routine/features/premium/premium_factory.dart';
+import 'package:routine/features/premium/presentation/bloc/premium_bloc.dart';
 import 'package:routine/features/settings/data/theme_repository_impl.dart';
 import 'package:routine/features/settings/domain/theme_repository.dart';
 import 'package:routine/features/settings/presentation/bloc/apptheme_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 const PageTransitionsTheme _flatPageTransitions = PageTransitionsTheme(
   builders: {
     TargetPlatform.android: ZoomPageTransitionsBuilder(
@@ -36,6 +41,7 @@ const PageTransitionsTheme _flatPageTransitions = PageTransitionsTheme(
 );
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  PremiumIapDataSource.instance.init();
   final onboardingRepository = OnboardingRepositoryImpl();
   final diaryLocalDataSource = DiaryLocalDataSource();
   final diaryRepository = DiaryRepositoryImpl(diaryLocalDataSource);
@@ -46,7 +52,6 @@ Future<void> main() async {
     biometricDataSource: biometricDataSource,
     prefsDataSource: prefsDataSource,
   );
-
 
   final googleAuthDataSource = GoogleAuthDataSource();
   final driveRemoteDataSource = DriveRemoteDataSource(googleAuthDataSource);
@@ -94,9 +99,14 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
+        BlocProvider(
+          create: (_) => PremiumFactory.createBloc()
+            ..add(const PremiumStarted()), 
+        ),
         RepositoryProvider<OnboardingRepository>(
           create: (_) => onboardingRepository,
         ),
+
         BlocProvider(
           create: (_) =>
               DiaryBloc(repository: diaryRepository)..add(LoadDiaryEntries()),
@@ -111,10 +121,10 @@ class MyApp extends StatelessWidget {
                 ..add(LoadAppLockSettings()),
         ),
         BlocProvider(
-    create: (_) =>
-        BackupBloc(repository: backupRepository)
-          ..add(const BackupSilentSignInRequested()),
-  ),
+          create: (_) =>
+              BackupBloc(repository: backupRepository)
+                ..add(const BackupSilentSignInRequested()),
+        ),
       ],
       child: MediaQuery(
         data: MediaQuery.of(
@@ -133,12 +143,12 @@ class MyApp extends StatelessWidget {
                 pageTransitionsTheme: _flatPageTransitions,
               );
             }
- 
+
             final ThemeMode themeMode =
                 themeData.colorScheme.brightness == Brightness.dark
                 ? ThemeMode.dark
                 : ThemeMode.light;
- 
+
             return MaterialApp(
               debugShowCheckedModeBanner: false,
               theme: themeData,
