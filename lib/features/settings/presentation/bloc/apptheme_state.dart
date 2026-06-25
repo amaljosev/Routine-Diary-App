@@ -1,3 +1,5 @@
+// lib/features/settings/presentation/bloc/apptheme_state.dart
+
 part of 'apptheme_bloc.dart';
 
 class ThemeState {

@@ -22,3 +22,4 @@ class BackgroundImageTheme extends ThemeExtension<BackgroundImageTheme> {
     );
   }
 }
+

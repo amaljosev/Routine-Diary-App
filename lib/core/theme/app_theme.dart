@@ -1,3 +1,5 @@
+// lib/core/theme/app_theme.dart
+
 import 'package:flutter/material.dart';
 import 'package:routine/core/theme/app_colors.dart';
 import 'package:routine/core/theme/theme_extenstions.dart';
@@ -913,3 +915,4 @@ final List<ThemeData> allThemes = [
   darkTheme2,  // 5 - Blue/Grey (Dark)
   darkTheme3,  // 6 - Forest Green/Amber (Dark)
 ];
+

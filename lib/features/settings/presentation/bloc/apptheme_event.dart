@@ -1,3 +1,5 @@
+// lib/features/settings/presentation/bloc/apptheme_event.dart
+
 part of 'apptheme_bloc.dart';
 
 abstract class ThemeEvent {}

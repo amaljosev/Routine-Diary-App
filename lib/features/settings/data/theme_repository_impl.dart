@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ThemeRepositoryImpl implements ThemeRepository {
   static const String _themeIndexKey = 'selected_theme_index';
   static const String _customThemeKey = 'custom_theme_config';
+  static const String _lastCustomThemeKey = 'last_custom_theme_config';
 
   // ── existing ──────────────────────────────────────────────────────────────
 
@@ -39,4 +40,16 @@ class ThemeRepositoryImpl implements ThemeRepository {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_customThemeKey, model.toJson());
   }
+  Future<void> saveLastCustomTheme(CustomThemeModel model) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString(_lastCustomThemeKey, model.toJson());
+}
+
+Future<CustomThemeModel?> getLastCustomTheme() async {
+  final prefs = await SharedPreferences.getInstance();
+  final json = prefs.getString(_lastCustomThemeKey);
+  if (json == null) return null;
+  try { return CustomThemeModel.fromJson(json); } catch (_) { return null; }
+}
+
 }

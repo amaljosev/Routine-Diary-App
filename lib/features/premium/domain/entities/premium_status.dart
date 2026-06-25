@@ -1,8 +1,4 @@
-/// Represents whether the user has unlocked premium.
-///
-/// Keep this a plain Dart class — no Flutter, no packages.
-/// Add future entitlements here (e.g. [aiSuggestions], [exportPdf]) as bools
-/// so every feature can check a single object.
+// lib/features/premium/domain/entities/premium_status.dart
 class PremiumStatus {
   final bool isPremium;
 

@@ -39,6 +39,7 @@ const PageTransitionsTheme _flatPageTransitions = PageTransitionsTheme(
     TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
   },
 );
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   PremiumIapDataSource.instance.init();
@@ -100,13 +101,12 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (_) => PremiumFactory.createBloc()
-            ..add(const PremiumStarted()), 
+          create: (_) =>
+              PremiumFactory.createBloc()..add(const PremiumStarted()),
         ),
         RepositoryProvider<OnboardingRepository>(
           create: (_) => onboardingRepository,
         ),
-
         BlocProvider(
           create: (_) =>
               DiaryBloc(repository: diaryRepository)..add(LoadDiaryEntries()),
@@ -116,47 +116,59 @@ class MyApp extends StatelessWidget {
               ThemeBloc(repository: themeRepository)..add(LoadSavedTheme()),
         ),
         BlocProvider(
-          create: (_) =>
-              AppLockBloc(repository: appLockRepository)
-                ..add(LoadAppLockSettings()),
+          create: (_) => AppLockBloc(repository: appLockRepository)
+            ..add(LoadAppLockSettings()),
         ),
         BlocProvider(
-          create: (_) =>
-              BackupBloc(repository: backupRepository)
-                ..add(const BackupSilentSignInRequested()),
+          create: (_) => BackupBloc(repository: backupRepository)
+            ..add(const BackupSilentSignInRequested()),
         ),
       ],
-      child: MediaQuery(
-        data: MediaQuery.of(
-          context,
-        ).copyWith(textScaler: const TextScaler.linear(1.0)),
-        child: BlocBuilder<ThemeBloc, ThemeState>(
-          builder: (context, state) {
-            final ThemeData themeData;
-            if (state.isCustomThemeActive && state.customThemeData != null) {
-              themeData = state.customThemeData!.copyWith(
-                pageTransitionsTheme: _flatPageTransitions,
-              );
-            } else {
-              final safeIndex = state.themeIndex.clamp(0, allThemes.length - 1);
-              themeData = allThemes[safeIndex].copyWith(
-                pageTransitionsTheme: _flatPageTransitions,
-              );
-            }
+      // ── Subscription expiry watcher ──────────────────────────────────────
+      // Sits above MaterialApp so it has access to both PremiumBloc and
+      // ThemeBloc. Fires only once per session on the false → true transition
+      // of subscriptionExpired. No cross-bloc injection — just event dispatch.
+      child: BlocListener<PremiumBloc, PremiumState>(
+        listenWhen: (prev, curr) =>
+            !prev.subscriptionExpired && curr.subscriptionExpired,
+        listener: (context, state) {
+          // Subscription has expired — reset theme to the default (index 0)
+          // and clear any saved custom theme from SharedPreferences.
+          context.read<ThemeBloc>().add(ChangeTheme(0));
+        },
+        child: MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaler: const TextScaler.linear(1.0),
+          ),
+          child: BlocBuilder<ThemeBloc, ThemeState>(
+            builder: (context, state) {
+              final ThemeData themeData;
+              if (state.isCustomThemeActive && state.customThemeData != null) {
+                themeData = state.customThemeData!.copyWith(
+                  pageTransitionsTheme: _flatPageTransitions,
+                );
+              } else {
+                final safeIndex =
+                    state.themeIndex.clamp(0, allThemes.length - 1);
+                themeData = allThemes[safeIndex].copyWith(
+                  pageTransitionsTheme: _flatPageTransitions,
+                );
+              }
 
-            final ThemeMode themeMode =
-                themeData.colorScheme.brightness == Brightness.dark
-                ? ThemeMode.dark
-                : ThemeMode.light;
+              final ThemeMode themeMode =
+                  themeData.colorScheme.brightness == Brightness.dark
+                      ? ThemeMode.dark
+                      : ThemeMode.light;
 
-            return MaterialApp(
-              debugShowCheckedModeBanner: false,
-              theme: themeData,
-              darkTheme: themeData,
-              themeMode: themeMode,
-              home: const SplashScreen(),
-            );
-          },
+              return MaterialApp(
+                debugShowCheckedModeBanner: false,
+                theme: themeData,
+                darkTheme: themeData,
+                themeMode: themeMode,
+                home: const SplashScreen(),
+              );
+            },
+          ),
         ),
       ),
     );

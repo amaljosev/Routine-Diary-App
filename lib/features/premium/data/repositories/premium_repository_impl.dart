@@ -1,3 +1,5 @@
+// lib/features/premium/data/repositories/premium_repository_impl.dart
+
 import 'package:fpdart/fpdart.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:routine/core/error/subscription/sub_failures.dart';
@@ -13,10 +15,8 @@ class PremiumRepositoryImpl implements PremiumRepository {
   const PremiumRepositoryImpl({
     required PremiumLocalDataSource local,
     required PremiumIapDataSource iap,
-  }) : _local = local,
-       _iap = iap;
-
-  // ── getCachedStatus ───────────────────────────────────────────────────────
+  })  : _local = local,
+        _iap = iap;
 
   @override
   Future<Either<StorageFailure, PremiumStatus>> getCachedStatus() async {
@@ -30,8 +30,6 @@ class PremiumRepositoryImpl implements PremiumRepository {
     }
   }
 
-  // ── savePremiumUnlocked ───────────────────────────────────────────────────
-
   @override
   Future<Either<StorageFailure, Unit>> savePremiumUnlocked() async {
     try {
@@ -42,18 +40,26 @@ class PremiumRepositoryImpl implements PremiumRepository {
     }
   }
 
-  // ── fetchProductDetails ───────────────────────────────────────────────────
-  // Returns all 3 subscription plans as a list.
+  @override
+  Future<Either<StorageFailure, Unit>> clearPremiumCache() async {
+    try {
+      await _local.clearPremiumUnlocked();
+      return right(unit);
+    } catch (e) {
+      return left(StorageFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<bool> verifySubscription() => _iap.verifyActiveSubscription();
 
   @override
   Future<Either<StoreUnavailableFailure, List<ProductDetails>>>
-  fetchProductDetails() async {
+      fetchProductDetails() async {
     final plans = await _iap.fetchProductDetails();
     if (plans.isEmpty) return left(const StoreUnavailableFailure());
     return right(plans);
   }
-
-  // ── buyPremium ────────────────────────────────────────────────────────────
 
   @override
   Future<Either<PremiumFailure, Unit>> buyPremium(
@@ -67,8 +73,6 @@ class PremiumRepositoryImpl implements PremiumRepository {
     }
   }
 
-  // ── restorePurchases ──────────────────────────────────────────────────────
-
   @override
   Future<Either<PremiumFailure, Unit>> restorePurchases() async {
     try {
@@ -79,14 +83,16 @@ class PremiumRepositoryImpl implements PremiumRepository {
     }
   }
 
-  // ── purchaseResultStream ──────────────────────────────────────────────────
-
   @override
   Stream<Either<PremiumFailure, Unit>> get purchaseResultStream =>
       _iap.resultStream.map(
         (raw) => switch (raw) {
           RawPurchaseSuccess() => right(unit),
-          RawPurchaseFailure(:final message) => left(PurchaseFailure(message)),
+          RawPurchaseFailure(:final message, :final isCancellation) => left(
+              isCancellation
+                  ? PurchaseCancelledFailure()
+                  : PurchaseFailure(message),
+            ),
         },
       );
 }

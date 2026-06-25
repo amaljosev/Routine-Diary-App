@@ -1,42 +1,52 @@
+// lib/features/premium/presentation/bloc/premium_state.dart
+
 part of 'premium_bloc.dart';
 
-
-
 enum PremiumLoadingState { initial, loading, purchasing, idle }
- 
+
 class PremiumState {
   final PremiumStatus status;
   final PremiumLoadingState loadingState;
-  final List<ProductDetails> subscriptionPlans; // all 3 plans
+  final List<ProductDetails> subscriptionPlans;
   final String? errorMessage;
- 
+
+  /// Becomes [true] exactly once when the store confirms the cached subscription
+  /// has lapsed. [main.dart]'s BlocListener watches this flag to reset the
+  /// custom theme — it only acts on the false → true transition.
+  final bool subscriptionExpired;
+
   const PremiumState({
     this.status = const PremiumStatus.free(),
     this.loadingState = PremiumLoadingState.initial,
-    this.subscriptionPlans = const [], // default to empty, not required
+    this.subscriptionPlans = const [],
     this.errorMessage,
+    this.subscriptionExpired = false,
   });
- 
+
   // ── Convenience getters used by UI ────────────────────────────────────────
- 
+
   bool get isPremium => status.isPremium;
   bool get isPurchasing => loadingState == PremiumLoadingState.purchasing;
   bool get isLoading => loadingState == PremiumLoadingState.loading;
   bool get hasPlans => subscriptionPlans.isNotEmpty;
- 
+
   PremiumState copyWith({
     PremiumStatus? status,
     PremiumLoadingState? loadingState,
     List<ProductDetails>? subscriptionPlans,
     bool clearPlans = false,
     String? errorMessage,
+    bool clearError = false,
+    bool? subscriptionExpired,
   }) =>
       PremiumState(
         status: status ?? this.status,
         loadingState: loadingState ?? this.loadingState,
         subscriptionPlans:
             clearPlans ? [] : (subscriptionPlans ?? this.subscriptionPlans),
-        // Pass null explicitly to clear the error
-        errorMessage: errorMessage,
+        errorMessage:
+            clearError ? null : (errorMessage ?? this.errorMessage),
+        subscriptionExpired:
+            subscriptionExpired ?? this.subscriptionExpired,
       );
 }
