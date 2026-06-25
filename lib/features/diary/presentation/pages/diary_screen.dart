@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:routine/features/diary/presentation/blocs/cubit/showcase_cubit.dart';
+import 'package:routine/features/diary/presentation/widgets/subscription_banner_widget.dart';
 import 'package:routine/features/settings/presentation/pages/theme/theme_image_helper.dart';
 import 'package:showcaseview/showcaseview.dart';
 import 'package:routine/core/theme/theme_extenstions.dart';
@@ -66,11 +67,9 @@ class _DiaryBodyState extends State<_DiaryBody> {
 
   void _startShowcase() {
     // ── v5 API: retrieve the registered scope and start ────────────────────
-    ShowcaseView.getNamed(_scope).startShowCase([
-      _fabKey,
-      _calendarKey,
-      _settingsKey,
-    ]);
+    ShowcaseView.getNamed(
+      _scope,
+    ).startShowCase([_fabKey, _calendarKey, _settingsKey]);
   }
 
   @override
@@ -81,10 +80,7 @@ class _DiaryBodyState extends State<_DiaryBody> {
     return BlocListener<ShowcaseCubit, ShowcaseState>(
       listener: (_, state) {
         if (state.shouldShow == true) {
-          Future.delayed(
-            const Duration(milliseconds: 400),
-            _startShowcase,
-          );
+          Future.delayed(const Duration(milliseconds: 400), _startShowcase);
         }
       },
       child: Scaffold(
@@ -105,9 +101,9 @@ class _DiaryBodyState extends State<_DiaryBody> {
                       fit: StackFit.expand,
                       children: [
                         ThemeImageHelper.buildImage(
-                          Theme.of(context)
-                                  .extension<BackgroundImageTheme>()
-                                  ?.imagePath ??
+                          Theme.of(
+                                context,
+                              ).extension<BackgroundImageTheme>()?.imagePath ??
                               'assets/img/themes/theme_1.webp',
                           fit: BoxFit.cover,
                         ),
@@ -122,7 +118,7 @@ class _DiaryBodyState extends State<_DiaryBody> {
             CustomScrollView(
               slivers: [
                 const SliverToBoxAdapter(child: SizedBox(height: 170)),
-
+                SliverToBoxAdapter(child: const SubscriptionStatusBanner()),
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
@@ -138,13 +134,16 @@ class _DiaryBodyState extends State<_DiaryBody> {
                         const Spacer(),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: theme.colorScheme.surface,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: theme.colorScheme.primary
-                                  .withValues(alpha: 0.2),
+                              color: theme.colorScheme.primary.withValues(
+                                alpha: 0.2,
+                              ),
                             ),
                           ),
                           child: Text(
@@ -199,12 +198,15 @@ class _DiaryBodyState extends State<_DiaryBody> {
                       );
                     }
 
-                    final allEntries =
-                        List<DiaryEntryModel>.from(state.entries);
+                    final allEntries = List<DiaryEntryModel>.from(
+                      state.entries,
+                    );
                     allEntries.sort((a, b) {
-                      final dateA = DateTime.tryParse(a.date) ??
+                      final dateA =
+                          DateTime.tryParse(a.date) ??
                           DateTime.fromMillisecondsSinceEpoch(0);
-                      final dateB = DateTime.tryParse(b.date) ??
+                      final dateB =
+                          DateTime.tryParse(b.date) ??
                           DateTime.fromMillisecondsSinceEpoch(0);
                       return dateB.compareTo(dateA);
                     });
@@ -238,7 +240,9 @@ class _DiaryBodyState extends State<_DiaryBody> {
                       return SliverToBoxAdapter(
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
-                              vertical: 20, horizontal: 16),
+                            vertical: 20,
+                            horizontal: 16,
+                          ),
                           child: Center(
                             child: ElevatedButton.icon(
                               onPressed: () => Navigator.push(
@@ -253,7 +257,9 @@ class _DiaryBodyState extends State<_DiaryBody> {
                                 foregroundColor: theme.colorScheme.onPrimary,
                                 backgroundColor: theme.colorScheme.primary,
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 24, vertical: 12),
+                                  horizontal: 24,
+                                  vertical: 12,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(30),
                                 ),
@@ -283,7 +289,8 @@ class _DiaryBodyState extends State<_DiaryBody> {
                 onCalendarTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (_) => const DiaryCalendarScreen()),
+                    builder: (_) => const DiaryCalendarScreen(),
+                  ),
                 ),
                 onSettingsTap: () => Navigator.push(
                   context,

@@ -127,14 +127,25 @@ class MyApp extends StatelessWidget {
       // ── Subscription expiry watcher ──────────────────────────────────────
       // Sits above MaterialApp so it has access to both PremiumBloc and
       // ThemeBloc. Fires only once per session on the false → true transition
-      // of subscriptionExpired. No cross-bloc injection — just event dispatch.
+      // of subscriptionExpired.
+      //
+      // FIX: We use addPostFrameCallback to defer the ThemeBloc event so it
+      // never fires synchronously during the widget build phase, which would
+      // cause a "setState() or markNeedsBuild() called during build" crash.
       child: BlocListener<PremiumBloc, PremiumState>(
         listenWhen: (prev, curr) =>
             !prev.subscriptionExpired && curr.subscriptionExpired,
         listener: (context, state) {
-          // Subscription has expired — reset theme to the default (index 0)
-          // and clear any saved custom theme from SharedPreferences.
-          context.read<ThemeBloc>().add(ChangeTheme(0));
+          // Defer to the next frame so we never call ThemeBloc.add() while
+          // the widget tree is mid-build (e.g. during SplashScreen's
+          // initState → PremiumStarted → verify → expire path).
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            // Guard: bloc could theoretically be gone if app is torn down
+            // between the callback being registered and it firing.
+            if (context.mounted) {
+              context.read<ThemeBloc>().add(ChangeTheme(0));
+            }
+          });
         },
         child: MediaQuery(
           data: MediaQuery.of(context).copyWith(

@@ -21,6 +21,13 @@ class PremiumIapDataSource {
   // iOS-only verify completer — reuses the existing _iapSub, no second listener.
   Completer<bool>? _iosVerifyCompleter;
 
+  // FIX: Flag that marks when we are in an iOS silent-restore verification
+  // pass. While true, ALL stream events are routed to the completer and
+  // suppressed from _resultController, preventing spurious
+  // PremiumPurchaseSucceeded events that would incorrectly unlock premium on
+  // an expired account.
+  bool _iosVerifying = false;
+
   /// Call once in main.dart before runApp.
   void init() {
     _iapSub?.cancel();
@@ -34,6 +41,7 @@ class PremiumIapDataSource {
     _iapSub?.cancel();
     _resultController.close();
     _iosVerifyCompleter = null;
+    _iosVerifying = false;
   }
 
   // ── Fetch all plans ───────────────────────────────────────────────────────
@@ -76,7 +84,6 @@ class PremiumIapDataSource {
   List<ProductDetails> _filterAndSortAndroid(List<ProductDetails> raw) {
     final result = <ProductDetails>[];
     for (final p in raw) {
-      // Inactive base plans have no price — skip them.
       if (p.rawPrice <= 0) {
         log('IAP: Skipping "${basePlanId(p)}" (inactive — no price)');
         continue;
@@ -108,10 +115,10 @@ class PremiumIapDataSource {
   //
   // Android: queryPastPurchases via InAppPurchaseAndroidPlatformAddition.
   //   Queries local Play billing cache — fast, offline-safe, no stream events.
-  //   Requires in_app_purchase_android as explicit pubspec dependency.
   //
   // iOS: restorePurchases + stream via existing _iapSub.
-  //   Silent, no UI shown. _iosVerifyCompleter is completed by _onPurchaseUpdate.
+  //   Silent, no UI shown. _iosVerifying flag blocks all stream events from
+  //   reaching _resultController while verification is in progress.
   //
   // All error paths → true (benefit of the doubt — never wrongly revoke access).
 
@@ -163,17 +170,24 @@ class PremiumIapDataSource {
   }
 
   Future<bool> _verifyIos() async {
-    if (_iosVerifyCompleter != null && !_iosVerifyCompleter!.isCompleted) {
+    // FIX: If a verification is already running, return the same future
+    // instead of starting a second silent restore (which would conflict).
+    if (_iosVerifying &&
+        _iosVerifyCompleter != null &&
+        !_iosVerifyCompleter!.isCompleted) {
+      log('IAP verify [iOS]: verification already in progress — reusing future');
       return _iosVerifyCompleter!.future;
     }
+
     _iosVerifyCompleter = Completer<bool>();
+    _iosVerifying = true; // Block stream events from reaching _resultController
 
     log('IAP verify [iOS]: calling restorePurchases...');
     try {
       await _iap.restorePurchases();
     } catch (e) {
       log('IAP verify [iOS]: threw ($e) → benefit of doubt');
-      _iosVerifyCompleter!.complete(true);
+      _safeCompleteIosVerify(true);
       return _iosVerifyCompleter!.future;
     }
 
@@ -181,9 +195,18 @@ class PremiumIapDataSource {
       const Duration(seconds: 8),
       onTimeout: () {
         log('IAP verify [iOS]: timed out → benefit of doubt');
+        _safeCompleteIosVerify(true);
         return true;
       },
     );
+  }
+
+  /// Completes the iOS verify completer and clears the verifying flag.
+  void _safeCompleteIosVerify(bool result) {
+    if (_iosVerifyCompleter != null && !_iosVerifyCompleter!.isCompleted) {
+      _iosVerifyCompleter!.complete(result);
+    }
+    _iosVerifying = false;
   }
 
   // ── Internal stream handler ───────────────────────────────────────────────
@@ -197,12 +220,15 @@ class PremiumIapDataSource {
         case PurchaseStatus.restored:
           log('IAP: Purchase/restore success for ${p.productID}');
 
-          if (_iosVerifyCompleter != null &&
-              !_iosVerifyCompleter!.isCompleted) {
-            // This is an iOS verification response — complete the completer,
-            // do NOT also send to _resultController (not a user-initiated purchase).
+          if (_iosVerifying) {
+            // FIX: Use _iosVerifying flag (not just the completer) as the
+            // single source of truth. This prevents a race where the completer
+            // exists but a previous result already completed it, yet
+            // _iosVerifying is still true.
             log('IAP verify [iOS]: confirmed active');
-            _iosVerifyCompleter!.complete(true);
+            _safeCompleteIosVerify(true);
+            // Do NOT forward to _resultController — this is a silent verification
+            // event, not a user-initiated purchase.
           } else {
             // Normal user-initiated purchase or restore.
             _resultController.add(const RawPurchaseSuccess());
@@ -214,20 +240,26 @@ class PremiumIapDataSource {
           final msg = p.error?.message ?? 'Unknown IAP error';
           log('IAP error: $msg');
 
-          if (_iosVerifyCompleter != null &&
-              !_iosVerifyCompleter!.isCompleted) {
-            log('IAP verify [iOS]: error → not active');
-            _iosVerifyCompleter!.complete(false);
+          if (_iosVerifying) {
+            log('IAP verify [iOS]: error → treating as not active');
+            _safeCompleteIosVerify(false);
+            // Suppress from _resultController — this is a verification error,
+            // not a user-facing purchase error.
           } else {
-            _resultController.add(RawPurchaseFailure(msg, isCancellation: false));
+            _resultController
+                .add(RawPurchaseFailure(msg, isCancellation: false));
           }
+
           if (p.pendingCompletePurchase) _iap.completePurchase(p);
 
         case PurchaseStatus.canceled:
           log('IAP: Purchase cancelled for ${p.productID}');
-          if (_iosVerifyCompleter == null || _iosVerifyCompleter!.isCompleted) {
+          if (!_iosVerifying) {
             _resultController.add(
-              const RawPurchaseFailure('Purchase cancelled', isCancellation: true),
+              const RawPurchaseFailure(
+                'Purchase cancelled',
+                isCancellation: true,
+              ),
             );
           }
 

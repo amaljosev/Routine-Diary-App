@@ -59,6 +59,7 @@ class PremiumBloc extends Bloc<PremiumEvent, PremiumState> {
     on<PremiumPurchaseFailed>(_onFailed);
     on<PremiumPurchaseReset>(_onReset);
     on<PremiumSubscriptionExpired>(_onExpired);
+    on<PremiumExpiredBannerShown>(_onExpiredBannerShown);
   }
 
   // ── Handlers ──────────────────────────────────────────────────────────────
@@ -73,21 +74,32 @@ class PremiumBloc extends Bloc<PremiumEvent, PremiumState> {
     final status = statusResult.fold((_) => state.status, (s) => s);
 
     if (status.isPremium) {
-      // ── User was premium locally — now verify with the store ──────────────
-      // Emit the premium state immediately so the UI is responsive while
-      // verification runs in the background (runs during splash screen).
+      // ── Emit premium state immediately so the UI is responsive ────────────
       emit(state.copyWith(
         status: status,
         loadingState: PremiumLoadingState.idle,
       ));
 
       log('🔍 Premium cached — verifying with store...');
-      final isStillActive = await _verifySubscription();
+
+      // FIX: wrap verification in try/catch so any unexpected exception
+      // from the IAP plugin (e.g. during cold start) never crashes the app.
+      bool isStillActive = true;
+      try {
+        isStillActive = await _verifySubscription();
+      } catch (e) {
+        log('⚠️ verifySubscription threw unexpectedly: $e → benefit of doubt');
+        isStillActive = true;
+      }
 
       if (!isStillActive) {
-        // Store confirmed the subscription has expired → revoke
         log('⚠️ Subscription expired — revoking premium access');
-        add(const PremiumSubscriptionExpired());
+        // FIX: Schedule the expiry event after the current emit cycle
+        // completes. Dispatching an event that causes a state change (which
+        // triggers a BlocListener in main.dart calling ThemeBloc) while we
+        // are still inside an emit() call can cause a
+        // "setState called during build" crash on some Flutter versions.
+        Future.microtask(() => add(const PremiumSubscriptionExpired()));
       } else {
         log('✅ Subscription still active');
       }
@@ -118,20 +130,21 @@ class PremiumBloc extends Bloc<PremiumEvent, PremiumState> {
     PremiumSubscriptionExpired _,
     Emitter<PremiumState> emit,
   ) async {
-    // Clear local cache so the next launch starts fresh
+    // Clear local cache so the next launch starts fresh.
     await _clearPremiumCache();
 
-    // Emit free state with subscriptionExpired = true.
-    // main.dart BlocListener watches the false → true transition
-    // and resets the theme to default (index 0).
+    // FIX: emit free state with subscriptionExpired = true.
+    // The BlocListener in main.dart watches false → true and resets the theme.
+    // We also set showExpiredBanner = true so DiaryScreen can surface a banner.
     emit(state.copyWith(
       status: const PremiumStatus.free(),
-      loadingState: PremiumLoadingState.loading, // show spinner while fetching plans
+      loadingState: PremiumLoadingState.loading,
       clearError: true,
       subscriptionExpired: true,
+      showExpiredBanner: true,
     ));
 
-    // Also fetch plans so the paywall is ready to show immediately
+    // Fetch plans so the paywall is ready immediately if user taps the banner.
     final plansResult = await _fetchProduct();
     final plans = plansResult.fold(
       (failure) {
@@ -144,9 +157,8 @@ class PremiumBloc extends Bloc<PremiumEvent, PremiumState> {
     emit(state.copyWith(
       loadingState: PremiumLoadingState.idle,
       subscriptionPlans: List.from(plans),
-      // Keep subscriptionExpired = true so the BlocListener in main.dart
-      // still sees it if it hadn't fired yet
       subscriptionExpired: true,
+      showExpiredBanner: true,
     ));
   }
 
@@ -166,7 +178,7 @@ class PremiumBloc extends Bloc<PremiumEvent, PremiumState> {
         errorMessage: failure.message,
       )),
       (_) {
-        // OS sheet is showing — result arrives via purchaseResultStream.
+        // OS purchase sheet is showing — result arrives via purchaseResultStream.
       },
     );
   }
@@ -201,8 +213,9 @@ class PremiumBloc extends Bloc<PremiumEvent, PremiumState> {
       status: const PremiumStatus.premium(),
       loadingState: PremiumLoadingState.idle,
       clearError: true,
-      // Clear the expired flag in case user re-subscribed in the same session
+      // Clear both expiry flags if user re-subscribed in the same session.
       subscriptionExpired: false,
+      showExpiredBanner: false,
     ));
   }
 
@@ -229,6 +242,14 @@ class PremiumBloc extends Bloc<PremiumEvent, PremiumState> {
         clearError: true,
       ));
     }
+  }
+
+  /// Dismisses the expired banner once the UI has shown it.
+  void _onExpiredBannerShown(
+    PremiumExpiredBannerShown _,
+    Emitter<PremiumState> emit,
+  ) {
+    emit(state.copyWith(showExpiredBanner: false));
   }
 
   @override

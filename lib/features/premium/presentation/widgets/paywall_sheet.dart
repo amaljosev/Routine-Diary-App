@@ -1,6 +1,8 @@
 
 // lib/features/premium/presentation/widgets/paywall_sheet.dart
 
+// ignore_for_file: unused_field
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';

@@ -15,12 +15,18 @@ class PremiumState {
   /// custom theme — it only acts on the false → true transition.
   final bool subscriptionExpired;
 
+  /// Becomes [true] when the subscription expires so DiaryScreen can show a
+  /// one-time "Your subscription has expired" banner. Reset to [false] by
+  /// dispatching [PremiumExpiredBannerShown] after the banner is displayed.
+  final bool showExpiredBanner;
+
   const PremiumState({
     this.status = const PremiumStatus.free(),
     this.loadingState = PremiumLoadingState.initial,
     this.subscriptionPlans = const [],
     this.errorMessage,
     this.subscriptionExpired = false,
+    this.showExpiredBanner = false,
   });
 
   // ── Convenience getters used by UI ────────────────────────────────────────
@@ -38,15 +44,16 @@ class PremiumState {
     String? errorMessage,
     bool clearError = false,
     bool? subscriptionExpired,
+    bool? showExpiredBanner,
   }) =>
       PremiumState(
         status: status ?? this.status,
         loadingState: loadingState ?? this.loadingState,
         subscriptionPlans:
             clearPlans ? [] : (subscriptionPlans ?? this.subscriptionPlans),
-        errorMessage:
-            clearError ? null : (errorMessage ?? this.errorMessage),
+        errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
         subscriptionExpired:
             subscriptionExpired ?? this.subscriptionExpired,
+        showExpiredBanner: showExpiredBanner ?? this.showExpiredBanner,
       );
 }
