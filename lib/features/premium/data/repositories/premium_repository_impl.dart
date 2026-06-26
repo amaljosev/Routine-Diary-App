@@ -50,6 +50,11 @@ class PremiumRepositoryImpl implements PremiumRepository {
     }
   }
 
+  /// Returns true if the user has ever held a subscription.
+  /// This value is never cleared — safe to use for lapsed-subscriber UX.
+  @override
+  Future<bool> wasEverSubscriber() => _local.wasEverSubscriber();
+
   @override
   Future<bool> verifySubscription() => _iap.verifyActiveSubscription();
 

@@ -1,3 +1,5 @@
+// lib/main.dart
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:routine/core/config/secrets.dart';
 import 'package:routine/core/network/network_info.dart';
 import 'package:routine/core/services/showcase_prefs_service.dart';
@@ -19,7 +21,6 @@ import 'package:routine/features/diary/data/repository/diary_repo_implementation
 import 'package:routine/features/diary/domain/repository/diary_repository.dart';
 import 'package:routine/features/diary/presentation/blocs/diary/diary_bloc.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:routine/features/onboarding/data/repositories/onboarding_repository_impl.dart';
 import 'package:routine/features/onboarding/domain/repositories/onboarding_repository.dart';
 import 'package:routine/features/onboarding/presentation/pages/splash_screen.dart';
@@ -124,29 +125,7 @@ class MyApp extends StatelessWidget {
             ..add(const BackupSilentSignInRequested()),
         ),
       ],
-      // ── Subscription expiry watcher ──────────────────────────────────────
-      // Sits above MaterialApp so it has access to both PremiumBloc and
-      // ThemeBloc. Fires only once per session on the false → true transition
-      // of subscriptionExpired.
-      //
-      // FIX: We use addPostFrameCallback to defer the ThemeBloc event so it
-      // never fires synchronously during the widget build phase, which would
-      // cause a "setState() or markNeedsBuild() called during build" crash.
-      child: BlocListener<PremiumBloc, PremiumState>(
-        listenWhen: (prev, curr) =>
-            !prev.subscriptionExpired && curr.subscriptionExpired,
-        listener: (context, state) {
-          // Defer to the next frame so we never call ThemeBloc.add() while
-          // the widget tree is mid-build (e.g. during SplashScreen's
-          // initState → PremiumStarted → verify → expire path).
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            // Guard: bloc could theoretically be gone if app is torn down
-            // between the callback being registered and it firing.
-            if (context.mounted) {
-              context.read<ThemeBloc>().add(ChangeTheme(0));
-            }
-          });
-        },
+      child: _AppListeners(
         child: MediaQuery(
           data: MediaQuery.of(context).copyWith(
             textScaler: const TextScaler.linear(1.0),
@@ -182,6 +161,73 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Hosts all top-level BlocListeners that coordinate cross-bloc side effects.
+/// Extracted into its own widget to keep [MyApp.build] readable.
+class _AppListeners extends StatelessWidget {
+  final Widget child;
+  const _AppListeners({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiBlocListener(
+      listeners: [
+        // ── Subscription expiry → deactivate custom theme ─────────────────
+        //
+        // Fires once per session on the false → true transition of
+        // subscriptionExpired.
+        //
+        // KEY CHANGE: fires DeactivateCustomTheme (not ChangeTheme(0)).
+        // DeactivateCustomTheme switches the active theme to 0 while
+        // preserving customThemeModel in state — so the user's theme config
+        // is safe and can be restored when they re-subscribe.
+        //
+        // addPostFrameCallback defers the event to the next frame so it never
+        // fires synchronously during a build phase (avoids
+        // "setState called during build" crashes).
+        BlocListener<PremiumBloc, PremiumState>(
+          listenWhen: (prev, curr) =>
+              !prev.subscriptionExpired && curr.subscriptionExpired,
+          listener: (context, state) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (context.mounted) {
+                context
+                    .read<ThemeBloc>()
+                    .add( DeactivateCustomTheme());
+              }
+            });
+          },
+        ),
+
+        // ── Successful (re-)subscription → auto-restore custom theme ───────
+        //
+        // Fires on the false → true transition of isPremium (covers both
+        // first-time subscribers and lapsed users who re-subscribe).
+        //
+        // If customThemeModel is present in ThemeState we immediately
+        // re-apply it — the user gets their theme back without any manual
+        // steps. For first-time subscribers customThemeModel is null, so
+        // nothing happens here and they can create their theme normally.
+        BlocListener<PremiumBloc, PremiumState>(
+          listenWhen: (prev, curr) => !prev.isPremium && curr.isPremium,
+          listener: (context, state) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!context.mounted) return;
+              final customModel =
+                  context.read<ThemeBloc>().state.customThemeModel;
+              if (customModel != null) {
+                context
+                    .read<ThemeBloc>()
+                    .add(ApplyCustomTheme(customModel));
+              }
+            });
+          },
+        ),
+      ],
+      child: child,
     );
   }
 }

@@ -25,6 +25,7 @@ class PremiumBloc extends Bloc<PremiumEvent, PremiumState> {
   final SavePremiumUnlocked _saveUnlocked;
   final VerifySubscription _verifySubscription;
   final ClearPremiumCache _clearPremiumCache;
+  final PremiumRepository _repository;
 
   StreamSubscription<dynamic>? _purchaseSub;
 
@@ -44,6 +45,7 @@ class PremiumBloc extends Bloc<PremiumEvent, PremiumState> {
         _saveUnlocked = saveUnlocked,
         _verifySubscription = verifySubscription,
         _clearPremiumCache = clearPremiumCache,
+        _repository = repository,
         super(const PremiumState()) {
     _purchaseSub = repository.purchaseResultStream.listen((either) {
       either.fold(
@@ -70,20 +72,22 @@ class PremiumBloc extends Bloc<PremiumEvent, PremiumState> {
   ) async {
     emit(state.copyWith(loadingState: PremiumLoadingState.loading));
 
+    // Load wasEverSubscriber alongside premium status — both come from local
+    // storage so this is fast and offline-safe.
     final statusResult = await _getStatus();
     final status = statusResult.fold((_) => state.status, (s) => s);
+    final wasEver = await _repository.wasEverSubscriber();
 
     if (status.isPremium) {
-      // ── Emit premium state immediately so the UI is responsive ────────────
+      // Emit premium state immediately so the UI is responsive.
       emit(state.copyWith(
         status: status,
         loadingState: PremiumLoadingState.idle,
+        wasEverSubscriber: wasEver,
       ));
 
       log('🔍 Premium cached — verifying with store...');
 
-      // FIX: wrap verification in try/catch so any unexpected exception
-      // from the IAP plugin (e.g. during cold start) never crashes the app.
       bool isStillActive = true;
       try {
         isStillActive = await _verifySubscription();
@@ -94,11 +98,6 @@ class PremiumBloc extends Bloc<PremiumEvent, PremiumState> {
 
       if (!isStillActive) {
         log('⚠️ Subscription expired — revoking premium access');
-        // FIX: Schedule the expiry event after the current emit cycle
-        // completes. Dispatching an event that causes a state change (which
-        // triggers a BlocListener in main.dart calling ThemeBloc) while we
-        // are still inside an emit() call can cause a
-        // "setState called during build" crash on some Flutter versions.
         Future.microtask(() => add(const PremiumSubscriptionExpired()));
       } else {
         log('✅ Subscription still active');
@@ -106,7 +105,7 @@ class PremiumBloc extends Bloc<PremiumEvent, PremiumState> {
       return;
     }
 
-    // ── Not premium locally — load plans for paywall ──────────────────────
+    // Not premium locally — load plans for paywall.
     final plansResult = await _fetchProduct();
     final plans = plansResult.fold(
       (failure) {
@@ -123,6 +122,7 @@ class PremiumBloc extends Bloc<PremiumEvent, PremiumState> {
       status: status,
       loadingState: PremiumLoadingState.idle,
       subscriptionPlans: List.from(plans),
+      wasEverSubscriber: wasEver,
     ));
   }
 
@@ -130,21 +130,18 @@ class PremiumBloc extends Bloc<PremiumEvent, PremiumState> {
     PremiumSubscriptionExpired _,
     Emitter<PremiumState> emit,
   ) async {
-    // Clear local cache so the next launch starts fresh.
     await _clearPremiumCache();
 
-    // FIX: emit free state with subscriptionExpired = true.
-    // The BlocListener in main.dart watches false → true and resets the theme.
-    // We also set showExpiredBanner = true so DiaryScreen can surface a banner.
+    // wasEverSubscriber remains true — subscription lapsed, not forgotten.
     emit(state.copyWith(
       status: const PremiumStatus.free(),
       loadingState: PremiumLoadingState.loading,
       clearError: true,
       subscriptionExpired: true,
       showExpiredBanner: true,
+      // wasEverSubscriber is intentionally left as-is (already true)
     ));
 
-    // Fetch plans so the paywall is ready immediately if user taps the banner.
     final plansResult = await _fetchProduct();
     final plans = plansResult.fold(
       (failure) {
@@ -209,13 +206,18 @@ class PremiumBloc extends Bloc<PremiumEvent, PremiumState> {
     Emitter<PremiumState> emit,
   ) async {
     await _saveUnlocked();
+
+    // Re-read wasEverSubscriber — it was just stamped by saveUnlocked →
+    // setPremiumUnlocked → also sets kWasEverSubscriber.
+    final wasEver = await _repository.wasEverSubscriber();
+
     emit(state.copyWith(
       status: const PremiumStatus.premium(),
       loadingState: PremiumLoadingState.idle,
       clearError: true,
-      // Clear both expiry flags if user re-subscribed in the same session.
       subscriptionExpired: false,
       showExpiredBanner: false,
+      wasEverSubscriber: wasEver,
     ));
   }
 
@@ -244,7 +246,6 @@ class PremiumBloc extends Bloc<PremiumEvent, PremiumState> {
     }
   }
 
-  /// Dismisses the expired banner once the UI has shown it.
   void _onExpiredBannerShown(
     PremiumExpiredBannerShown _,
     Emitter<PremiumState> emit,

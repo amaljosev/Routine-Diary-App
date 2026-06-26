@@ -177,8 +177,6 @@ class _PortraitBody extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onSelected;
 
-  static const _gold = Color(0xFFFFC94A);
-  static const _textSecondary = Color(0xFFABBAD9);
 
   const _PortraitBody({
     required this.state,
@@ -234,8 +232,6 @@ class _LandscapeBody extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onSelected;
 
-  static const _gold = Color(0xFFFFC94A);
-  static const _textSecondary = Color(0xFFABBAD9);
 
   const _LandscapeBody({
     required this.state,

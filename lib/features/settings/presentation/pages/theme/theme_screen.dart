@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:routine/core/theme/app_colors.dart';
 import 'package:routine/features/premium/presentation/bloc/premium_bloc.dart';
+import 'package:routine/features/premium/presentation/widgets/paywall_sheet.dart';
 import 'package:routine/features/settings/presentation/bloc/apptheme_bloc.dart';
 import 'package:routine/features/settings/presentation/pages/theme/custom_theme_screen.dart';
 
 class ThemeSwitcherScreen extends StatefulWidget {
   const ThemeSwitcherScreen({super.key});
-
   @override
   State<ThemeSwitcherScreen> createState() => _ThemeSwitcherScreenState();
 }
@@ -168,7 +168,39 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
     );
   }
 
-  // ── preview card skeleton (NeverScrollableScrollPhysics fixes the swipe) ──
+  // ── restore custom theme ──────────────────────────────────────────────────
+  //
+  // Called when the user taps "Restore Custom Theme".
+  // If already premium  → apply immediately.
+  // If not subscribed   → show paywall; apply on success.
+
+  void _restoreCustomTheme() {
+    final isPremium = context.read<PremiumBloc>().state.isPremium;
+    final customModel = context.read<ThemeBloc>().state.customThemeModel;
+    if (customModel == null) return;
+
+    void apply() {
+      context.read<ThemeBloc>().add(ApplyCustomTheme(customModel));
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Custom theme restored!'),
+          backgroundColor: _getThemePrimaryColor(_currentPage),
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+      );
+    }
+
+    if (isPremium) {
+      apply();
+    } else {
+      showPaywallSheet(context, onSuccess: apply);
+    }
+  }
+
+  // ── preview card skeleton ─────────────────────────────────────────────────
 
   Widget _buildPreviewItem(BuildContext context, int themeIndex) {
     final isDarkPreview = _isPreviewDark(themeIndex);
@@ -324,16 +356,16 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ThemeBloc, ThemeState>(
-      builder: (context, state) {
+      builder: (context, themeState) {
         // When custom theme is active we don't highlight any built-in page.
-        final int selectedThemeIndex = state.isCustomThemeActive
-            ? -1
-            : state.themeIndex;
-        final bool isCustomActive = state.isCustomThemeActive;
+        final int selectedThemeIndex =
+            themeState.isCustomThemeActive ? -1 : themeState.themeIndex;
+        final bool isCustomActive = themeState.isCustomThemeActive;
 
         if (!_initialScrollDone) {
           _isLoading = false;
-          final jumpTo = state.isCustomThemeActive ? 0 : state.themeIndex;
+          final jumpTo =
+              themeState.isCustomThemeActive ? 0 : themeState.themeIndex;
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) return;
             void doJump() {
@@ -372,308 +404,385 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
         final previewSecondary = _getThemeSecondaryColor(_currentPage);
         final isCurrentPageSelected = selectedThemeIndex == _currentPage;
 
-        return Scaffold(
-          backgroundColor: _getPreviewBackgroundColor(_currentPage),
+        return BlocBuilder<PremiumBloc, PremiumState>(
+          builder: (context, premiumState) {
+            // ── Restore button visibility logic ─────────────────────────────
+            //
+            // Show when ALL of:
+            //   • user was ever a subscriber (lapsed, not a stranger)
+            //   • a saved custom theme config exists (something to restore)
+            //   • custom theme is NOT already the active theme
+            //
+            // Hidden when:
+            //   • user is currently subscribed + custom theme active
+            //     (they're already enjoying it — no restore needed)
+            //   • user never subscribed (they haven't created a theme yet)
+            //   • no saved theme data exists
+            final bool showRestoreButton = premiumState.wasEverSubscriber &&
+                themeState.customThemeModel != null &&
+                !isCustomActive;
 
-          appBar: AppBar(
-            title: const Text('Choose Your Diary Theme'),
-            titleTextStyle: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: previewPrimary,
-              fontWeight: FontWeight.bold,
-            ),
-            centerTitle: true,
-            backgroundColor: Colors.transparent,
-            foregroundColor: previewPrimary,
-            elevation: 0,
-          ),
+            return Scaffold(
+              backgroundColor: _getPreviewBackgroundColor(_currentPage),
 
-          // ── Persistent "Customize Theme" pill — always accessible ──────────
-          floatingActionButtonLocation:
-              FloatingActionButtonLocation.centerFloat,
-          floatingActionButton: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: _CustomizeThemePill(
-              isActive: isCustomActive,
-              primaryColor: previewPrimary,
-              onTap: _openCustomThemeEditor,
-            ),
-          ),
+              appBar: AppBar(
+                title: const Text('Choose Your Diary Theme'),
+                titleTextStyle:
+                    Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: previewPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                centerTitle: true,
+                backgroundColor: Colors.transparent,
+                foregroundColor: previewPrimary,
+                elevation: 0,
+              ),
 
-          body: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20.0),
-            child: Column(
-              children: [
-                // ── Page view ─────────────────────────────────────────────
-                Expanded(
-                  flex: 4,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 40.0),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        PageView.builder(
-                          controller: _pageController,
-                          itemCount: _themes.length,
-                          onPageChanged: (index) =>
-                              setState(() => _currentPage = index),
-                          itemBuilder: (context, index) {
-                            final isDarkPreview = _isPreviewDark(index);
-                            final isSelected = selectedThemeIndex == index;
+              // ── Persistent "Customize Theme" pill ────────────────────────
+              floatingActionButtonLocation:
+                  FloatingActionButtonLocation.centerFloat,
+              floatingActionButton: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: _CustomizeThemePill(
+                  isActive: isCustomActive,
+                  primaryColor: previewPrimary,
+                  onTap: _openCustomThemeEditor,
+                ),
+              ),
 
-                            return AnimatedContainer(
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeOutCubic,
-                              margin: EdgeInsets.only(
-                                top: _currentPage == index ? 0 : 20,
-                                bottom: _currentPage == index ? 0 : 10,
-                                right: 10,
-                                left: 10,
-                              ),
-                              child: Transform.scale(
-                                scale: _currentPage == index ? 1.0 : 0.9,
-                                child: GestureDetector(
-                                  onTap: () {
-                                    if (selectedThemeIndex != index) {
-                                      context.read<ThemeBloc>().add(
-                                        ChangeTheme(index),
-                                      );
-                                      _pageController.animateToPage(
-                                        index,
-                                        duration: const Duration(
-                                          milliseconds: 400,
-                                        ),
-                                        curve: Curves.easeInOutCubic,
-                                      );
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).clearSnackBars();
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            _getThemeName(index),
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.w500,
+              body: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20.0),
+                child: Column(
+                  children: [
+                    // ── Page view ───────────────────────────────────────────
+                    Expanded(
+                      flex: 4,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 40.0),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            PageView.builder(
+                              controller: _pageController,
+                              itemCount: _themes.length,
+                              onPageChanged: (index) =>
+                                  setState(() => _currentPage = index),
+                              itemBuilder: (context, index) {
+                                final isDarkPreview = _isPreviewDark(index);
+                                final isSelected =
+                                    selectedThemeIndex == index;
+                                return AnimatedContainer(
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeOutCubic,
+                                  margin: EdgeInsets.only(
+                                    top: _currentPage == index ? 0 : 20,
+                                    bottom: _currentPage == index ? 0 : 10,
+                                    right: 10,
+                                    left: 10,
+                                  ),
+                                  child: Transform.scale(
+                                    scale:
+                                        _currentPage == index ? 1.0 : 0.9,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        if (selectedThemeIndex != index) {
+                                          context.read<ThemeBloc>().add(
+                                                ChangeTheme(index),
+                                              );
+                                          _pageController.animateToPage(
+                                            index,
+                                            duration: const Duration(
+                                                milliseconds: 400),
+                                            curve: Curves.easeInOutCubic,
+                                          );
+                                          ScaffoldMessenger.of(context)
+                                              .clearSnackBars();
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                _getThemeName(index),
+                                                style: const TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.w500),
+                                              ),
+                                              backgroundColor:
+                                                  _getThemePrimaryColor(
+                                                      index),
+                                              behavior:
+                                                  SnackBarBehavior.floating,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
+                                              ),
                                             ),
-                                          ),
-                                          backgroundColor:
-                                              _getThemePrimaryColor(index),
-                                          behavior: SnackBarBehavior.floating,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              16,
-                                            ),
-                                          ),
+                                          );
+                                        }
+                                      },
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(32),
+                                          color: isDarkPreview
+                                              ? Colors.white10
+                                              : Colors.black12,
                                         ),
-                                      );
-                                    }
-                                  },
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(32),
-                                      color: isDarkPreview
-                                          ? Colors.white10
-                                          : Colors.black12,
-                                    ),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(32),
-                                      child: Stack(
-                                        children: [
-                                          Column(
+                                        child: ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(32),
+                                          child: Stack(
                                             children: [
-                                              Image.asset(
-                                                _themes[index],
-                                                width: double.infinity,
-                                                height: 150,
-                                                fit: BoxFit.cover,
-                                                errorBuilder:
-                                                    (
-                                                      context,
-                                                      error,
-                                                      _,
-                                                    ) => Container(
+                                              Column(
+                                                children: [
+                                                  Image.asset(
+                                                    _themes[index],
+                                                    width: double.infinity,
+                                                    height: 150,
+                                                    fit: BoxFit.cover,
+                                                    errorBuilder: (context,
+                                                            error, _) =>
+                                                        Container(
                                                       width: double.infinity,
                                                       height: 150,
                                                       color:
                                                           _getThemePrimaryColor(
-                                                            index,
-                                                          ).withValues(
-                                                            alpha: 0.3,
-                                                          ),
+                                                                  index)
+                                                              .withValues(
+                                                                  alpha: 0.3),
                                                       child: Center(
                                                         child: Icon(
                                                           Icons
                                                               .image_not_supported,
                                                           color:
                                                               _getThemePrimaryColor(
-                                                                index,
-                                                              ),
+                                                                  index),
                                                           size: 40,
                                                         ),
                                                       ),
                                                     ),
-                                              ),
-                                              // ── FIX: NeverScrollable so
-                                              //    PageView swipe works ──────
-                                              Expanded(
-                                                child: ListView.builder(
-                                                  physics:
-                                                      const NeverScrollableScrollPhysics(),
-                                                  padding: const EdgeInsets.all(
-                                                    8,
                                                   ),
-                                                  itemCount: 4,
-                                                  itemBuilder: (context, idx) =>
-                                                      _buildPreviewItem(
-                                                        context,
-                                                        index,
-                                                      ),
-                                                ),
+                                                  Expanded(
+                                                    child: ListView.builder(
+                                                      physics:
+                                                          const NeverScrollableScrollPhysics(),
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              8),
+                                                      itemCount: 4,
+                                                      itemBuilder:
+                                                          (context, idx) =>
+                                                              _buildPreviewItem(
+                                                                  context,
+                                                                  index),
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
+                                              if (isSelected)
+                                                Positioned.fill(
+                                                  child: Container(
+                                                    decoration: BoxDecoration(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              32),
+                                                      border: Border.all(
+                                                        color:
+                                                            _getThemePrimaryColor(
+                                                                index),
+                                                        width: 4,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
                                             ],
                                           ),
-                                          // Selection border
-                                          if (isSelected)
-                                            Positioned.fill(
-                                              child: Container(
-                                                decoration: BoxDecoration(
-                                                  borderRadius:
-                                                      BorderRadius.circular(32),
-                                                  border: Border.all(
-                                                    color:
-                                                        _getThemePrimaryColor(
-                                                          index,
-                                                        ),
-                                                    width: 4,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                        ],
+                                        ),
                                       ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            // Page indicator dots
+                            Positioned(
+                              bottom: 20,
+                              left: 0,
+                              right: 0,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: List.generate(
+                                  _themes.length,
+                                  (index) => AnimatedContainer(
+                                    duration:
+                                        const Duration(milliseconds: 300),
+                                    margin: const EdgeInsets.symmetric(
+                                        horizontal: 4),
+                                    height: 6,
+                                    width:
+                                        _currentPage == index ? 24 : 6,
+                                    decoration: BoxDecoration(
+                                      color: _currentPage == index
+                                          ? previewPrimary
+                                          : previewSecondary.withValues(
+                                              alpha: 0.3),
+                                      borderRadius:
+                                          BorderRadius.circular(3),
                                     ),
                                   ),
                                 ),
                               ),
-                            );
-                          },
-                        ),
-                        // Page indicator dots
-                        Positioned(
-                          bottom: 20,
-                          left: 0,
-                          right: 0,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: List.generate(
-                              _themes.length,
-                              (index) => AnimatedContainer(
-                                duration: const Duration(milliseconds: 300),
-                                margin: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                ),
-                                height: 6,
-                                width: _currentPage == index ? 24 : 6,
-                                decoration: BoxDecoration(
-                                  color: _currentPage == index
-                                      ? previewPrimary
-                                      : previewSecondary.withValues(alpha: 0.3),
-                                  borderRadius: BorderRadius.circular(3),
-                                ),
-                              ),
                             ),
-                          ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
 
-                // ── "Use This Theme" / "Currently Selected" button ────────
-                SafeArea(
-                  child: Padding(
-                    // Extra bottom padding so the FAB pill doesn't overlap
-                    padding: const EdgeInsets.fromLTRB(25, 0, 25, 72),
-                    child: Column(
-                      children: [
-                        if (isCurrentPageSelected)
-                          Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: previewPrimary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              '✓ Current Theme',
-                              style: TextStyle(
-                                color: previewPrimary,
-                                fontWeight: FontWeight.w600,
+                    // ── Bottom button area ────────────────────────────────
+                    SafeArea(
+                      child: Padding(
+                        // Extra bottom padding so the FAB pill doesn't overlap
+                        padding: const EdgeInsets.fromLTRB(25, 0, 25, 72),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // ── "Currently Selected" badge ────────────────
+                            if (isCurrentPageSelected)
+                              Container(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: previewPrimary.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  '✓ Current Theme',
+                                  style: TextStyle(
+                                    color: previewPrimary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+
+                            // ── "Use This Theme" button ───────────────────
+                            ElevatedButton(
+                              onPressed: isCurrentPageSelected
+                                  ? null
+                                  : () {
+                                      context
+                                          .read<ThemeBloc>()
+                                          .add(ChangeTheme(_currentPage));
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            _getThemeName(_currentPage),
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.w500),
+                                          ),
+                                          backgroundColor: previewPrimary,
+                                          behavior: SnackBarBehavior.floating,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(16),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: previewPrimary,
+                                foregroundColor: Colors.white,
+                                disabledBackgroundColor:
+                                    previewPrimary.withValues(alpha: 0.3),
+                                disabledForegroundColor:
+                                    Colors.white.withValues(alpha: 0.5),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20)),
+                                elevation: isCurrentPageSelected ? 0 : 5,
+                                minimumSize:
+                                    const Size(double.infinity, 50),
+                              ),
+                              child: Text(
+                                isCurrentPageSelected
+                                    ? 'Currently Selected'
+                                    : 'Use This Theme',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 1,
+                                ),
                               ),
                             ),
-                          ),
-                        ElevatedButton(
-                          onPressed: isCurrentPageSelected
-                              ? null
-                              : () {
-                                  context.read<ThemeBloc>().add(
-                                    ChangeTheme(_currentPage),
-                                  );
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        _getThemeName(_currentPage),
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      backgroundColor: previewPrimary,
-                                      behavior: SnackBarBehavior.floating,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                    ),
-                                  );
-                                },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: previewPrimary,
-                            foregroundColor: Colors.white,
-                            disabledBackgroundColor: previewPrimary.withValues(
-                              alpha: 0.3,
-                            ),
-                            disabledForegroundColor: Colors.white.withValues(
-                              alpha: 0.5,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            elevation: isCurrentPageSelected ? 0 : 5,
-                            minimumSize: const Size(double.infinity, 50),
-                          ),
-                          child: Text(
-                            isCurrentPageSelected
-                                ? 'Currently Selected'
-                                : 'Use This Theme',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 1,
-                            ),
-                          ),
+
+                            // ── "Restore Custom Theme" button ─────────────
+                            //
+                            // Visible only to lapsed subscribers who have a
+                            // saved custom theme that is not currently active.
+                            if (showRestoreButton) ...[
+                              const SizedBox(height: 12),
+                              _RestoreCustomThemeButton(
+                                primaryColor: previewPrimary,
+                                isPremium: premiumState.isPremium,
+                                onTap: _restoreCustomTheme,
+                              ),
+                            ],
+                          ],
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Restore Custom Theme button
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _RestoreCustomThemeButton extends StatelessWidget {
+  final Color primaryColor;
+  final bool isPremium;
+  final VoidCallback onTap;
+
+  const _RestoreCustomThemeButton({
+    required this.primaryColor,
+    required this.isPremium,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: OutlinedButton.icon(
+        onPressed: onTap,
+        icon: Icon(
+          isPremium ? Icons.palette_outlined : Icons.lock_open_outlined,
+          size: 18,
+          color: primaryColor,
+        ),
+        label: Text(
+          'Restore Custom Theme',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: primaryColor,
+            letterSpacing: 0.3,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(color: primaryColor, width: 1.5),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        ),
+      ),
     );
   }
 }
@@ -735,7 +844,8 @@ class _CustomizeThemePill extends StatelessWidget {
             if (isActive) ...[
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.25),
                   borderRadius: BorderRadius.circular(10),

@@ -37,4 +37,6 @@ abstract class PremiumRepository {
 
   /// Stream of purchase outcomes from the IAP plugin.
   Stream<Either<PremiumFailure, Unit>> get purchaseResultStream;
+
+  Future<bool> wasEverSubscriber();
 }

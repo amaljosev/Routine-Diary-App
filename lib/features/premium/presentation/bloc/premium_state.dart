@@ -1,8 +1,7 @@
 // lib/features/premium/presentation/bloc/premium_state.dart
-
 part of 'premium_bloc.dart';
 
-enum PremiumLoadingState { initial, loading, purchasing, idle }
+enum PremiumLoadingState { idle, loading, purchasing }
 
 class PremiumState {
   final PremiumStatus status;
@@ -10,50 +9,50 @@ class PremiumState {
   final List<ProductDetails> subscriptionPlans;
   final String? errorMessage;
 
-  /// Becomes [true] exactly once when the store confirms the cached subscription
-  /// has lapsed. [main.dart]'s BlocListener watches this flag to reset the
-  /// custom theme — it only acts on the false → true transition.
+  /// True during the session in which a subscription expired. Used by the
+  /// BlocListener in main.dart to fire DeactivateCustomTheme once.
   final bool subscriptionExpired;
 
-  /// Becomes [true] when the subscription expires so DiaryScreen can show a
-  /// one-time "Your subscription has expired" banner. Reset to [false] by
-  /// dispatching [PremiumExpiredBannerShown] after the banner is displayed.
+  /// True when the diary screen should surface the "subscription expired" banner.
   final bool showExpiredBanner;
+
+  /// True if the user has ever held a subscription (never cleared on expiry).
+  /// Drives the "Restore Custom Theme" button visibility.
+  final bool wasEverSubscriber;
 
   const PremiumState({
     this.status = const PremiumStatus.free(),
-    this.loadingState = PremiumLoadingState.initial,
+    this.loadingState = PremiumLoadingState.idle,
     this.subscriptionPlans = const [],
     this.errorMessage,
     this.subscriptionExpired = false,
     this.showExpiredBanner = false,
+    this.wasEverSubscriber = false,
   });
 
-  // ── Convenience getters used by UI ────────────────────────────────────────
-
   bool get isPremium => status.isPremium;
-  bool get isPurchasing => loadingState == PremiumLoadingState.purchasing;
   bool get isLoading => loadingState == PremiumLoadingState.loading;
+  bool get isPurchasing => loadingState == PremiumLoadingState.purchasing;
   bool get hasPlans => subscriptionPlans.isNotEmpty;
 
   PremiumState copyWith({
     PremiumStatus? status,
     PremiumLoadingState? loadingState,
     List<ProductDetails>? subscriptionPlans,
-    bool clearPlans = false,
     String? errorMessage,
     bool clearError = false,
     bool? subscriptionExpired,
     bool? showExpiredBanner,
-  }) =>
-      PremiumState(
-        status: status ?? this.status,
-        loadingState: loadingState ?? this.loadingState,
-        subscriptionPlans:
-            clearPlans ? [] : (subscriptionPlans ?? this.subscriptionPlans),
-        errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
-        subscriptionExpired:
-            subscriptionExpired ?? this.subscriptionExpired,
-        showExpiredBanner: showExpiredBanner ?? this.showExpiredBanner,
-      );
+    bool? wasEverSubscriber,
+  }) {
+    return PremiumState(
+      status: status ?? this.status,
+      loadingState: loadingState ?? this.loadingState,
+      subscriptionPlans: subscriptionPlans ?? this.subscriptionPlans,
+      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+      subscriptionExpired: subscriptionExpired ?? this.subscriptionExpired,
+      showExpiredBanner: showExpiredBanner ?? this.showExpiredBanner,
+      wasEverSubscriber: wasEverSubscriber ?? this.wasEverSubscriber,
+    );
+  }
 }

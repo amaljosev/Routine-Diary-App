@@ -27,10 +27,6 @@ class DiaryScreen extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// StatefulWidget — owns GlobalKeys and wires ShowcaseView v5 lifecycle
-// ---------------------------------------------------------------------------
-
 class _DiaryBody extends StatefulWidget {
   const _DiaryBody();
 
@@ -39,34 +35,27 @@ class _DiaryBody extends StatefulWidget {
 }
 
 class _DiaryBodyState extends State<_DiaryBody> {
-  // One GlobalKey per item you want to highlight.
   final GlobalKey _fabKey = GlobalKey();
   final GlobalKey _calendarKey = GlobalKey();
   final GlobalKey _settingsKey = GlobalKey();
 
-  // A fixed scope name — must be unique per screen if you have multiple.
   static const _scope = 'diary_home_showcase';
 
   @override
   void initState() {
     super.initState();
-
-    // ── v5 API: register this screen's showcase scope ──────────────────────
     ShowcaseView.register(
       scope: _scope,
       onFinish: () {
         if (mounted) context.read<ShowcaseCubit>().markHomeSeen();
       },
     );
-
-    // Check SharedPrefs after first frame and emit shouldShow.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) context.read<ShowcaseCubit>().checkIfShouldShowHome();
     });
   }
 
   void _startShowcase() {
-    // ── v5 API: retrieve the registered scope and start ────────────────────
     ShowcaseView.getNamed(
       _scope,
     ).startShowCase([_fabKey, _calendarKey, _settingsKey]);
@@ -76,7 +65,6 @@ class _DiaryBodyState extends State<_DiaryBody> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // BlocListener reacts to the cubit emitting shouldShow = true.
     return BlocListener<ShowcaseCubit, ShowcaseState>(
       listener: (_, state) {
         if (state.shouldShow == true) {
@@ -84,81 +72,49 @@ class _DiaryBodyState extends State<_DiaryBody> {
         }
       },
       child: Scaffold(
+        // Let content slide behind the status bar so the hero image fills edge-to-edge
+        extendBodyBehindAppBar: true,
         body: Stack(
-          alignment: AlignmentGeometry.bottomCenter,
           children: [
-            // ── Background SliverAppBar layer ───────────────────────────────
+            // ── Single scrollable column ──────────────────────────────────
             CustomScrollView(
-              physics: const NeverScrollableScrollPhysics(),
               slivers: [
+                // 1. Hero image app bar
                 SliverAppBar(
                   expandedHeight: 200.0,
+                  pinned: true,
                   stretch: true,
                   backgroundColor: theme.colorScheme.primary,
                   flexibleSpace: FlexibleSpaceBar(
                     stretchModes: const [StretchMode.blurBackground],
-                    background: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        ThemeImageHelper.buildImage(
-                          Theme.of(
-                                context,
-                              ).extension<BackgroundImageTheme>()?.imagePath ??
-                              'assets/img/themes/theme_1.webp',
-                          fit: BoxFit.cover,
-                        ),
-                      ],
+                    background: ThemeImageHelper.buildImage(
+                      Theme.of(
+                            context,
+                          ).extension<BackgroundImageTheme>()?.imagePath ??
+                          'assets/img/themes/theme_1.webp',
+                      fit: BoxFit.cover,
                     ),
                   ),
                 ),
-              ],
-            ),
 
-            // ── Scrollable content layer ────────────────────────────────────
-            CustomScrollView(
-              slivers: [
-                const SliverToBoxAdapter(child: SizedBox(height: 170)),
-                SliverToBoxAdapter(child: const SubscriptionStatusBanner()),
+                // 2. Subscription status banner
+                const SliverToBoxAdapter(child: SubscriptionStatusBanner()),
+
+                // 3. "Recent Entries" header + date chip
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
-                    child: Row(
-                      children: [
-                        Text(
-                          "Recent Entries",
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.surface,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: theme.colorScheme.primary.withValues(
-                                alpha: 0.2,
-                              ),
-                            ),
-                          ),
-                          child: Text(
-                            "${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}",
-                            style: theme.textTheme.labelMedium?.copyWith(
-                              color: theme.colorScheme.onSurface,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
+                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
+                    child: Text(
+                      '${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                   ),
                 ),
 
+                // 4. Diary entries (loading / error / list / empty)
                 BlocBuilder<DiaryBloc, DiaryState>(
                   builder: (context, state) {
                     if (state.isLoading) {
@@ -173,11 +129,10 @@ class _DiaryBodyState extends State<_DiaryBody> {
                         child: Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
-                                "Sorry there is a technical glitch at the"
-                                " moment, please try again later",
+                                'Sorry there is a technical glitch at the'
+                                ' moment, please try again later',
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   color: theme.colorScheme.error,
                                 ),
@@ -198,18 +153,16 @@ class _DiaryBodyState extends State<_DiaryBody> {
                       );
                     }
 
-                    final allEntries = List<DiaryEntryModel>.from(
-                      state.entries,
-                    );
-                    allEntries.sort((a, b) {
-                      final dateA =
-                          DateTime.tryParse(a.date) ??
-                          DateTime.fromMillisecondsSinceEpoch(0);
-                      final dateB =
-                          DateTime.tryParse(b.date) ??
-                          DateTime.fromMillisecondsSinceEpoch(0);
-                      return dateB.compareTo(dateA);
-                    });
+                    final allEntries = List<DiaryEntryModel>.from(state.entries)
+                      ..sort((a, b) {
+                        final dateA =
+                            DateTime.tryParse(a.date) ??
+                            DateTime.fromMillisecondsSinceEpoch(0);
+                        final dateB =
+                            DateTime.tryParse(b.date) ??
+                            DateTime.fromMillisecondsSinceEpoch(0);
+                        return dateB.compareTo(dateA);
+                      });
 
                     final latestEntries = allEntries.take(30).toList();
 
@@ -217,7 +170,7 @@ class _DiaryBodyState extends State<_DiaryBody> {
                       return SliverFillRemaining(
                         child: Center(
                           child: Text(
-                            "No entries yet",
+                            'No entries yet',
                             style: theme.textTheme.titleLarge,
                           ),
                         ),
@@ -234,6 +187,7 @@ class _DiaryBodyState extends State<_DiaryBody> {
                   },
                 ),
 
+                // 5. "View All" button — only when entries >= 10
                 BlocBuilder<DiaryBloc, DiaryState>(
                   builder: (context, state) {
                     if (state.entries.length >= 10) {
@@ -273,11 +227,12 @@ class _DiaryBodyState extends State<_DiaryBody> {
                   },
                 ),
 
+                // 6. Bottom padding so last card clears the nav bar
                 const SliverToBoxAdapter(child: SizedBox(height: 120)),
               ],
             ),
 
-            // ── Bottom nav — keys injected for Showcase wrapping ────────────
+            // ── Bottom nav bar — stays on top, outside the scroll ─────────
             Positioned(
               bottom: 0,
               left: 0,
