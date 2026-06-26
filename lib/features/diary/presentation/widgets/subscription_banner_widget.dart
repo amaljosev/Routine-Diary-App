@@ -34,21 +34,15 @@ class SubscriptionStatusBanner extends StatelessWidget {
         // Once shown, mark the banner as seen so it won't re-appear if the
         // widget rebuilds (e.g. on navigation return).
         Future.microtask(
-          () => context.read<PremiumBloc>().add(const PremiumExpiredBannerShown()),
+          () => context.read<PremiumBloc>().add(
+            const PremiumExpiredBannerShown(),
+          ),
         );
       },
       builder: (context, state) {
         // ── 1. Subscription expired ──────────────────────────────────────
         if (state.subscriptionExpired || state.showExpiredBanner) {
-          return _ExpiredBanner(
-            onRenewTap: () {
-              // TODO: Navigate to your paywall screen here.
-              // Example:
-              // Navigator.of(context).push(
-              //   MaterialPageRoute(builder: (_) => const PaywallScreen()),
-              // );
-            },
-          );
+          return _ExpiredBanner(onRenewTap: () {});
         }
 
         // ── 2. Active premium ────────────────────────────────────────────
@@ -79,9 +73,7 @@ class _ExpiredBanner extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.errorContainer,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: colorScheme.error.withValues(alpha: 0.35),
-        ),
+        border: Border.all(color: colorScheme.error.withValues(alpha: 0.35)),
         boxShadow: [
           BoxShadow(
             color: colorScheme.error.withValues(alpha: 0.10),
@@ -129,8 +121,9 @@ class _ExpiredBanner extends StatelessWidget {
                     Text(
                       'Your premium features have been paused. Renew to restore custom themes.',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onErrorContainer
-                            .withValues(alpha: 0.80),
+                        color: colorScheme.onErrorContainer.withValues(
+                          alpha: 0.80,
+                        ),
                         height: 1.4,
                       ),
                     ),
@@ -145,8 +138,10 @@ class _ExpiredBanner extends StatelessWidget {
                 style: TextButton.styleFrom(
                   foregroundColor: colorScheme.error,
                   backgroundColor: colorScheme.error.withValues(alpha: 0.12),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -185,26 +180,17 @@ class _PremiumActiveBadge extends StatelessWidget {
       decoration: BoxDecoration(
         // Subtle gradient pill — uses primary/tertiary so it adapts to any theme.
         gradient: LinearGradient(
-          colors: [
-            colorScheme.primaryContainer,
-            colorScheme.tertiaryContainer,
-          ],
+          colors: [colorScheme.primaryContainer, colorScheme.tertiaryContainer],
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
         ),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: colorScheme.primary.withValues(alpha: 0.25),
-        ),
+        border: Border.all(color: colorScheme.primary.withValues(alpha: 0.25)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.workspace_premium,
-            color: colorScheme.primary,
-            size: 18,
-          ),
+          Icon(Icons.workspace_premium, color: colorScheme.primary, size: 18),
           const SizedBox(width: 8),
           Text(
             'Premium Active',

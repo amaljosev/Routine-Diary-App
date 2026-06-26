@@ -75,8 +75,28 @@ class PremiumIapDataSource {
       plans = [...plans]..sort((a, b) => a.rawPrice.compareTo(b.rawPrice));
     }
 
-    log('IAP: ${plans.length} active plans: '
-        '${plans.map((p) => basePlanId(p) ?? p.id).toList()}');
+    // log('========== GOOGLE PLAY PRODUCTS ==========');
+
+    // for (final p in plans) {
+    //   log('----------------------------------------');
+    //   log('id          : ${p.id}');
+    //   log('title       : ${p.title}');
+    //   log('price       : ${p.price}');
+    //   log('rawPrice    : ${p.rawPrice}');
+
+    //   if (p is GooglePlayProductDetails) {
+    //     final offers = p.productDetails.subscriptionOfferDetails ?? [];
+
+    //     log('offers       : ${offers.length}');
+
+    //     for (final offer in offers) {
+    //       log(
+    //         'basePlan=${offer.basePlanId} '
+    //         'offerId=${offer.offerId} '
+    //       );
+    //     }
+    //   }
+    // }
 
     return plans;
   }
@@ -97,6 +117,7 @@ class PremiumIapDataSource {
         if (bpId.contains('quarter') || bpId.contains('3month')) return 1;
         return 2;
       }
+
       return order(a).compareTo(order(b));
     });
     return result;
@@ -104,10 +125,8 @@ class PremiumIapDataSource {
 
   // ── Purchase / Restore ────────────────────────────────────────────────────
 
-  Future<void> buyNonConsumable(ProductDetails product) =>
-      _iap.buyNonConsumable(
-        purchaseParam: PurchaseParam(productDetails: product),
-      );
+  Future<void> buyNonConsumable(ProductDetails product) => _iap
+      .buyNonConsumable(purchaseParam: PurchaseParam(productDetails: product));
 
   Future<void> restorePurchases() => _iap.restorePurchases();
 
@@ -124,8 +143,9 @@ class PremiumIapDataSource {
 
   Future<bool> verifyActiveSubscription() async {
     try {
-      final available =
-          await _iap.isAvailable().timeout(const Duration(seconds: 4));
+      final available = await _iap.isAvailable().timeout(
+        const Duration(seconds: 4),
+      );
       if (!available) {
         log('IAP verify: store not available → benefit of doubt');
         return true;
@@ -140,16 +160,18 @@ class PremiumIapDataSource {
 
   Future<bool> _verifyAndroid() async {
     try {
-      final addition =
-          _iap.getPlatformAddition<InAppPurchaseAndroidPlatformAddition>();
+      final addition = _iap
+          .getPlatformAddition<InAppPurchaseAndroidPlatformAddition>();
 
-      final response = await addition
-          .queryPastPurchases()
-          .timeout(const Duration(seconds: 6));
+      final response = await addition.queryPastPurchases().timeout(
+        const Duration(seconds: 6),
+      );
 
       if (response.error != null) {
-        log('IAP verify [Android]: error ${response.error!.message} '
-            '→ benefit of doubt');
+        log(
+          'IAP verify [Android]: error ${response.error!.message} '
+          '→ benefit of doubt',
+        );
         return true;
       }
 
@@ -159,8 +181,10 @@ class PremiumIapDataSource {
             p.status == PurchaseStatus.purchased,
       );
 
-      log('IAP verify [Android]: hasActive=$hasActive '
-          '(${response.pastPurchases.length} purchases checked)');
+      log(
+        'IAP verify [Android]: hasActive=$hasActive '
+        '(${response.pastPurchases.length} purchases checked)',
+      );
 
       return hasActive;
     } catch (e) {
@@ -175,7 +199,9 @@ class PremiumIapDataSource {
     if (_iosVerifying &&
         _iosVerifyCompleter != null &&
         !_iosVerifyCompleter!.isCompleted) {
-      log('IAP verify [iOS]: verification already in progress — reusing future');
+      log(
+        'IAP verify [iOS]: verification already in progress — reusing future',
+      );
       return _iosVerifyCompleter!.future;
     }
 
@@ -246,8 +272,9 @@ class PremiumIapDataSource {
             // Suppress from _resultController — this is a verification error,
             // not a user-facing purchase error.
           } else {
-            _resultController
-                .add(RawPurchaseFailure(msg, isCancellation: false));
+            _resultController.add(
+              RawPurchaseFailure(msg, isCancellation: false),
+            );
           }
 
           if (p.pendingCompletePurchase) _iap.completePurchase(p);
@@ -275,7 +302,10 @@ class PremiumIapDataSource {
 
 String? basePlanId(ProductDetails details) {
   if (details is! GooglePlayProductDetails) return null;
-  return details.productDetails.subscriptionOfferDetails?.firstOrNull
+  return details
+      .productDetails
+      .subscriptionOfferDetails
+      ?.firstOrNull
       ?.basePlanId;
 }
 

@@ -1,11 +1,9 @@
-
 // lib/features/premium/presentation/widgets/paywall_sheet.dart
-
-// ignore_for_file: unused_field
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 import '../bloc/premium_bloc.dart';
 
 Future<void> showPaywallSheet(
@@ -67,8 +65,6 @@ class _PaywallSheetState extends State<_PaywallSheet> {
   int _selectedIndex = 1;
 
   static const _navy = Color(0xFF0D1B3E);
-  static const _gold = Color(0xFFFFC94A);
-  static const _textSecondary = Color(0xFFABBAD9);
 
   /// On tablets (>= 600 dp wide) we show the sheet centred with a fixed width.
   static const double _tabletMaxWidth = 560;
@@ -593,20 +589,28 @@ class _PlanSelector extends StatelessWidget {
   });
 
   String _label(ProductDetails p) {
-    final id = p.id.toLowerCase();
+    // On Android, find the base plan whose price matches this product variant.
+    final id = (_matchedBasePlanId(p) ?? p.id).toLowerCase();
+
     if (id.contains('3month') ||
-        id.contains('three') ||
-        id.contains('quarter')) {
+        id.contains('3-month') ||
+        id.contains('quarter') ||
+        id.contains('quarterly')) {
       return '3 Months';
     }
-    if (id.contains('yearly') || id.contains('annual')) return 'Yearly';
+    if (id.contains('year') || id.contains('yearly') || id.contains('annual')) {
+      return 'Yearly';
+    }
     if (id.contains('lifetime') ||
         id.contains('permanent') ||
         id.contains('forever')) {
       return 'Permanent';
     }
-    if (id.contains('monthly') || id.contains('month')) return 'Monthly';
+    if (id.contains('month') || id.contains('monthly')) {
+      return 'Monthly';
+    }
 
+    // Fallback: price-based detection (unchanged)
     final raw = p.price.replaceAll(RegExp(r'[^\d.]'), '');
     final amount = double.tryParse(raw) ?? 0;
     if (amount == 0) return p.title;
@@ -623,7 +627,6 @@ class _PlanSelector extends StatelessWidget {
           ..sort();
 
     if (prices.length < 2) return p.title;
-
     final min = prices.first;
     final max = prices.last;
     final third = (max - min) / 3;
@@ -631,6 +634,26 @@ class _PlanSelector extends StatelessWidget {
     if (amount <= min + third) return 'Monthly';
     if (amount >= max - third) return 'Yearly';
     return '3 Months';
+  }
+
+  String? _matchedBasePlanId(ProductDetails details) {
+    if (details is! GooglePlayProductDetails) return null;
+
+    final offers = details.productDetails.subscriptionOfferDetails ?? [];
+
+    // Find the offer whose pricing phase matches this product's rawPrice.
+    for (final offer in offers) {
+      final phases = offer.pricingPhases;
+      for (final phase in phases) {
+        // pricingPhaseList prices are in micros (e.g. 100000000 = ₹100)
+        final offerPrice = phase.priceAmountMicros / 1000000;
+        if ((offerPrice - details.rawPrice).abs() < 0.5) {
+          return offer.basePlanId;
+        }
+      }
+    }
+
+    return null;
   }
 
   bool _isBestValue(ProductDetails p) {
