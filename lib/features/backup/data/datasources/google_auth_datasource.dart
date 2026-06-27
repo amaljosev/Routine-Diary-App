@@ -69,15 +69,28 @@ class GoogleAuthDataSource {
       final GoogleSignInAccount account = await GoogleSignIn.instance
           .authenticate();
       _currentUser = account;
-      // Request the Drive appdata scope (prompts if not yet granted).
-      await account.authorizationClient.authorizeScopes(_scopes);
+
+      // Only call authorizeScopes if the Drive scope isn't already granted.
+      // authorizeScopes() launches a second consent UI — skipping it when
+      // unnecessary avoids a hang if the pending Future never resolves
+      // (e.g. the consent screen is suppressed or the scope is missing from
+      // your OAuth client in Google Cloud Console).
+      final existing = await account.authorizationClient
+          .authorizationForScopes(_scopes);
+      if (existing == null) {
+        await account.authorizationClient.authorizeScopes(_scopes);
+      }
     } on GoogleSignInException catch (e) {
       if (e.code == GoogleSignInExceptionCode.canceled) {
         throw AuthCancelledException('Cancelled');
       }
       throw AuthException(e.description ?? 'Google sign-in failed.');
-    } catch (e) {
-      throw AuthException(e.toString());
+    } on Exception catch (e) {
+      // Catches PlatformException thrown by authorizeScopes on Android
+      // (e.g. access_denied, network_error, sign_in_required) that the
+      // previous bare `catch (e)` was silently re-throwing as AuthException
+      // but only after a potential indefinite hang.
+      throw AuthException('Drive authorization failed: $e');
     }
   }
 
