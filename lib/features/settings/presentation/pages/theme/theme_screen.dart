@@ -9,6 +9,7 @@ import 'package:routine/features/settings/presentation/pages/theme/custom_theme_
 
 class ThemeSwitcherScreen extends StatefulWidget {
   const ThemeSwitcherScreen({super.key});
+
   @override
   State<ThemeSwitcherScreen> createState() => _ThemeSwitcherScreenState();
 }
@@ -19,7 +20,6 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
   bool _initialScrollDone = false;
   bool _isLoading = true;
 
-  // Only built-in themes — no sentinel needed anymore.
   final List<String> _themes = [
     'assets/img/themes/theme_2.webp',
     'assets/img/themes/theme_1.webp',
@@ -131,28 +131,7 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
 
   bool _isPreviewDark(int index) => index >= 4;
 
-  String _getThemeName(int index) {
-    switch (index) {
-      case 0:
-        return 'Blue Orange Theme selected!';
-      case 1:
-        return 'Purple Teal Theme selected!';
-      case 2:
-        return 'Green Coral Theme selected!';
-      case 3:
-        return 'Orange Purple Theme selected!';
-      case 4:
-        return 'Deep Purple Amber Theme selected!';
-      case 5:
-        return 'Blue Grey Theme selected!';
-      case 6:
-        return 'Forest Green Theme selected!';
-      default:
-        return 'Theme ${index + 1} selected!';
-    }
-  }
-
-  // ── navigation to Custom Theme editor ────────────────────────────────────
+  // ── navigation ────────────────────────────────────────────────────────────
 
   void _openCustomThemeEditor() {
     Navigator.of(context).push(
@@ -168,12 +147,6 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
     );
   }
 
-  // ── restore custom theme ──────────────────────────────────────────────────
-  //
-  // Called when the user taps "Restore Custom Theme".
-  // If already premium  → apply immediately.
-  // If not subscribed   → show paywall; apply on success.
-
   void _restoreCustomTheme() {
     final isPremium = context.read<PremiumBloc>().state.isPremium;
     final customModel = context.read<ThemeBloc>().state.customThemeModel;
@@ -181,16 +154,6 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
 
     void apply() {
       context.read<ThemeBloc>().add(ApplyCustomTheme(customModel));
-      ScaffoldMessenger.of(context).clearSnackBars();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Custom theme restored!'),
-          backgroundColor: _getThemePrimaryColor(_currentPage),
-          behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        ),
-      );
     }
 
     if (isPremium) {
@@ -207,9 +170,18 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
     final surfaceColor = _getThemeSurfaceColor(themeIndex);
     final primaryColor = _getThemePrimaryColor(themeIndex);
 
-    final List<Color> gradientColors = isDarkPreview
+    final List<Color> gc = isDarkPreview
         ? [Colors.grey[800]!, Colors.grey[700]!, Colors.grey[800]!]
         : [Colors.grey[300]!, Colors.grey[100]!, Colors.grey[300]!];
+
+    BoxDecoration bar(double h) => BoxDecoration(
+      borderRadius: BorderRadius.circular(3),
+      gradient: LinearGradient(
+        colors: gc,
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+      ),
+    );
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
@@ -218,10 +190,7 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
             ? surfaceColor.withValues(alpha: 0.6)
             : surfaceColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: primaryColor.withValues(alpha: 0.1),
-          width: 1,
-        ),
+        border: Border.all(color: primaryColor.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
             color: isDarkPreview
@@ -235,7 +204,6 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
               width: 45,
@@ -243,10 +211,10 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 gradient: LinearGradient(
+                  colors: gc,
+                  stops: const [0.0, 0.5, 1.0],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: gradientColors,
-                  stops: const [0.0, 0.5, 1.0],
                 ),
               ),
             ),
@@ -254,7 +222,6 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Row(
                     children: [
@@ -264,25 +231,15 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           gradient: LinearGradient(
+                            colors: gc,
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
-                            colors: gradientColors,
                           ),
                         ),
                       ),
                       const SizedBox(width: 6),
                       Expanded(
-                        child: Container(
-                          height: 18,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(3),
-                            gradient: LinearGradient(
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                              colors: gradientColors,
-                            ),
-                          ),
-                        ),
+                        child: Container(height: 18, decoration: bar(18)),
                       ),
                     ],
                   ),
@@ -290,27 +247,13 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                   Container(
                     height: 12,
                     width: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(3),
-                      gradient: LinearGradient(
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                        colors: gradientColors,
-                      ),
-                    ),
+                    decoration: bar(12),
                   ),
                   const SizedBox(height: 6),
                   Container(
                     height: 12,
                     width: MediaQuery.of(context).size.width * 0.5,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(3),
-                      gradient: LinearGradient(
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                        colors: gradientColors,
-                      ),
-                    ),
+                    decoration: bar(12),
                   ),
                   const SizedBox(height: 8),
                   Row(
@@ -321,25 +264,14 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           gradient: LinearGradient(
+                            colors: gc,
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
-                            colors: gradientColors,
                           ),
                         ),
                       ),
                       const SizedBox(width: 4),
-                      Container(
-                        width: 50,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(2),
-                          gradient: LinearGradient(
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                            colors: gradientColors,
-                          ),
-                        ),
-                      ),
+                      Container(width: 50, height: 12, decoration: bar(12)),
                     ],
                   ),
                 ],
@@ -357,15 +289,16 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
   Widget build(BuildContext context) {
     return BlocBuilder<ThemeBloc, ThemeState>(
       builder: (context, themeState) {
-        // When custom theme is active we don't highlight any built-in page.
-        final int selectedThemeIndex =
-            themeState.isCustomThemeActive ? -1 : themeState.themeIndex;
+        final int selectedThemeIndex = themeState.isCustomThemeActive
+            ? -1
+            : themeState.themeIndex;
         final bool isCustomActive = themeState.isCustomThemeActive;
 
         if (!_initialScrollDone) {
           _isLoading = false;
-          final jumpTo =
-              themeState.isCustomThemeActive ? 0 : themeState.themeIndex;
+          final int jumpTo = themeState.isCustomThemeActive
+              ? 0
+              : themeState.themeIndex;
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) return;
             void doJump() {
@@ -400,338 +333,239 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
           );
         }
 
-        final previewPrimary = _getThemePrimaryColor(_currentPage);
-        final previewSecondary = _getThemeSecondaryColor(_currentPage);
-        final isCurrentPageSelected = selectedThemeIndex == _currentPage;
+        final Color previewPrimary = _getThemePrimaryColor(_currentPage);
+        final Color previewSecondary = _getThemeSecondaryColor(_currentPage);
+        final bool isCurrentPageSelected = selectedThemeIndex == _currentPage;
+        final bool isDarkBg = _isPreviewDark(_currentPage);
 
         return BlocBuilder<PremiumBloc, PremiumState>(
           builder: (context, premiumState) {
-            // ── Restore button visibility logic ─────────────────────────────
-            //
-            // Show when ALL of:
-            //   • user was ever a subscriber (lapsed, not a stranger)
-            //   • a saved custom theme config exists (something to restore)
-            //   • custom theme is NOT already the active theme
-            //
-            // Hidden when:
-            //   • user is currently subscribed + custom theme active
-            //     (they're already enjoying it — no restore needed)
-            //   • user never subscribed (they haven't created a theme yet)
-            //   • no saved theme data exists
-            final bool showRestoreButton = premiumState.wasEverSubscriber &&
+            final bool showRestoreButton =
+                premiumState.wasEverSubscriber &&
                 themeState.customThemeModel != null &&
                 !isCustomActive;
 
             return Scaffold(
               backgroundColor: _getPreviewBackgroundColor(_currentPage),
-
               appBar: AppBar(
                 title: const Text('Choose Your Diary Theme'),
-                titleTextStyle:
-                    Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: previewPrimary,
-                          fontWeight: FontWeight.bold,
-                        ),
+                titleTextStyle: Theme.of(context).textTheme.titleMedium
+                    ?.copyWith(
+                      color: previewPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
                 centerTitle: true,
                 backgroundColor: Colors.transparent,
                 foregroundColor: previewPrimary,
                 elevation: 0,
               ),
+              body: Column(
+                children: [
+                  // ── PageView carousel ─────────────────────────────────────
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          PageView.builder(
+                            controller: _pageController,
+                            itemCount: _themes.length,
+                            onPageChanged: (i) =>
+                                setState(() => _currentPage = i),
+                            itemBuilder: (context, index) {
+                              final bool isDarkPreview = _isPreviewDark(index);
+                              final bool isSelected =
+                                  selectedThemeIndex == index;
 
-              // ── Persistent "Customize Theme" pill ────────────────────────
-              floatingActionButtonLocation:
-                  FloatingActionButtonLocation.centerFloat,
-              floatingActionButton: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: _CustomizeThemePill(
-                  isActive: isCustomActive,
-                  primaryColor: previewPrimary,
-                  onTap: _openCustomThemeEditor,
-                ),
-              ),
-
-              body: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20.0),
-                child: Column(
-                  children: [
-                    // ── Page view ───────────────────────────────────────────
-                    Expanded(
-                      flex: 4,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 40.0),
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            PageView.builder(
-                              controller: _pageController,
-                              itemCount: _themes.length,
-                              onPageChanged: (index) =>
-                                  setState(() => _currentPage = index),
-                              itemBuilder: (context, index) {
-                                final isDarkPreview = _isPreviewDark(index);
-                                final isSelected =
-                                    selectedThemeIndex == index;
-                                return AnimatedContainer(
-                                  duration: const Duration(milliseconds: 300),
-                                  curve: Curves.easeOutCubic,
-                                  margin: EdgeInsets.only(
-                                    top: _currentPage == index ? 0 : 20,
-                                    bottom: _currentPage == index ? 0 : 10,
-                                    right: 10,
-                                    left: 10,
-                                  ),
-                                  child: Transform.scale(
-                                    scale:
-                                        _currentPage == index ? 1.0 : 0.9,
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        if (selectedThemeIndex != index) {
-                                          context.read<ThemeBloc>().add(
-                                                ChangeTheme(index),
-                                              );
-                                          _pageController.animateToPage(
-                                            index,
-                                            duration: const Duration(
-                                                milliseconds: 400),
-                                            curve: Curves.easeInOutCubic,
-                                          );
-                                          ScaffoldMessenger.of(context)
-                                              .clearSnackBars();
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                _getThemeName(index),
-                                                style: const TextStyle(
-                                                    fontWeight:
-                                                        FontWeight.w500),
-                                              ),
-                                              backgroundColor:
-                                                  _getThemePrimaryColor(
-                                                      index),
-                                              behavior:
-                                                  SnackBarBehavior.floating,
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(16),
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                      },
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          borderRadius:
-                                              BorderRadius.circular(32),
-                                          color: isDarkPreview
-                                              ? Colors.white10
-                                              : Colors.black12,
-                                        ),
-                                        child: ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(32),
-                                          child: Stack(
-                                            children: [
-                                              Column(
-                                                children: [
-                                                  Image.asset(
-                                                    _themes[index],
-                                                    width: double.infinity,
-                                                    height: 150,
-                                                    fit: BoxFit.cover,
-                                                    errorBuilder: (context,
-                                                            error, _) =>
-                                                        Container(
-                                                      width: double.infinity,
-                                                      height: 150,
-                                                      color:
-                                                          _getThemePrimaryColor(
-                                                                  index)
-                                                              .withValues(
-                                                                  alpha: 0.3),
-                                                      child: Center(
-                                                        child: Icon(
-                                                          Icons
-                                                              .image_not_supported,
-                                                          color:
-                                                              _getThemePrimaryColor(
-                                                                  index),
-                                                          size: 40,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  Expanded(
-                                                    child: ListView.builder(
-                                                      physics:
-                                                          const NeverScrollableScrollPhysics(),
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                              8),
-                                                      itemCount: 4,
-                                                      itemBuilder:
-                                                          (context, idx) =>
-                                                              _buildPreviewItem(
-                                                                  context,
-                                                                  index),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                              if (isSelected)
-                                                Positioned.fill(
-                                                  child: Container(
-                                                    decoration: BoxDecoration(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              32),
-                                                      border: Border.all(
+                              return AnimatedContainer(
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeOutCubic,
+                                margin: EdgeInsets.only(
+                                  top: _currentPage == index ? 0 : 20,
+                                  bottom: _currentPage == index ? 0 : 10,
+                                  left: 10,
+                                  right: 10,
+                                ),
+                                child: Transform.scale(
+                                  scale: _currentPage == index ? 1.0 : 0.9,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      if (selectedThemeIndex != index) {
+                                        context.read<ThemeBloc>().add(
+                                          ChangeTheme(index),
+                                        );
+                                        _pageController.animateToPage(
+                                          index,
+                                          duration: const Duration(
+                                            milliseconds: 400,
+                                          ),
+                                          curve: Curves.easeInOutCubic,
+                                        );
+                                      }
+                                    },
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(20),
+                                        color: isDarkPreview
+                                            ? Colors.white10
+                                            : Colors.black12,
+                                      ),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(20),
+                                        child: Stack(
+                                          children: [
+                                            Column(
+                                              children: [
+                                                Image.asset(
+                                                  _themes[index],
+                                                  width: double.infinity,
+                                                  height: 150,
+                                                  fit: BoxFit.cover,
+                                                  errorBuilder: (ctx, err, _) =>
+                                                      Container(
+                                                        width: double.infinity,
+                                                        height: 150,
                                                         color:
                                                             _getThemePrimaryColor(
-                                                                index),
-                                                        width: 4,
+                                                              index,
+                                                            ).withValues(
+                                                              alpha: 0.3,
+                                                            ),
+                                                        child: Center(
+                                                          child: Icon(
+                                                            Icons
+                                                                .image_not_supported,
+                                                            color:
+                                                                _getThemePrimaryColor(
+                                                                  index,
+                                                                ),
+                                                            size: 40,
+                                                          ),
+                                                        ),
                                                       ),
+                                                ),
+                                                Expanded(
+                                                  child: ListView.builder(
+                                                    physics:
+                                                        const NeverScrollableScrollPhysics(),
+                                                    padding:
+                                                        const EdgeInsets.all(8),
+                                                    itemCount: 4,
+                                                    itemBuilder: (ctx, idx) =>
+                                                        _buildPreviewItem(
+                                                          context,
+                                                          index,
+                                                        ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            if (isSelected)
+                                              Positioned.fill(
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          20,
+                                                        ),
+                                                    border: Border.all(
+                                                      color:
+                                                          _getThemePrimaryColor(
+                                                            index,
+                                                          ),
+                                                      width: 2,
                                                     ),
                                                   ),
                                                 ),
-                                            ],
-                                          ),
+                                              ),
+                                          ],
                                         ),
                                       ),
                                     ),
                                   ),
-                                );
-                              },
-                            ),
-                            // Page indicator dots
-                            Positioned(
-                              bottom: 20,
-                              left: 0,
-                              right: 0,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: List.generate(
-                                  _themes.length,
-                                  (index) => AnimatedContainer(
-                                    duration:
-                                        const Duration(milliseconds: 300),
-                                    margin: const EdgeInsets.symmetric(
-                                        horizontal: 4),
-                                    height: 6,
-                                    width:
-                                        _currentPage == index ? 24 : 6,
-                                    decoration: BoxDecoration(
-                                      color: _currentPage == index
-                                          ? previewPrimary
-                                          : previewSecondary.withValues(
-                                              alpha: 0.3),
-                                      borderRadius:
-                                          BorderRadius.circular(3),
-                                    ),
-                                  ),
                                 ),
-                              ),
-                            ),
-                          ],
-                        ),
+                              );
+                            },
+                          ),
+                        ],
                       ),
                     ),
+                  ),
 
-                    // ── Bottom button area ────────────────────────────────
-                    SafeArea(
-                      child: Padding(
-                        // Extra bottom padding so the FAB pill doesn't overlap
-                        padding: const EdgeInsets.fromLTRB(25, 0, 25, 72),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // ── "Currently Selected" badge ────────────────
-                            if (isCurrentPageSelected)
-                              Container(
-                                margin: const EdgeInsets.only(bottom: 12),
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 8),
+                  // ── Bottom action area ────────────────────────────────────
+                  SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        spacing: 10,
+                        children: [
+                          // Page indicator dots
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: List.generate(
+                              _themes.length,
+                              (index) => AnimatedContainer(
+                                duration: const Duration(milliseconds: 300),
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
+                                height: 6,
+                                width: _currentPage == index ? 24 : 6,
                                 decoration: BoxDecoration(
-                                  color: previewPrimary.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  '✓ Current Theme',
-                                  style: TextStyle(
-                                    color: previewPrimary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-
-                            // ── "Use This Theme" button ───────────────────
-                            ElevatedButton(
-                              onPressed: isCurrentPageSelected
-                                  ? null
-                                  : () {
-                                      context
-                                          .read<ThemeBloc>()
-                                          .add(ChangeTheme(_currentPage));
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            _getThemeName(_currentPage),
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.w500),
-                                          ),
-                                          backgroundColor: previewPrimary,
-                                          behavior: SnackBarBehavior.floating,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(16),
-                                          ),
-                                        ),
-                                      );
-                                    },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: previewPrimary,
-                                foregroundColor: Colors.white,
-                                disabledBackgroundColor:
-                                    previewPrimary.withValues(alpha: 0.3),
-                                disabledForegroundColor:
-                                    Colors.white.withValues(alpha: 0.5),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(20)),
-                                elevation: isCurrentPageSelected ? 0 : 5,
-                                minimumSize:
-                                    const Size(double.infinity, 50),
-                              ),
-                              child: Text(
-                                isCurrentPageSelected
-                                    ? 'Currently Selected'
-                                    : 'Use This Theme',
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 1,
+                                  color: _currentPage == index
+                                      ? previewPrimary
+                                      : previewSecondary.withValues(alpha: 0.3),
+                                  borderRadius: BorderRadius.circular(3),
                                 ),
                               ),
                             ),
+                          ),
 
-                            // ── "Restore Custom Theme" button ─────────────
-                            //
-                            // Visible only to lapsed subscribers who have a
-                            // saved custom theme that is not currently active.
-                            if (showRestoreButton) ...[
-                              const SizedBox(height: 12),
-                              _RestoreCustomThemeButton(
-                                primaryColor: previewPrimary,
-                                isPremium: premiumState.isPremium,
-                                onTap: _restoreCustomTheme,
+                          _SelectThemeButton(
+                            isSelected: isCurrentPageSelected,
+                            primaryColor: previewPrimary,
+                            isDarkBackground: isDarkBg,
+                            label: isCurrentPageSelected
+                                ? 'Currently Selected'
+                                : 'Use This Theme',
+                            onTap: isCurrentPageSelected
+                                ? null
+                                : () => context.read<ThemeBloc>().add(
+                                    ChangeTheme(_currentPage),
+                                  ),
+                          ),
+
+                          // Second row: Customize | Restore (side by side)
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _CustomizeThemeFAB(
+                                  isActive: isCustomActive,
+                                  primaryColor: previewPrimary,
+                                  isDarkBackground: isDarkBg,
+                                  onTap: _openCustomThemeEditor,
+                                ),
                               ),
+                              if (showRestoreButton) ...[
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: _RestoreCustomThemeButton(
+                                    primaryColor: previewPrimary,
+                                    isDarkBackground: isDarkBg,
+                                    isPremium: premiumState.isPremium,
+                                    onTap: _restoreCustomTheme,
+                                  ),
+                                ),
+                              ],
                             ],
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             );
           },
@@ -742,45 +576,109 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Restore Custom Theme button
+// "Use This Theme" / "Currently Selected" button
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _RestoreCustomThemeButton extends StatelessWidget {
+class _SelectThemeButton extends StatelessWidget {
+  final bool isSelected;
   final Color primaryColor;
-  final bool isPremium;
-  final VoidCallback onTap;
+  final bool isDarkBackground;
+  final String label;
+  final VoidCallback? onTap;
 
-  const _RestoreCustomThemeButton({
+  const _SelectThemeButton({
+    required this.isSelected,
     required this.primaryColor,
-    required this.isPremium,
+    required this.isDarkBackground,
+    required this.label,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 50,
-      child: OutlinedButton.icon(
-        onPressed: onTap,
-        icon: Icon(
-          isPremium ? Icons.palette_outlined : Icons.lock_open_outlined,
-          size: 18,
-          color: primaryColor,
-        ),
-        label: Text(
-          'Restore Custom Theme',
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: primaryColor,
-            letterSpacing: 0.3,
+    if (isSelected) {
+      // Frosted "Currently Selected" chip
+      return Container(
+        width: double.infinity,
+        height: 54,
+        decoration: BoxDecoration(
+          color: primaryColor.withValues(alpha: isDarkBackground ? 0.18 : 0.12),
+          borderRadius: BorderRadius.circular(27),
+          border: Border.all(
+            color: primaryColor.withValues(alpha: 0.35),
+            width: 1.5,
           ),
         ),
-        style: OutlinedButton.styleFrom(
-          side: BorderSide(color: primaryColor, width: 1.5),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                color: primaryColor,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.check_rounded,
+                color: Colors.white,
+                size: 14,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: primaryColor,
+                letterSpacing: 0.2,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Solid filled "Use This Theme" pill
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(27),
+        child: Ink(
+          height: 54,
+          decoration: BoxDecoration(
+            color: primaryColor,
+            borderRadius: BorderRadius.circular(27),
+            boxShadow: [
+              BoxShadow(
+                color: primaryColor.withValues(alpha: 0.40),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                  letterSpacing: 0.3,
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Icon(
+                Icons.arrow_forward_rounded,
+                color: Colors.white,
+                size: 18,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -788,17 +686,84 @@ class _RestoreCustomThemeButton extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Persistent "Customize Theme" pill button
+// "Restore Custom Theme" button  (secondary / ghost)
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _CustomizeThemePill extends StatelessWidget {
-  final bool isActive;
+class _RestoreCustomThemeButton extends StatelessWidget {
   final Color primaryColor;
+  final bool isDarkBackground;
+  final bool isPremium;
   final VoidCallback onTap;
 
-  const _CustomizeThemePill({
+  const _RestoreCustomThemeButton({
+    required this.primaryColor,
+    required this.isDarkBackground,
+    required this.isPremium,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(24),
+        child: Ink(
+          height: 54,
+          decoration: BoxDecoration(
+            color: primaryColor.withValues(
+              alpha: isDarkBackground ? 0.12 : 0.08,
+            ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: primaryColor.withValues(alpha: 0.30),
+              width: 1.5,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                isPremium ? Icons.history_rounded : Icons.lock_open_rounded,
+                size: 17,
+                color: primaryColor,
+              ),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  'Restore Theme',
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: primaryColor,
+                    letterSpacing: 0.1,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// "Customize Theme" FAB pill
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _CustomizeThemeFAB extends StatelessWidget {
+  final bool isActive;
+  final Color primaryColor;
+  final bool isDarkBackground;
+  final VoidCallback onTap;
+
+  const _CustomizeThemeFAB({
     required this.isActive,
     required this.primaryColor,
+    required this.isDarkBackground,
     required this.onTap,
   });
 
@@ -807,58 +772,76 @@ class _CustomizeThemePill extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        height: 52,
+        duration: const Duration(milliseconds: 260),
+        curve: Curves.easeOutCubic,
+        height: 54,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(26),
-          color: isActive ? primaryColor : Colors.transparent,
-          border: Border.all(color: primaryColor, width: 2),
-          boxShadow: isActive
-              ? [
-                  BoxShadow(
-                    color: primaryColor.withValues(alpha: 0.35),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : [],
+          borderRadius: BorderRadius.circular(27),
+          color: isActive
+              ? primaryColor
+              : (isDarkBackground
+                    ? Colors.black.withValues(alpha: 0.45)
+                    : Colors.white.withValues(alpha: 0.72)),
+          border: Border.all(
+            color: isActive
+                ? primaryColor
+                : primaryColor.withValues(alpha: 0.55),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: primaryColor.withValues(alpha: isActive ? 0.38 : 0.15),
+              blurRadius: isActive ? 16 : 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.palette_outlined,
-              size: 20,
+              Icons.auto_awesome_rounded,
+              size: 18,
               color: isActive ? Colors.white : primaryColor,
             ),
-            const SizedBox(width: 8),
-            Text(
-              'Customize Theme',
-              style: TextStyle(
-                fontFamily: 'Quicksand',
-                fontWeight: FontWeight.w700,
-                fontSize: 15,
-                color: isActive ? Colors.white : primaryColor,
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                'Customize Theme',
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: 'Quicksand',
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  color: isActive ? Colors.white : primaryColor,
+                  letterSpacing: 0.1,
+                ),
               ),
             ),
             if (isActive) ...[
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.25),
+                  color: Colors.white.withValues(alpha: 0.22),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Text(
                   'Active',
                   style: TextStyle(
                     fontFamily: 'Nunito',
-                    fontSize: 11,
+                    fontSize: 10,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
                   ),
                 ),
+              ),
+            ] else ...[
+              const SizedBox(width: 4),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 16,
+                color: primaryColor.withValues(alpha: 0.7),
               ),
             ],
           ],

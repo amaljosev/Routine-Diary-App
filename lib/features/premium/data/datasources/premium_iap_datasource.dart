@@ -239,7 +239,10 @@ class PremiumIapDataSource {
 
   void _onPurchaseUpdate(List<PurchaseDetails> purchases) {
     for (final p in purchases) {
-      if (!AppConstants.kPremiumProductIds.contains(p.productID)) continue;
+      // 1. Allow empty productIDs through (common during Android early cancellations)
+      if (p.productID.isNotEmpty && !AppConstants.kPremiumProductIds.contains(p.productID)) {
+        continue;
+      }
 
       switch (p.status) {
         case PurchaseStatus.purchased:
@@ -247,37 +250,38 @@ class PremiumIapDataSource {
           log('IAP: Purchase/restore success for ${p.productID}');
 
           if (_iosVerifying) {
-            // FIX: Use _iosVerifying flag (not just the completer) as the
-            // single source of truth. This prevents a race where the completer
-            // exists but a previous result already completed it, yet
-            // _iosVerifying is still true.
             log('IAP verify [iOS]: confirmed active');
             _safeCompleteIosVerify(true);
-            // Do NOT forward to _resultController — this is a silent verification
-            // event, not a user-initiated purchase.
           } else {
-            // Normal user-initiated purchase or restore.
             _resultController.add(const RawPurchaseSuccess());
           }
 
           if (p.pendingCompletePurchase) _iap.completePurchase(p);
+          break; // Added explicit break
 
         case PurchaseStatus.error:
           final msg = p.error?.message ?? 'Unknown IAP error';
-          log('IAP error: $msg');
+          final code = p.error?.code;
+          log('IAP error: code=$code, msg=$msg');
+
+          // 2. Detect cancellations masquerading as errors
+          // Code '1' is Android BillingResponse.userCanceled. Code '2' is iOS SKErrorPaymentCancelled.
+          final isCancellation = code == '1' || 
+                                 code == '2' || 
+                                 code == 'userCanceled' || 
+                                 msg.toLowerCase().contains('cancel');
 
           if (_iosVerifying) {
             log('IAP verify [iOS]: error → treating as not active');
             _safeCompleteIosVerify(false);
-            // Suppress from _resultController — this is a verification error,
-            // not a user-facing purchase error.
           } else {
             _resultController.add(
-              RawPurchaseFailure(msg, isCancellation: false),
+              RawPurchaseFailure(msg, isCancellation: isCancellation),
             );
           }
 
           if (p.pendingCompletePurchase) _iap.completePurchase(p);
+          break; // Added explicit break
 
         case PurchaseStatus.canceled:
           log('IAP: Purchase cancelled for ${p.productID}');
@@ -289,14 +293,16 @@ class PremiumIapDataSource {
               ),
             );
           }
+          // 3. Ensure we still complete the purchase to remove it from the queue
+          if (p.pendingCompletePurchase) _iap.completePurchase(p); 
+          break; // Added explicit break
 
         case PurchaseStatus.pending:
           log('IAP: Purchase pending for ${p.productID}');
           break;
       }
     }
-  }
-}
+  }}
 
 // ── Base plan ID helper ───────────────────────────────────────────────────────
 

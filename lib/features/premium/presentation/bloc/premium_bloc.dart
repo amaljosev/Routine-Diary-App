@@ -4,6 +4,7 @@ import 'dart:developer';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:routine/core/error/subscription/sub_failures.dart';
 import 'package:routine/features/premium/domain/repositories/premium_repository.dart';
 import 'package:routine/features/premium/domain/usecases/clear_premium_cache.dart';
 import 'package:routine/features/premium/domain/usecases/fetch_product_details.dart';
@@ -47,9 +48,18 @@ class PremiumBloc extends Bloc<PremiumEvent, PremiumState> {
         _clearPremiumCache = clearPremiumCache,
         _repository = repository,
         super(const PremiumState()) {
+          
     _purchaseSub = repository.purchaseResultStream.listen((either) {
       either.fold(
-        (failure) => add(PremiumPurchaseFailed(failure.message)),
+        (failure) {
+          // Check if the failure type maps to a cancellation
+          final isCancel = failure is PurchaseCancelledFailure;
+          
+          add(PremiumPurchaseFailed(
+            failure.message,
+            isCancellation: isCancel, // Pass the flag to the event
+          ));
+        },
         (_) => add(const PremiumPurchaseSucceeded()),
       );
     });

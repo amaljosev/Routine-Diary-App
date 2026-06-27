@@ -38,6 +38,7 @@ class _SubscriptionStatusBannerState extends State<SubscriptionStatusBanner> {
         // Guard with mounted before using context across the async gap.
         Future.microtask(() {
           if (!mounted) return;
+          // ignore: use_build_context_synchronously
           context.read<PremiumBloc>().add(const PremiumExpiredBannerShown());
         });
       },
