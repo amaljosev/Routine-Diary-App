@@ -181,8 +181,8 @@ class PaletteInfo {
 }
 
 const List<String> kBuiltInPaletteNames = [
-  'Purple Teal',
   'Blue Orange',
+  'Purple Teal',
   'Green Coral',
   'Orange Purple',
   'Deep Purple (Dark)',
