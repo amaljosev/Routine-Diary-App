@@ -10,7 +10,7 @@ import 'package:routine/features/diary/presentation/pages/entry/diary_entry.dart
 import 'package:routine/features/diary/presentation/pages/history/history_screen.dart';
 import 'package:routine/features/diary/presentation/widgets/bottom_nav_bar.dart';
 import 'package:routine/features/diary/presentation/widgets/entry_card_widget.dart';
-import 'package:routine/features/diary/presentation/widgets/subscription_banner_widget.dart';
+import 'package:routine/features/premium/presentation/widgets/subscription_banner_widget.dart';
 import 'package:routine/features/settings/presentation/pages/settings_screen.dart';
 import 'package:routine/features/settings/presentation/pages/theme/theme_image_helper.dart';
 import 'package:showcaseview/showcaseview.dart';
@@ -127,7 +127,7 @@ class _DiaryBodyState extends State<_DiaryBody> {
                 ),
 
                 // 2. Subscription banner
-                const SliverToBoxAdapter(child: SubscriptionStatusBanner()),
+                const SliverToBoxAdapter(child: SubscriptionStatusBanner(isHome: true,)),
 
                 // 3. Entries / empty state
                 BlocBuilder<DiaryBloc, DiaryState>(

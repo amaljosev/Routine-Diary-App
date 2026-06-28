@@ -6,9 +6,67 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 import '../bloc/premium_bloc.dart';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Design tokens — all pink-theme colors live here so they're easy to update.
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _T {
+  // Sheet background gradient stops
+  static const bgTop    = Color(0xFF2A0618);
+  static const bgBottom = Color(0xFF130208);
+
+  // Radial glow behind the icon
+  static const glowColor = Color(0xFFD4537E);
+
+  // Icon circle gradient
+  static const iconGradTop    = Color(0xFFF9A8D4); // pink-300
+  static const iconGradBottom = Color(0xFFE11D74); // pink-600
+
+  // Primary accent (borders, highlights, badge gradient start)
+  static const pink  = Color(0xFFE11D74);
+  static const pink2 = Color(0xFFF472B6); // lighter end
+
+  // Text colors on dark sheet
+  static const textPrimary   = Colors.white;
+  static const textSecondary = Color(0x99FFFFFF); // 60 % white
+  static const textMuted     = Color(0x4DFFFFFF); // 30 % white
+
+  // Feature row icon backgrounds
+  static const featPinkBg  = Color(0x26F472B6); // pink  / 15 %
+  static const featBlueBg  = Color(0x263B82F6); // blue-500 / 15 %
+
+  // Plan card colors
+  static const cardBg     = Color(0x0DFFFFFF); //  5 % white fill
+  static const cardBorder = Color(0x14FFFFFF); //  8 % white border
+  static const cardSelBg  = Color(0x1AE11D74); // pink / 10 %
+
+  // Subscribe button gradient
+  static const btnTop    = Color(0xFFF472B6);
+  static const btnBottom = Color(0xFFBE185D);
+  static const btnShadow = Color(0x66E11D74); // 40 % pink
+
+  // "Best value" badge gradient
+  static const badgeStart = Color(0xFFF9A8D4);
+  static const badgeEnd   = Color(0xFFE11D74);
+
+  // Footer / restore
+  static const restoreText = Color(0x66FFFFFF);
+  static const legalText   = Color(0x33FFFFFF);
+  static const legalDot    = Color(0xFFE11D74);
+
+  // Plans unavailable error
+  static const errorText = Color(0xFFFF6B8A);
+
+  // Section label
+  static const sectionLabel = Color(0x4DFFFFFF); // 30 % white
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Public entry-point (API unchanged)
+// ─────────────────────────────────────────────────────────────────────────────
+
 Future<void> showPaywallSheet(
   BuildContext context, {
-
   required VoidCallback onSuccess,
   String title = 'Unlock Premium',
   String subtitle = 'Subscribe and unlock all premium features.',
@@ -17,6 +75,7 @@ Future<void> showPaywallSheet(
     'Choose from built-in asset headers',
     'Pick any primary & secondary color',
     'Unlimited theme combinations',
+    'Google Drive backup & restore',
   ],
 }) {
   final bloc = context.read<PremiumBloc>();
@@ -34,14 +93,14 @@ Future<void> showPaywallSheet(
       ),
     ),
   ).whenComplete(() {
-    // Sheet is fully closed — reset purchasing state if IAP stream never fired.
-    // Safe to call even after a successful purchase (bloc ignores if not purchasing).
     if (!bloc.isClosed) {
       bloc.add(const PremiumPurchaseReset());
     }
   });
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Shell widget — handles responsive layout + BlocConsumer
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _PaywallSheet extends StatefulWidget {
@@ -64,9 +123,6 @@ class _PaywallSheet extends StatefulWidget {
 class _PaywallSheetState extends State<_PaywallSheet> {
   int _selectedIndex = 1;
 
-  static const _navy = Color(0xFF0D1B3E);
-
-  /// On tablets (>= 600 dp wide) we show the sheet centred with a fixed width.
   static const double _tabletMaxWidth = 560;
 
   bool get _isLandscape =>
@@ -79,12 +135,11 @@ class _PaywallSheetState extends State<_PaywallSheet> {
     final mq = MediaQuery.of(context);
     final bottomPad = mq.viewInsets.bottom + mq.padding.bottom + 16;
 
-    // On tablets / landscape we cap the height so it doesn't fill the screen.
     final maxSheetHeight = _isTablet
         ? mq.size.height * 0.90
         : _isLandscape
-        ? mq.size.height * 0.96
-        : mq.size.height * 0.92;
+            ? mq.size.height * 0.96
+            : mq.size.height * 0.92;
 
     return BlocConsumer<PremiumBloc, PremiumState>(
       listenWhen: (prev, curr) =>
@@ -110,19 +165,23 @@ class _PaywallSheetState extends State<_PaywallSheet> {
         final sheet = Container(
           constraints: BoxConstraints(maxHeight: maxSheetHeight),
           decoration: const BoxDecoration(
-            color: _navy,
+            gradient: LinearGradient(
+              colors: [_T.bgTop, _T.bgBottom],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
             borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // ── Drag handle ──────────────────────────────────────────────
-              const SizedBox(height: 10),
+              // ── Drag handle ─────────────────────────────────────────────
+              const SizedBox(height: 12),
               Container(
                 width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
+                  color: Colors.white.withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -138,13 +197,15 @@ class _PaywallSheetState extends State<_PaywallSheet> {
                           state: state,
                           widget: widget,
                           selectedIndex: _selectedIndex,
-                          onSelected: (i) => setState(() => _selectedIndex = i),
+                          onSelected: (i) =>
+                              setState(() => _selectedIndex = i),
                         )
                       : _PortraitBody(
                           state: state,
                           widget: widget,
                           selectedIndex: _selectedIndex,
-                          onSelected: (i) => setState(() => _selectedIndex = i),
+                          onSelected: (i) =>
+                              setState(() => _selectedIndex = i),
                         ),
                 ),
               ),
@@ -152,7 +213,6 @@ class _PaywallSheetState extends State<_PaywallSheet> {
           ),
         );
 
-        // Tablet: centre + constrain width, add safe-area padding on sides
         if (_isTablet) {
           return Align(
             alignment: Alignment.bottomCenter,
@@ -169,14 +229,15 @@ class _PaywallSheetState extends State<_PaywallSheet> {
   }
 }
 
-// ── Portrait layout (phone portrait + tablet) ─────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Portrait layout
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _PortraitBody extends StatelessWidget {
   final PremiumState state;
   final _PaywallSheet widget;
   final int selectedIndex;
   final ValueChanged<int> onSelected;
-
 
   const _PortraitBody({
     required this.state,
@@ -192,14 +253,16 @@ class _PortraitBody extends StatelessWidget {
       children: [
         _HeroHeader(title: widget.title, subtitle: widget.subtitle),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
           child: Column(
-            children: widget.features
-                .map((f) => _FeatureRow(label: f))
-                .toList(),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _sectionLabel('What you get'),
+              ...widget.features.map((f) => _FeatureRow(label: f)),
+              _sectionLabel('Choose your plan'),
+            ],
           ),
         ),
-        const SizedBox(height: 24),
         _PlanArea(
           state: state,
           selectedIndex: selectedIndex,
@@ -207,11 +270,11 @@ class _PortraitBody extends StatelessWidget {
         ),
         const SizedBox(height: 20),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: _SubscribeButton(
             state: state,
-            selectedPlan:
-                state.hasPlans && selectedIndex < state.subscriptionPlans.length
+            selectedPlan: state.hasPlans &&
+                    selectedIndex < state.subscriptionPlans.length
                 ? state.subscriptionPlans[selectedIndex]
                 : null,
           ),
@@ -222,16 +285,15 @@ class _PortraitBody extends StatelessWidget {
   }
 }
 
-// ── Landscape layout (phone landscape only) ───────────────────────────────────
-//
-// Two-column: hero/features on left, plans + CTA on right.
+// ─────────────────────────────────────────────────────────────────────────────
+// Landscape layout — two column
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _LandscapeBody extends StatelessWidget {
   final PremiumState state;
   final _PaywallSheet widget;
   final int selectedIndex;
   final ValueChanged<int> onSelected;
-
 
   const _LandscapeBody({
     required this.state,
@@ -247,7 +309,7 @@ class _LandscapeBody extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── LEFT: title + features ───────────────────────────────────────
+          // LEFT — icon + title + features
           Expanded(
             flex: 5,
             child: Column(
@@ -258,19 +320,19 @@ class _LandscapeBody extends StatelessWidget {
                   subtitle: widget.subtitle,
                 ),
                 const SizedBox(height: 12),
+                _sectionLabel('What you get'),
                 ...widget.features.map((f) => _FeatureRow(label: f)),
               ],
             ),
           ),
-
           const SizedBox(width: 16),
-
-          // ── RIGHT: plans + CTA + footer ──────────────────────────────────
+          // RIGHT — plans + CTA + footer
           Expanded(
             flex: 5,
             child: Column(
               children: [
                 const SizedBox(height: 8),
+                _sectionLabel('Choose your plan'),
                 _PlanArea(
                   state: state,
                   selectedIndex: selectedIndex,
@@ -279,8 +341,7 @@ class _LandscapeBody extends StatelessWidget {
                 const SizedBox(height: 16),
                 _SubscribeButton(
                   state: state,
-                  selectedPlan:
-                      state.hasPlans &&
+                  selectedPlan: state.hasPlans &&
                           selectedIndex < state.subscriptionPlans.length
                       ? state.subscriptionPlans[selectedIndex]
                       : null,
@@ -295,77 +356,110 @@ class _LandscapeBody extends StatelessWidget {
   }
 }
 
-// ── Shared plan area (loading / unavailable / selector) ───────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Section label helper (shared between portrait & landscape)
+// ─────────────────────────────────────────────────────────────────────────────
 
-class _PlanArea extends StatelessWidget {
-  final PremiumState state;
-  final int selectedIndex;
-  final ValueChanged<int> onSelected;
-
-  static const _gold = Color(0xFFFFC94A);
-
-  const _PlanArea({
-    required this.state,
-    required this.selectedIndex,
-    required this.onSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: state.isLoading
-          ? const Padding(
-              padding: EdgeInsets.symmetric(vertical: 20),
-              child: CircularProgressIndicator(color: _gold),
-            )
-          : !state.hasPlans
-          ? Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Text(
-                'Plans unavailable. Please check your connection.',
-                style: TextStyle(color: Colors.red.shade300, fontSize: 13),
-                textAlign: TextAlign.center,
-              ),
-            )
-          : _PlanSelector(
-              plans: state.subscriptionPlans,
-              selectedIndex: selectedIndex,
-              onSelected: onSelected,
-            ),
+Widget _sectionLabel(String text) => Padding(
+      padding: const EdgeInsets.only(top: 18, bottom: 8),
+      child: Text(
+        text.toUpperCase(),
+        style: const TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.2,
+          color: _T.sectionLabel,
+        ),
+      ),
     );
-  }
-}
 
-// ── Footer (restore + legal) ──────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Hero header — portrait / tablet
+// ─────────────────────────────────────────────────────────────────────────────
 
-class _Footer extends StatelessWidget {
-  final bool isPurchasing;
+class _HeroHeader extends StatelessWidget {
+  final String title;
+  final String subtitle;
 
-  const _Footer({required this.isPurchasing});
+  const _HeroHeader({required this.title, required this.subtitle});
 
   @override
   Widget build(BuildContext context) {
-    final bloc = context.read<PremiumBloc>();
-    return Column(
-      mainAxisSize: MainAxisSize.min,
+    return Stack(
+      alignment: Alignment.topCenter,
       children: [
-        TextButton(
-          onPressed: isPurchasing
-              ? () => !bloc.isClosed
-                    ? bloc.add(const PremiumPurchaseReset())
-                    : null
-              : () => bloc.add(const PremiumRestoreRequested()),
-          child: const Text(
-            'Restore Purchase',
-            style: TextStyle(color: Color(0xFFABBAD9), fontSize: 13),
+        // Radial glow
+        Positioned(
+          top: 0,
+          child: Container(
+            width: 220,
+            height: 140,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  _T.glowColor.withValues(alpha: 0.20),
+                  Colors.transparent,
+                ],
+              ),
+            ),
           ),
         ),
-        const Padding(
-          padding: EdgeInsets.only(bottom: 8),
-          child: Text(
-            'Renews automatically · Cancel anytime',
-            style: TextStyle(color: Color(0xFF5A6E9A), fontSize: 11),
+
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+          child: Column(
+            children: [
+              // Crown icon circle
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [_T.iconGradTop, _T.iconGradBottom],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: _T.pink.withValues(alpha: 0.45),
+                      blurRadius: 28,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.workspace_premium_rounded,
+                  color: Colors.white,
+                  size: 34,
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              Text(
+                title,
+                style: const TextStyle(
+                  color: _T.textPrimary,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.5,
+                  height: 1.2,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  color: _T.textSecondary,
+                  fontSize: 13,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
         ),
       ],
@@ -373,90 +467,13 @@ class _Footer extends StatelessWidget {
   }
 }
 
-// ── Hero Header (portrait / tablet) ──────────────────────────────────────────
-
-class _HeroHeader extends StatelessWidget {
-  final String title;
-  final String subtitle;
-
-  static const _gold = Color(0xFFFFC94A);
-  static const _textSecondary = Color(0xFFABBAD9);
-
-  const _HeroHeader({required this.title, required this.subtitle});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 28, 24, 28),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF1A2F6B), Color(0xFF0D1B3E)],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-      ),
-      child: Column(
-        children: [
-          Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFFFDE7A), Color(0xFFE6A800)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: _gold.withValues(alpha: 0.5),
-                  blurRadius: 24,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.workspace_premium_rounded,
-              color: Color(0xFF7A4800),
-              size: 36,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.5,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 6),
-          Text(
-            subtitle,
-            style: const TextStyle(
-              color: _textSecondary,
-              fontSize: 13,
-              height: 1.5,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Compact Hero Header (landscape phone — left column) ───────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Compact hero header — landscape phone (left column)
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _CompactHeroHeader extends StatelessWidget {
   final String title;
   final String subtitle;
-
-  static const _gold = Color(0xFFFFC94A);
-  static const _textSecondary = Color(0xFFABBAD9);
 
   const _CompactHeroHeader({required this.title, required this.subtitle});
 
@@ -470,14 +487,14 @@ class _CompactHeroHeader extends StatelessWidget {
           height: 48,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFFFFDE7A), Color(0xFFE6A800)],
+              colors: [_T.iconGradTop, _T.iconGradBottom],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: _gold.withValues(alpha: 0.45),
+                color: _T.pink.withValues(alpha: 0.40),
                 blurRadius: 16,
                 offset: const Offset(0, 4),
               ),
@@ -485,8 +502,8 @@ class _CompactHeroHeader extends StatelessWidget {
           ),
           child: const Icon(
             Icons.workspace_premium_rounded,
-            color: Color(0xFF7A4800),
-            size: 26,
+            color: Colors.white,
+            size: 24,
           ),
         ),
         const SizedBox(width: 12),
@@ -497,7 +514,7 @@ class _CompactHeroHeader extends StatelessWidget {
               Text(
                 title,
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: _T.textPrimary,
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.3,
@@ -507,7 +524,7 @@ class _CompactHeroHeader extends StatelessWidget {
               Text(
                 subtitle,
                 style: const TextStyle(
-                  color: _textSecondary,
+                  color: _T.textSecondary,
                   fontSize: 11,
                   height: 1.4,
                 ),
@@ -520,45 +537,65 @@ class _CompactHeroHeader extends StatelessWidget {
   }
 }
 
-// ── Feature Row ───────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Feature row
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _FeatureRow extends StatelessWidget {
   final String label;
 
-  static const _gold = Color(0xFFFFC94A);
-  static const _cardBg = Color(0xFF1E2D5A);
-
   const _FeatureRow({required this.label});
+
+  // Detect Google Drive / cloud backup rows to give them a distinct blue icon.
+  static bool _isDriveFeature(String label) {
+    final l = label.toLowerCase();
+    return l.contains('google drive') ||
+        l.contains('backup') ||
+        l.contains('restore') ||
+        l.contains('cloud');
+  }
 
   @override
   Widget build(BuildContext context) {
+    final isDrive = _isDriveFeature(label);
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      margin: const EdgeInsets.only(bottom: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: _cardBg,
+        color: _T.cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        border: Border.all(
+          color: isDrive
+              ? const Color(0x263B82F6) // blue tint border for drive row
+              : _T.pink.withValues(alpha: 0.12),
+        ),
       ),
       child: Row(
         children: [
+          // Icon bubble
           Container(
-            width: 26,
-            height: 26,
+            width: 30,
+            height: 30,
             decoration: BoxDecoration(
-              color: _gold.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
+              color: isDrive ? _T.featBlueBg : _T.featPinkBg,
+              borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(Icons.check_rounded, color: _gold, size: 16),
+            child: Icon(
+              isDrive ? Icons.cloud_done_outlined : Icons.check_rounded,
+              color: isDrive ? const Color(0xFF60A5FA) : _T.pink2,
+              size: 16,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               label,
               style: const TextStyle(
-                color: Colors.white,
+                color: _T.textPrimary,
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
+                height: 1.3,
               ),
             ),
           ),
@@ -568,15 +605,56 @@ class _FeatureRow extends StatelessWidget {
   }
 }
 
-// ── Plan Selector ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Plan area — handles loading / unavailable / selector states
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _PlanArea extends StatelessWidget {
+  final PremiumState state;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+
+  const _PlanArea({
+    required this.state,
+    required this.selectedIndex,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: state.isLoading
+          ? const Padding(
+              padding: EdgeInsets.symmetric(vertical: 20),
+              child: CircularProgressIndicator(color: _T.pink),
+            )
+          : !state.hasPlans
+              ? Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Text(
+                    'Plans unavailable. Please check your connection.',
+                    style: TextStyle(color: _T.errorText, fontSize: 13),
+                    textAlign: TextAlign.center,
+                  ),
+                )
+              : _PlanSelector(
+                  plans: state.subscriptionPlans,
+                  selectedIndex: selectedIndex,
+                  onSelected: onSelected,
+                ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Plan selector — row of tappable plan cards
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _PlanSelector extends StatelessWidget {
   final List<ProductDetails> plans;
   final int selectedIndex;
   final ValueChanged<int> onSelected;
-
-  static const _gold = Color(0xFFFFC94A);
-  static const _cardBg = Color(0xFF1E2D5A);
 
   const _PlanSelector({
     required this.plans,
@@ -584,8 +662,9 @@ class _PlanSelector extends StatelessWidget {
     required this.onSelected,
   });
 
+  // ── Label helpers (unchanged logic from original) ──────────────────────────
+
   String _label(ProductDetails p) {
-    // On Android, find the base plan whose price matches this product variant.
     final id = (_matchedBasePlanId(p) ?? p.id).toLowerCase();
 
     if (id.contains('3month') ||
@@ -600,27 +679,20 @@ class _PlanSelector extends StatelessWidget {
     if (id.contains('lifetime') ||
         id.contains('permanent') ||
         id.contains('forever')) {
-      return 'Permanent';
+      return 'Lifetime';
     }
-    if (id.contains('month') || id.contains('monthly')) {
-      return 'Monthly';
-    }
+    if (id.contains('month') || id.contains('monthly')) return 'Monthly';
 
-    // Fallback: price-based detection (unchanged)
     final raw = p.price.replaceAll(RegExp(r'[^\d.]'), '');
     final amount = double.tryParse(raw) ?? 0;
     if (amount == 0) return p.title;
 
-    final prices =
-        plans
-            .map(
-              (pl) =>
-                  double.tryParse(pl.price.replaceAll(RegExp(r'[^\d.]'), '')) ??
-                  0,
-            )
-            .where((v) => v > 0)
-            .toList()
-          ..sort();
+    final prices = plans
+        .map((pl) =>
+            double.tryParse(pl.price.replaceAll(RegExp(r'[^\d.]'), '')) ?? 0)
+        .where((v) => v > 0)
+        .toList()
+      ..sort();
 
     if (prices.length < 2) return p.title;
     final min = prices.first;
@@ -636,19 +708,14 @@ class _PlanSelector extends StatelessWidget {
     if (details is! GooglePlayProductDetails) return null;
 
     final offers = details.productDetails.subscriptionOfferDetails ?? [];
-
-    // Find the offer whose pricing phase matches this product's rawPrice.
     for (final offer in offers) {
-      final phases = offer.pricingPhases;
-      for (final phase in phases) {
-        // pricingPhaseList prices are in micros (e.g. 100000000 = ₹100)
+      for (final phase in offer.pricingPhases) {
         final offerPrice = phase.priceAmountMicros / 1000000;
         if ((offerPrice - details.rawPrice).abs() < 0.5) {
           return offer.basePlanId;
         }
       }
     }
-
     return null;
   }
 
@@ -665,15 +732,15 @@ class _PlanSelector extends StatelessWidget {
   }
 
   String? _subLabel(ProductDetails p) {
-    if (_isPermanent(p)) return 'Pay once, unlock forever';
+    if (_isPermanent(p)) return 'Pay once, keep forever';
 
     final raw = p.price.replaceAll(RegExp(r'[^\d.]'), '');
     final amount = double.tryParse(raw) ?? 0;
     if (amount == 0) return null;
 
     final currencySymbol = p.price.replaceAll(RegExp(r'[\d.,\s]'), '').trim();
-
     final label = _label(p);
+
     if (label == 'Monthly') {
       return '$currencySymbol${(amount / 4).toStringAsFixed(2)}/wk';
     }
@@ -703,7 +770,7 @@ class _PlanSelector extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Fixed-height badge row
+                // Fixed-height badge row so cards stay aligned
                 SizedBox(
                   height: 26,
                   child: bestValue
@@ -715,12 +782,12 @@ class _PlanSelector extends StatelessWidget {
                             ),
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
-                                colors: [Color(0xFFFFDE7A), Color(0xFFE6A800)],
+                                colors: [_T.badgeStart, _T.badgeEnd],
                               ),
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
                                 BoxShadow(
-                                  color: _gold.withValues(alpha: 0.4),
+                                  color: _T.pink.withValues(alpha: 0.40),
                                   blurRadius: 10,
                                   offset: const Offset(0, 3),
                                 ),
@@ -729,7 +796,7 @@ class _PlanSelector extends StatelessWidget {
                             child: const Text(
                               '★ Best Value',
                               style: TextStyle(
-                                color: Color(0xFF7A4800),
+                                color: Colors.white,
                                 fontSize: 9,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 0.3,
@@ -742,24 +809,24 @@ class _PlanSelector extends StatelessWidget {
 
                 const SizedBox(height: 4),
 
-                // Card
+                // Plan card
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   margin: const EdgeInsets.symmetric(horizontal: 4),
                   padding: const EdgeInsets.fromLTRB(8, 14, 8, 14),
                   decoration: BoxDecoration(
-                    color: isSelected ? _gold.withValues(alpha: 0.10) : _cardBg,
+                    color: isSelected ? _T.cardSelBg : _T.cardBg,
                     border: Border.all(
                       color: isSelected
-                          ? _gold
-                          : Colors.white.withValues(alpha: 0.08),
+                          ? _T.pink
+                          : _T.cardBorder,
                       width: isSelected ? 2 : 1.5,
                     ),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(16),
                     boxShadow: isSelected
                         ? [
                             BoxShadow(
-                              color: _gold.withValues(alpha: 0.18),
+                              color: _T.pink.withValues(alpha: 0.22),
                               blurRadius: 14,
                               offset: const Offset(0, 4),
                             ),
@@ -769,30 +836,37 @@ class _PlanSelector extends StatelessWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      // Period label
                       Text(
                         _label(plan),
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
-                          fontSize: 12,
-                          color: isSelected ? _gold : const Color(0xFFABBAD9),
+                          fontSize: 11,
+                          color: isSelected ? _T.pink2 : _T.textMuted,
                         ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 6),
+
+                      // Price
                       Text(
                         plan.price,
                         style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 16,
                           color: isSelected
-                              ? Colors.white
-                              : const Color(0xFF7A8EBB),
+                              ? _T.textPrimary
+                              : _T.textSecondary,
                         ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 2),
+
+                      // Strikethrough (if present in description)
                       _StrikethroughPrice(plan: plan),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
+
+                      // Sub-label pill
                       if (subLabel != null)
                         _SubLabelPill(
                           label: subLabel,
@@ -803,13 +877,18 @@ class _PlanSelector extends StatelessWidget {
                   ),
                 ),
 
+                // Selection indicator bar
                 const SizedBox(height: 6),
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   height: 3,
-                  width: isSelected ? 28 : 0,
+                  width: isSelected ? 24 : 0,
                   decoration: BoxDecoration(
-                    color: _gold,
+                    gradient: isSelected
+                        ? const LinearGradient(
+                            colors: [_T.pink2, _T.pink],
+                          )
+                        : null,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -822,7 +901,9 @@ class _PlanSelector extends StatelessWidget {
   }
 }
 
-// ── Strikethrough Price ───────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Strikethrough original price (parsed from product description)
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _StrikethroughPrice extends StatelessWidget {
   final ProductDetails plan;
@@ -830,8 +911,7 @@ class _StrikethroughPrice extends StatelessWidget {
   const _StrikethroughPrice({required this.plan});
 
   String? _originalPrice() {
-    final desc = plan.description;
-    final match = RegExp(r'was:([^\s]+)').firstMatch(desc);
+    final match = RegExp(r'was:([^\s]+)').firstMatch(plan.description);
     return match?.group(1);
   }
 
@@ -842,25 +922,25 @@ class _StrikethroughPrice extends StatelessWidget {
 
     return Text(
       original,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 11,
-        color: Color(0xFF4E5F88),
+        color: _T.textMuted,
         decoration: TextDecoration.lineThrough,
-        decorationColor: Color(0xFF4E5F88),
+        decorationColor: _T.textMuted,
       ),
       textAlign: TextAlign.center,
     );
   }
 }
 
-// ── Sub-label pill ────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Sub-label pill (weekly breakdown / "Pay once" etc.)
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _SubLabelPill extends StatelessWidget {
   final String label;
   final bool isSelected;
   final bool isPermanent;
-
-  static const _gold = Color(0xFFFFC94A);
 
   const _SubLabelPill({
     required this.label,
@@ -876,15 +956,15 @@ class _SubLabelPill extends StatelessWidget {
 
     if (isPermanent) {
       bg = Colors.white.withValues(alpha: 0.06);
-      fg = const Color(0xFF6B7FAB);
+      fg = _T.textMuted;
       fontSize = 9;
     } else if (isSelected) {
-      bg = _gold.withValues(alpha: 0.14);
-      fg = _gold;
+      bg = _T.pink.withValues(alpha: 0.18);
+      fg = _T.pink2;
       fontSize = 10;
     } else {
       bg = Colors.white.withValues(alpha: 0.04);
-      fg = const Color(0xFF4E5F88);
+      fg = _T.textMuted;
       fontSize = 10;
     }
 
@@ -907,7 +987,9 @@ class _SubLabelPill extends StatelessWidget {
   }
 }
 
-// ── Subscribe Button ──────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Subscribe CTA button
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _SubscribeButton extends StatelessWidget {
   final PremiumState state;
@@ -917,44 +999,44 @@ class _SubscribeButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final active = !state.isPurchasing && selectedPlan != null;
+
     return SizedBox(
       width: double.infinity,
-      height: 56,
+      height: 54,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          gradient: state.isPurchasing || selectedPlan == null
-              ? null
-              : const LinearGradient(
-                  colors: [Color(0xFFFFDE7A), Color(0xFFE6A800)],
+          gradient: active
+              ? const LinearGradient(
+                  colors: [_T.btnTop, _T.btnBottom],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                ),
-          color: state.isPurchasing || selectedPlan == null
-              ? const Color(0xFF2A3A6A)
+                )
               : null,
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: state.isPurchasing || selectedPlan == null
-              ? null
-              : [
+          color: active ? null : Colors.white.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(27),
+          boxShadow: active
+              ? [
                   BoxShadow(
-                    color: const Color(0xFFE6A800).withValues(alpha: 0.45),
-                    blurRadius: 20,
+                    color: _T.btnShadow,
+                    blurRadius: 22,
                     offset: const Offset(0, 6),
                   ),
-                ],
+                ]
+              : null,
         ),
         child: ElevatedButton(
-          onPressed: state.isPurchasing || selectedPlan == null
-              ? null
-              : () => context.read<PremiumBloc>().add(
-                  PremiumPurchaseRequested(selectedPlan!),
-                ),
+          onPressed: active
+              ? () => context.read<PremiumBloc>().add(
+                    PremiumPurchaseRequested(selectedPlan!),
+                  )
+              : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.transparent,
             shadowColor: Colors.transparent,
             disabledBackgroundColor: Colors.transparent,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(28),
+              borderRadius: BorderRadius.circular(27),
             ),
           ),
           child: state.isPurchasing
@@ -963,7 +1045,7 @@ class _SubscribeButton extends StatelessWidget {
                   width: 22,
                   child: CircularProgressIndicator(
                     strokeWidth: 2.5,
-                    color: Color(0xFF7A4800),
+                    color: Colors.white,
                   ),
                 )
               : Text(
@@ -973,12 +1055,64 @@ class _SubscribeButton extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF5A3000),
+                    color: Colors.white,
                     letterSpacing: 0.3,
                   ),
                 ),
         ),
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Footer — restore purchase + legal note
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _Footer extends StatelessWidget {
+  final bool isPurchasing;
+
+  const _Footer({required this.isPurchasing});
+
+  @override
+  Widget build(BuildContext context) {
+    final bloc = context.read<PremiumBloc>();
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        TextButton(
+          onPressed: isPurchasing
+              ? () {
+                  if (!bloc.isClosed) bloc.add(const PremiumPurchaseReset());
+                }
+              : () => bloc.add(const PremiumRestoreRequested()),
+          child: const Text(
+            'Restore purchase',
+            style: TextStyle(color: _T.restoreText, fontSize: 13),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 5,
+                height: 5,
+                decoration: const BoxDecoration(
+                  color: _T.legalDot,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 6),
+              const Text(
+                'Renews automatically · Cancel anytime',
+                style: TextStyle(color: _T.legalText, fontSize: 11),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

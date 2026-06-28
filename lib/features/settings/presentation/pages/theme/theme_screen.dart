@@ -184,7 +184,7 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
     );
 
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
+      margin: const EdgeInsets.symmetric(vertical: 3, horizontal: 12),
       decoration: BoxDecoration(
         color: isDarkPreview
             ? surfaceColor.withValues(alpha: 0.6)
@@ -450,7 +450,7 @@ class _ThemeSwitcherScreenState extends State<ThemeSwitcherScreen> {
                                                     physics:
                                                         const NeverScrollableScrollPhysics(),
                                                     padding:
-                                                        const EdgeInsets.all(8),
+                                                        const EdgeInsets.only(top: 5),
                                                     itemCount: 4,
                                                     itemBuilder: (ctx, idx) =>
                                                         _buildPreviewItem(
