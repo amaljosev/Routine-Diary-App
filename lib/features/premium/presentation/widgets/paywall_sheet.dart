@@ -12,47 +12,47 @@ import '../bloc/premium_bloc.dart';
 
 class _T {
   // Sheet background gradient stops
-  static const bgTop    = Color(0xFF2A0618);
+  static const bgTop = Color(0xFF2A0618);
   static const bgBottom = Color(0xFF130208);
 
   // Radial glow behind the icon
   static const glowColor = Color(0xFFD4537E);
 
   // Icon circle gradient
-  static const iconGradTop    = Color(0xFFF9A8D4); // pink-300
+  static const iconGradTop = Color(0xFFF9A8D4); // pink-300
   static const iconGradBottom = Color(0xFFE11D74); // pink-600
 
   // Primary accent (borders, highlights, badge gradient start)
-  static const pink  = Color(0xFFE11D74);
+  static const pink = Color(0xFFE11D74);
   static const pink2 = Color(0xFFF472B6); // lighter end
 
   // Text colors on dark sheet
-  static const textPrimary   = Colors.white;
+  static const textPrimary = Colors.white;
   static const textSecondary = Color(0x99FFFFFF); // 60 % white
-  static const textMuted     = Color(0x4DFFFFFF); // 30 % white
+  static const textMuted = Color(0x4DFFFFFF); // 30 % white
 
   // Feature row icon backgrounds
-  static const featPinkBg  = Color(0x26F472B6); // pink  / 15 %
-  static const featBlueBg  = Color(0x263B82F6); // blue-500 / 15 %
+  static const featPinkBg = Color(0x26F472B6); // pink  / 15 %
+  static const featBlueBg = Color(0x263B82F6); // blue-500 / 15 %
 
   // Plan card colors
-  static const cardBg     = Color(0x0DFFFFFF); //  5 % white fill
+  static const cardBg = Color(0x0DFFFFFF); //  5 % white fill
   static const cardBorder = Color(0x14FFFFFF); //  8 % white border
-  static const cardSelBg  = Color(0x1AE11D74); // pink / 10 %
+  static const cardSelBg = Color(0x1AE11D74); // pink / 10 %
 
   // Subscribe button gradient
-  static const btnTop    = Color(0xFFF472B6);
+  static const btnTop = Color(0xFFF472B6);
   static const btnBottom = Color(0xFFBE185D);
   static const btnShadow = Color(0x66E11D74); // 40 % pink
 
   // "Best value" badge gradient
   static const badgeStart = Color(0xFFF9A8D4);
-  static const badgeEnd   = Color(0xFFE11D74);
+  static const badgeEnd = Color(0xFFE11D74);
 
   // Footer / restore
   static const restoreText = Color(0x66FFFFFF);
-  static const legalText   = Color(0x33FFFFFF);
-  static const legalDot    = Color(0xFFE11D74);
+  static const legalText = Color(0x33FFFFFF);
+  static const legalDot = Color(0xFFE11D74);
 
   // Plans unavailable error
   static const errorText = Color(0xFFFF6B8A);
@@ -138,8 +138,8 @@ class _PaywallSheetState extends State<_PaywallSheet> {
     final maxSheetHeight = _isTablet
         ? mq.size.height * 0.90
         : _isLandscape
-            ? mq.size.height * 0.96
-            : mq.size.height * 0.92;
+        ? mq.size.height * 0.96
+        : mq.size.height * 0.92;
 
     return BlocConsumer<PremiumBloc, PremiumState>(
       listenWhen: (prev, curr) =>
@@ -175,17 +175,47 @@ class _PaywallSheetState extends State<_PaywallSheet> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // ── Drag handle ─────────────────────────────────────────────
-              const SizedBox(height: 12),
-              Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(2),
+              SizedBox(
+                height: 50,
+                width: double.infinity,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                  child: Row(
+                    mainAxisAlignment: .spaceBetween,
+                    children: [
+                      GestureDetector(
+                        onTap: () => Navigator.of(context).pop(),
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.12),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.15),
+                              width: 1,
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.close_rounded,
+                            color: Colors.white.withValues(alpha: 0.70),
+                            size: 18,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        width: 50,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(width: 35),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 4),
 
               // ── Scrollable body ──────────────────────────────────────────
               Flexible(
@@ -197,15 +227,13 @@ class _PaywallSheetState extends State<_PaywallSheet> {
                           state: state,
                           widget: widget,
                           selectedIndex: _selectedIndex,
-                          onSelected: (i) =>
-                              setState(() => _selectedIndex = i),
+                          onSelected: (i) => setState(() => _selectedIndex = i),
                         )
                       : _PortraitBody(
                           state: state,
                           widget: widget,
                           selectedIndex: _selectedIndex,
-                          onSelected: (i) =>
-                              setState(() => _selectedIndex = i),
+                          onSelected: (i) => setState(() => _selectedIndex = i),
                         ),
                 ),
               ),
@@ -228,7 +256,6 @@ class _PaywallSheetState extends State<_PaywallSheet> {
     );
   }
 }
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Portrait layout
 // ─────────────────────────────────────────────────────────────────────────────
@@ -273,8 +300,8 @@ class _PortraitBody extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: _SubscribeButton(
             state: state,
-            selectedPlan: state.hasPlans &&
-                    selectedIndex < state.subscriptionPlans.length
+            selectedPlan:
+                state.hasPlans && selectedIndex < state.subscriptionPlans.length
                 ? state.subscriptionPlans[selectedIndex]
                 : null,
           ),
@@ -341,7 +368,8 @@ class _LandscapeBody extends StatelessWidget {
                 const SizedBox(height: 16),
                 _SubscribeButton(
                   state: state,
-                  selectedPlan: state.hasPlans &&
+                  selectedPlan:
+                      state.hasPlans &&
                           selectedIndex < state.subscriptionPlans.length
                       ? state.subscriptionPlans[selectedIndex]
                       : null,
@@ -361,17 +389,17 @@ class _LandscapeBody extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 Widget _sectionLabel(String text) => Padding(
-      padding: const EdgeInsets.only(top: 18, bottom: 8),
-      child: Text(
-        text.toUpperCase(),
-        style: const TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 1.2,
-          color: _T.sectionLabel,
-        ),
-      ),
-    );
+  padding: const EdgeInsets.only(top: 18, bottom: 8),
+  child: Text(
+    text.toUpperCase(),
+    style: const TextStyle(
+      fontSize: 10,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 1.2,
+      color: _T.sectionLabel,
+    ),
+  ),
+);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Hero header — portrait / tablet
@@ -630,19 +658,19 @@ class _PlanArea extends StatelessWidget {
               child: CircularProgressIndicator(color: _T.pink),
             )
           : !state.hasPlans
-              ? Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: Text(
-                    'Plans unavailable. Please check your connection.',
-                    style: TextStyle(color: _T.errorText, fontSize: 13),
-                    textAlign: TextAlign.center,
-                  ),
-                )
-              : _PlanSelector(
-                  plans: state.subscriptionPlans,
-                  selectedIndex: selectedIndex,
-                  onSelected: onSelected,
-                ),
+          ? Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Text(
+                'Plans unavailable. Please check your connection.',
+                style: TextStyle(color: _T.errorText, fontSize: 13),
+                textAlign: TextAlign.center,
+              ),
+            )
+          : _PlanSelector(
+              plans: state.subscriptionPlans,
+              selectedIndex: selectedIndex,
+              onSelected: onSelected,
+            ),
     );
   }
 }
@@ -687,12 +715,16 @@ class _PlanSelector extends StatelessWidget {
     final amount = double.tryParse(raw) ?? 0;
     if (amount == 0) return p.title;
 
-    final prices = plans
-        .map((pl) =>
-            double.tryParse(pl.price.replaceAll(RegExp(r'[^\d.]'), '')) ?? 0)
-        .where((v) => v > 0)
-        .toList()
-      ..sort();
+    final prices =
+        plans
+            .map(
+              (pl) =>
+                  double.tryParse(pl.price.replaceAll(RegExp(r'[^\d.]'), '')) ??
+                  0,
+            )
+            .where((v) => v > 0)
+            .toList()
+          ..sort();
 
     if (prices.length < 2) return p.title;
     final min = prices.first;
@@ -817,9 +849,7 @@ class _PlanSelector extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: isSelected ? _T.cardSelBg : _T.cardBg,
                     border: Border.all(
-                      color: isSelected
-                          ? _T.pink
-                          : _T.cardBorder,
+                      color: isSelected ? _T.pink : _T.cardBorder,
                       width: isSelected ? 2 : 1.5,
                     ),
                     borderRadius: BorderRadius.circular(16),
@@ -854,9 +884,7 @@ class _PlanSelector extends StatelessWidget {
                         style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 16,
-                          color: isSelected
-                              ? _T.textPrimary
-                              : _T.textSecondary,
+                          color: isSelected ? _T.textPrimary : _T.textSecondary,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -885,9 +913,7 @@ class _PlanSelector extends StatelessWidget {
                   width: isSelected ? 24 : 0,
                   decoration: BoxDecoration(
                     gradient: isSelected
-                        ? const LinearGradient(
-                            colors: [_T.pink2, _T.pink],
-                          )
+                        ? const LinearGradient(colors: [_T.pink2, _T.pink])
                         : null,
                     borderRadius: BorderRadius.circular(2),
                   ),
@@ -1028,8 +1054,8 @@ class _SubscribeButton extends StatelessWidget {
         child: ElevatedButton(
           onPressed: active
               ? () => context.read<PremiumBloc>().add(
-                    PremiumPurchaseRequested(selectedPlan!),
-                  )
+                  PremiumPurchaseRequested(selectedPlan!),
+                )
               : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.transparent,

@@ -1,8 +1,12 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:routine/core/constants/app_constants.dart';
 import 'package:routine/features/diary/presentation/pages/diary_screen.dart';
 import 'package:routine/features/onboarding/domain/repositories/onboarding_repository.dart';
 import 'package:routine/features/onboarding/presentation/bloc/onboarding_bloc.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
@@ -32,17 +36,9 @@ class _OnboardingViewState extends State<OnboardingView>
   late final AnimationController _slideController;
   late final AnimationController _scaleController;
 
-  // Cycles through the 3 available background images.
-  // ignore: unused_field
-  static const _bgImages = [
-    'assets/img/onboarding/boarding_1.webp',
-    'assets/img/onboarding/boarding_2.webp',
-    'assets/img/onboarding/boarding_3.webp',
-  ];
-
   final List<OnboardingPageData> _pages = const [
     OnboardingPageData(
-      imagePath:'assets/img/onboarding/boarding_1.webp',
+      imagePath: 'assets/img/onboarding/boarding_1.webp',
       title: 'Your Personal Diary',
       description:
           'Capture your daily thoughts, feelings, and moments in one beautiful space. Add titles, moods, and rich descriptions to every entry.',
@@ -59,32 +55,13 @@ class _OnboardingViewState extends State<OnboardingView>
       description:
           'Your diary is protected by PIN lock, device biometrics, or a personal security question — keeping your entries safe no matter where they live.',
     ),
-    // OnboardingPageData(
-    //   imagePath: 'assets/img/onboarding/boarding_1.webp',
-    //   title: 'Memory Timeline',
-    //   description:
-    //       'Browse your entries visually with the calendar view. See your journey through time and relive special moments with ease.',
-    // ),
-    // OnboardingPageData(
-    //   imagePath: 'assets/img/onboarding/boarding_1.webp',
-    //   title: 'Make It Yours',
-    //   description:
-    //       'Build your perfect look with fully custom themes — pick accent colors, switch between light and dark modes, and style every detail to match your vibe.',
-    // ),
-    // OnboardingPageData(
-    //   imagePath: 'assets/img/onboarding/boarding_1.webp',
-    //   title: 'Backed Up to the Cloud',
-    //   description:
-    //       'Never lose a memory. Your diary is automatically backed up to Google Drive so your entries are safe, synced, and always with you.',
-    // ),
   ];
 
-  // ── helpers ──────────────────────────────────────────────────────────────────
+  // ── helpers ───────────────────────────────────────────────────────────────
 
   bool _isTablet(BuildContext context) =>
       MediaQuery.of(context).size.shortestSide >= 600;
 
-  /// True when the phone is in landscape (width > height) but NOT a tablet.
   bool _isPhoneLandscape(BuildContext context) {
     final size = MediaQuery.of(context).size;
     return !_isTablet(context) && size.width > size.height;
@@ -133,9 +110,8 @@ class _OnboardingViewState extends State<OnboardingView>
       ..forward();
   }
 
-  // ── page content builders ─────────────────────────────────────────────────
+  // ── shared builders ───────────────────────────────────────────────────────
 
-  /// Full-bleed background image for the primary-coloured panel.
   Widget _buildBgImage({
     required String imagePath,
     BoxFit fit = BoxFit.cover,
@@ -148,13 +124,10 @@ class _OnboardingViewState extends State<OnboardingView>
     return img;
   }
 
-  /// Shared helper: step counter label ("01 / 06") shown at the top of the card.
   Widget _buildStepCounter(BuildContext context, int index, int totalPages) {
     final theme = Theme.of(context);
     return Text(
-      '${(index + 1).toString().padLeft(2, '0')} '
-      '/ '
-      '${totalPages.toString().padLeft(2, '0')}',
+      '${(index + 1).toString().padLeft(2, '0')} / ${totalPages.toString().padLeft(2, '0')}',
       style: theme.textTheme.labelMedium?.copyWith(
         color: theme.colorScheme.primary,
         fontWeight: FontWeight.w600,
@@ -163,47 +136,53 @@ class _OnboardingViewState extends State<OnboardingView>
     );
   }
 
-  /// Shared helper: animated title + description column.
   Widget _buildCardText(
     BuildContext context,
     OnboardingPageData page, {
     TextAlign textAlign = TextAlign.left,
-    double titleFontSize = 26,
-    double bodyFontSize = 15,
+    double? titleFontSize,
+    double? bodyFontSize,
   }) {
     final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: textAlign == TextAlign.left
           ? CrossAxisAlignment.start
           : CrossAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Opacity(
-          opacity: _fadeController.value,
-          child: Transform.translate(
-            offset: Offset(0, 30 * (1 - _slideController.value)),
-            child: Text(
-              page.title,
-              textAlign: textAlign,
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.5,
-                fontSize: titleFontSize,
+        AnimatedBuilder(
+          animation: Listenable.merge([_fadeController, _slideController]),
+          builder: (context, _) => Opacity(
+            opacity: _fadeController.value.clamp(0.0, 1.0),
+            child: Transform.translate(
+              offset: Offset(0, 30 * (1 - _slideController.value)),
+              child: Text(
+                page.title,
+                textAlign: textAlign,
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.5,
+                  fontSize: titleFontSize,
+                ),
               ),
             ),
           ),
         ),
         const SizedBox(height: 12),
-        Opacity(
-          opacity: _fadeController.value,
-          child: Transform.translate(
-            offset: Offset(0, 18 * (1 - _slideController.value)),
-            child: Text(
-              page.description,
-              textAlign: textAlign,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
-                height: 1.65,
-                fontSize: bodyFontSize,
+        AnimatedBuilder(
+          animation: Listenable.merge([_fadeController, _slideController]),
+          builder: (context, _) => Opacity(
+            opacity: _fadeController.value.clamp(0.0, 1.0),
+            child: Transform.translate(
+              offset: Offset(0, 18 * (1 - _slideController.value)),
+              child: Text(
+                page.description,
+                textAlign: textAlign,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+                  height: 1.65,
+                  fontSize: bodyFontSize,
+                ),
               ),
             ),
           ),
@@ -212,8 +191,214 @@ class _OnboardingViewState extends State<OnboardingView>
     );
   }
 
-  // ── Phone portrait: full-screen image bg, white card slides up ─────────────
+  // ── bottom controls ───────────────────────────────────────────────────────
 
+  /// The dots + next arrow OR dots + disclaimer + get-started button.
+  /// Rendered as a Column so the disclaimer never overflows a fixed-height Row.
+  Widget _buildBottomControls(
+    BuildContext context,
+    OnboardingState state,
+    double leftInset,
+    double padH,
+    double padB,
+    bool isTablet,
+  ) {
+    if (state is! OnboardingLoaded) return const SizedBox.shrink();
+    final theme = Theme.of(context);
+
+    final dots = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(
+        state.totalPages,
+        (index) => AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          margin: const EdgeInsets.only(right: 6),
+          width: state.currentPage == index ? (isTablet ? 28 : 22) : (isTablet ? 10 : 8),
+          height: isTablet ? 10 : 8,
+          decoration: BoxDecoration(
+            color: state.currentPage == index
+                ? Colors.purple.shade700
+                : Colors.purple.shade100,
+            borderRadius: BorderRadius.circular(5),
+          ),
+        ),
+      ),
+    );
+
+    if (!state.isLastPage) {
+      // ── Pages 1 & 2: dots left, arrow right ──────────────────────────────
+      return Padding(
+        padding: EdgeInsets.only(
+          left: leftInset + padH,
+          right: padH,
+          bottom: padB,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            dots,
+            const Spacer(),
+            AnimatedBuilder(
+              animation: _scaleController,
+              builder: (context, _) => Transform.scale(
+                scale: 0.95 + 0.05 * _scaleController.value,
+                child: SizedBox(
+                  width: isTablet ? 60 : 52,
+                  height: isTablet ? 60 : 52,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      context.read<OnboardingBloc>().add(NextPageTapped());
+                      _pageController.nextPage(
+                        duration: const Duration(milliseconds: 600),
+                        curve: Curves.easeInOutCubic,
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.purple.shade700,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: EdgeInsets.zero,
+                      shape: const CircleBorder(),
+                    ),
+                    child: Icon(
+                      Icons.arrow_forward_rounded,
+                      size: isTablet ? 26 : 22,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // ── Last page: dots left, disclaimer + button stacked on the right ────
+    return Padding(
+      padding: EdgeInsets.only(
+        left: leftInset + padH,
+        right: padH,
+        bottom: padB,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          // Dots sit at the bottom of the row, aligned with the button
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: dots,
+          ),
+          const Spacer(),
+          // Column: disclaimer text above, button below
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ── Disclaimer ──────────────────────────────────────────────
+              ConstrainedBox(
+                // Cap width so it wraps rather than overflows on large screens
+                constraints: BoxConstraints(
+                  maxWidth: isTablet ? 320 : 220,
+                ),
+                child: Text.rich(
+                  TextSpan(
+                    text: 'By continuing, you accept our ',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.45),
+                      fontSize: isTablet ? 12 : 10.5,
+                      height: 1.5,
+                    ),
+                    children: [
+                      WidgetSpan(
+                        alignment: PlaceholderAlignment.middle,
+                        child: GestureDetector(
+                          onTap: () => _launchURL(context, AppConstants.privacyPolicy),
+                          child: Text(
+                            'Privacy Policy',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: Colors.purple.shade700,
+                              fontSize: isTablet ? 12 : 10.5,
+                              fontWeight: FontWeight.w600,
+                              decoration: TextDecoration.underline,
+                              decorationColor: Colors.purple.shade700,
+                            ),
+                          ),
+                        ),
+                      ),
+                      TextSpan(
+                        text: ' & ',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.45),
+                          fontSize: isTablet ? 12 : 10.5,
+                        ),
+                      ),
+                      WidgetSpan(
+                        alignment: PlaceholderAlignment.middle,
+                        child: GestureDetector(
+                          onTap: () => _launchURL(context, AppConstants.termsAndConditions),
+                          child: Text(
+                            'Terms',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: Colors.purple.shade700,
+                              fontSize: isTablet ? 12 : 10.5,
+                              fontWeight: FontWeight.w600,
+                              decoration: TextDecoration.underline,
+                              decorationColor: Colors.purple.shade700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  textAlign: TextAlign.right,
+                ),
+              ),
+              const SizedBox(height: 10),
+              // ── Get Started button ───────────────────────────────────────
+              AnimatedBuilder(
+                animation: _scaleController,
+                builder: (context, _) => Transform.scale(
+                  scale: 0.95 + 0.05 * _scaleController.value,
+                  child: SizedBox(
+                    height: isTablet ? 56 : 50,
+                    child: ElevatedButton(
+                      onPressed: () =>
+                          context.read<OnboardingBloc>().add(GetStartedTapped()),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.purple.shade700,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isTablet ? 36 : 28,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      child: Text(
+                        'Get Started',
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
+                          fontSize: isTablet ? 18 : null,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── layout builders ───────────────────────────────────────────────────────
+
+  /// Phone portrait: full-screen image, card slides up from bottom.
+  /// Card uses a SingleChildScrollView so text never overflows at large font sizes.
   Widget _buildSplitCardPortrait(
     BuildContext context,
     OnboardingPageData page,
@@ -221,48 +406,48 @@ class _OnboardingViewState extends State<OnboardingView>
     int index,
     int totalPages,
   ) {
-    // Card occupies roughly the bottom 48 % of the screen.
-    final cardHeight = size.height * 0.48;
+    // Reserve space for the fixed bottom controls overlay (~90 px + safe area).
+    final safeBottom = MediaQuery.of(context).padding.bottom;
+    final controlsReserve = 90.0 + safeBottom;
+    // Card minimum height is ~45 % of screen; it can grow if text is large.
+    final cardMinHeight = size.height * 0.45;
 
     return Stack(
       alignment: Alignment.bottomCenter,
       children: [
-        // ── Full-screen background image ───────────────────────────────────
-        Positioned.fill(
-          child: _buildBgImage(imagePath: page.imagePath),
-        ),
+        // Full-screen background
+        Positioned.fill(child: _buildBgImage(imagePath: page.imagePath)),
 
-        // ── White card ─────────────────────────────────────────────────────
-        Container(
-          width: double.infinity,
-          constraints: BoxConstraints(minHeight: cardHeight),
-          // Extra bottom padding reserves space for the fixed controls overlay.
-          padding: EdgeInsets.fromLTRB(
-            28,
-            28,
-            28,
-            80 + MediaQuery.of(context).padding.bottom,
-          ),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildStepCounter(context, index, totalPages),
-              const SizedBox(height: 14),
-              _buildCardText(context, page),
-            ],
+        // Scrollable card
+        ConstrainedBox(
+          constraints: BoxConstraints(minHeight: cardMinHeight),
+          child: Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(32)),
+            ),
+            child: SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              padding: EdgeInsets.fromLTRB(28, 28, 28, controlsReserve),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildStepCounter(context, index, totalPages),
+                  const SizedBox(height: 14),
+                  _buildCardText(context, page),
+                ],
+              ),
+            ),
           ),
         ),
       ],
     );
   }
 
-  // ── Phone landscape: left half image, white card on right ──────────────────
-
+  /// Phone landscape: image left, scrollable card right.
   Widget _buildSplitCardLandscape(
     BuildContext context,
     OnboardingPageData page,
@@ -270,38 +455,27 @@ class _OnboardingViewState extends State<OnboardingView>
     int index,
     int totalPages,
   ) {
+    final safeBottom = MediaQuery.of(context).padding.bottom;
+    final controlsReserve = 90.0 + safeBottom;
+
     return Row(
       children: [
-        // ── Image area (left panel) ────────────────────────────────────────
         SizedBox(
           width: size.width * 0.42,
           height: double.infinity,
-          child: _buildBgImage(
-            imagePath: page.imagePath,
-            borderRadius: const BorderRadius.horizontal(
-              right: Radius.circular(0),
-            ),
-          ),
+          child: _buildBgImage(imagePath: page.imagePath),
         ),
-
-        // ── White card ─────────────────────────────────────────────────────
         Expanded(
           child: Container(
             height: double.infinity,
-            padding: EdgeInsets.fromLTRB(
-              28,
-              28,
-              28,
-              80 + MediaQuery.of(context).padding.bottom,
-            ),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
-              borderRadius: const BorderRadius.horizontal(
-                left: Radius.circular(32),
-              ),
+              borderRadius:
+                  const BorderRadius.horizontal(left: Radius.circular(32)),
             ),
             child: SingleChildScrollView(
               physics: const ClampingScrollPhysics(),
+              padding: EdgeInsets.fromLTRB(28, 28, 28, controlsReserve),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -322,8 +496,7 @@ class _OnboardingViewState extends State<OnboardingView>
     );
   }
 
-  // ── Tablet: wider left image panel, generous right card ───────────────────
-
+  /// Tablet: wider image panel left, scrollable card right.
   Widget _buildSplitCardTablet(
     BuildContext context,
     OnboardingPageData page,
@@ -333,34 +506,27 @@ class _OnboardingViewState extends State<OnboardingView>
   ) {
     final isLandscape = size.width > size.height;
     final leftFraction = isLandscape ? 0.44 : 0.40;
+    final safeBottom = MediaQuery.of(context).padding.bottom;
+    final controlsReserve = 110.0 + safeBottom;
 
     return Row(
       children: [
-        // ── Image area (left panel) ────────────────────────────────────────
         SizedBox(
           width: size.width * leftFraction,
           height: double.infinity,
           child: _buildBgImage(imagePath: page.imagePath),
         ),
-
-        // ── White card ─────────────────────────────────────────────────────
         Expanded(
           child: Container(
             height: double.infinity,
-            padding: EdgeInsets.fromLTRB(
-              40,
-              40,
-              40,
-              100 + MediaQuery.of(context).padding.bottom,
-            ),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
-              borderRadius: const BorderRadius.horizontal(
-                left: Radius.circular(40),
-              ),
+              borderRadius:
+                  const BorderRadius.horizontal(left: Radius.circular(40)),
             ),
             child: SingleChildScrollView(
               physics: const ClampingScrollPhysics(),
+              padding: EdgeInsets.fromLTRB(40, 40, 40, controlsReserve),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -381,7 +547,7 @@ class _OnboardingViewState extends State<OnboardingView>
     );
   }
 
-  // ── build ─────────────────────────────────────────────────────────────────────
+  // ── build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -410,7 +576,7 @@ class _OnboardingViewState extends State<OnboardingView>
       child: Scaffold(
         body: Stack(
           children: [
-            // ── 1. PageView ───────────────────────────────────────────────
+            // ── 1. PageView ──────────────────────────────────────────────
             BlocBuilder<OnboardingBloc, OnboardingState>(
               builder: (context, state) {
                 if (state is OnboardingLoaded) {
@@ -420,21 +586,14 @@ class _OnboardingViewState extends State<OnboardingView>
                     itemCount: state.totalPages,
                     itemBuilder: (context, index) {
                       final page = _pages[index];
-                      return AnimatedBuilder(
-                        animation: Listenable.merge([
-                          _fadeController,
-                          _slideController,
-                          _scaleController,
-                        ]),
-                        builder: (context, _) => isTablet
-                            ? _buildSplitCardTablet(
-                                context, page, size, index, state.totalPages)
-                            : isPhoneLandscape
-                                ? _buildSplitCardLandscape(
-                                    context, page, size, index, state.totalPages)
-                                : _buildSplitCardPortrait(
-                                    context, page, size, index, state.totalPages),
-                      );
+                      return isTablet
+                          ? _buildSplitCardTablet(
+                              context, page, size, index, state.totalPages)
+                          : isPhoneLandscape
+                              ? _buildSplitCardLandscape(
+                                  context, page, size, index, state.totalPages)
+                              : _buildSplitCardPortrait(
+                                  context, page, size, index, state.totalPages);
                     },
                   );
                 }
@@ -442,7 +601,7 @@ class _OnboardingViewState extends State<OnboardingView>
               },
             ),
 
-            // ── 2. Skip button (top-right, over the image area) ───────────
+            // ── 2. Skip button ───────────────────────────────────────────
             BlocBuilder<OnboardingBloc, OnboardingState>(
               builder: (context, state) {
                 if (state is OnboardingLoaded && !state.isLastPage) {
@@ -466,7 +625,8 @@ class _OnboardingViewState extends State<OnboardingView>
                             );
                           },
                           style: TextButton.styleFrom(
-                            foregroundColor: Colors.white.withValues(alpha: 0.85),
+                            foregroundColor:
+                                Colors.white.withValues(alpha: 0.85),
                             textStyle: theme.textTheme.labelLarge?.copyWith(
                               fontWeight: FontWeight.w600,
                             ),
@@ -481,130 +641,30 @@ class _OnboardingViewState extends State<OnboardingView>
               },
             ),
 
-            // ── 3. Bottom controls (dots + next / get-started) ────────────
+            // ── 3. Bottom controls ───────────────────────────────────────
             Positioned(
               left: 0,
               right: 0,
               bottom: 0,
               child: BlocBuilder<OnboardingBloc, OnboardingState>(
                 builder: (context, state) {
-                  if (state is OnboardingLoaded) {
-                    final leftInset = (!isTablet && !isPhoneLandscape)
-                        ? 0.0
-                        : isTablet
-                            ? size.width *
-                                (size.width > size.height ? 0.44 : 0.40)
-                            : size.width * 0.42;
+                  if (state is! OnboardingLoaded) return const SizedBox.shrink();
 
-                    return Padding(
-                      padding: EdgeInsets.only(
-                        left: leftInset + controlsPadH,
-                        right: controlsPadH,
-                        bottom: controlsPadB,
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          // Dots indicator
-                          Row(
-                            children: List.generate(
-                              state.totalPages,
-                              (index) => AnimatedContainer(
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeInOut,
-                                margin: const EdgeInsets.only(right: 6),
-                                width: state.currentPage == index
-                                    ? (isTablet ? 28 : 22)
-                                    : (isTablet ? 10 : 8),
-                                height: isTablet ? 10 : 8,
-                                decoration: BoxDecoration(
-                                  color: state.currentPage == index
-                                      ? Colors.purple.shade700
-                                      :  Colors.purple.shade100,
-                                  borderRadius: BorderRadius.circular(5),
-                                ),
-                              ),
-                            ),
-                          ),
+                  final leftInset = (!isTablet && !isPhoneLandscape)
+                      ? 0.0
+                      : isTablet
+                          ? size.width *
+                              (size.width > size.height ? 0.44 : 0.40)
+                          : size.width * 0.42;
 
-                          const Spacer(),
-
-                          if (!state.isLastPage)
-                            AnimatedBuilder(
-                              animation: _scaleController,
-                              builder: (context, _) => Transform.scale(
-                                scale: 0.95 + 0.05 * _scaleController.value,
-                                child: SizedBox(
-                                  width: isTablet ? 60 : 52,
-                                  height: isTablet ? 60 : 52,
-                                  child: ElevatedButton(
-                                    onPressed: () {
-                                      context
-                                          .read<OnboardingBloc>()
-                                          .add(NextPageTapped());
-                                      _pageController.nextPage(
-                                        duration:
-                                            const Duration(milliseconds: 600),
-                                        curve: Curves.easeInOutCubic,
-                                      );
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                          Colors.purple.shade700,
-                                      foregroundColor: Colors.white,
-                                      elevation: 0,
-                                      padding: EdgeInsets.zero,
-                                      shape: const CircleBorder(),
-                                    ),
-                                    child: Icon(
-                                      Icons.arrow_forward_rounded,
-                                      size: isTablet ? 26 : 22,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            )
-                          else
-                            AnimatedBuilder(
-                              animation: _scaleController,
-                              builder: (context, _) => Transform.scale(
-                                scale: 0.95 + 0.05 * _scaleController.value,
-                                child: SizedBox(
-                                  height: isTablet ? 56 : 50,
-                                  child: ElevatedButton(
-                                    onPressed: () => context
-                                        .read<OnboardingBloc>()
-                                        .add(GetStartedTapped()),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                           Colors.purple.shade700,
-                                      foregroundColor: Colors.white,
-                                      elevation: 0,
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: isTablet ? 36 : 28,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(30),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      'Get Started',
-                                      style: theme.textTheme.labelLarge
-                                          ?.copyWith(
-                                        fontWeight: FontWeight.w600,
-                                        letterSpacing: 0.5,
-                                        fontSize: isTablet ? 18 : null,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    );
-                  }
-                  return const SizedBox.shrink();
+                  return _buildBottomControls(
+                    context,
+                    state,
+                    leftInset,
+                    controlsPadH,
+                    controlsPadB,
+                    isTablet,
+                  );
                 },
               ),
             ),
@@ -612,6 +672,19 @@ class _OnboardingViewState extends State<OnboardingView>
         ),
       ),
     );
+  }
+
+  Future<void> _launchURL(BuildContext context, String url) async {
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.inAppBrowserView)) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Sorry we are facing an issue')),
+        );
+      } else {
+        log('not mounted');
+      }
+    }
   }
 }
 
